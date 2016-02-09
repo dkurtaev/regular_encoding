@@ -5,4 +5,7 @@ compiler:
   - clang
 os: linux
 script:
-  - echo ${PWD}
+  - mkdir build
+  - cd build
+  - cmake .. && make
+  - ./bin/test_hello
