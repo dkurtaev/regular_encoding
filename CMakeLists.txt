@@ -7,11 +7,27 @@ set(PROJECT_SOURCE_DIR "${CMAKE_SOURCE_DIR}/src/")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(sources
-  src/main.cc
+  src/alphabetic_encoder.cc
+  src/bijective_checker.cc
+  src/code_generator.cc
+  src/code_tree.cc
+  src/code_tree_node.cc
+  src/simple_suffix_tree.cc
+  src/state_machine.cc
+  src/structures.cc
+#  src/suffix_tree.cc
 )
 
 set(headers
-  include/main.h
+  include/alphabetic_encoder.h
+  include/bijective_checker.h
+  include/code_generator.h
+  include/code_tree.h
+  include/code_tree_node.h
+  include/simple_suffix_tree.h
+  include/state_machine.h
+  include/structures.h
+#  include/suffix_tree.h
 )
 
 include_directories(${CMAKE_SOURCE_DIR})
