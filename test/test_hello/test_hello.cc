@@ -7,7 +7,7 @@
 
 TEST(Hello, say_hello) {
   std::string str = SayHello();
-  ASSERT_NE(str, "Hello!");
+  ASSERT_EQ(str, "Hello!");
   std::cout << str << std::endl;
 }
 
