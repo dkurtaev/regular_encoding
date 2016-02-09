@@ -4,7 +4,6 @@ notifications:
 sudo: false
 compiler:
   - gcc
-  - clang
 os: linux
 script:
   - mkdir build
