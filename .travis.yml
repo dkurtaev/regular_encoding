@@ -1,0 +1,11 @@
+language: cpp
+sudo: false
+compiler:
+  - gcc
+  - clang
+os: linux
+script:
+  - mkdir build
+  - cd build
+  - cmake .. && make
+  - ./bin/test_hello
