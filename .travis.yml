@@ -1,4 +1,6 @@
 language: cpp
+notifications:
+  email: false
 sudo: false
 compiler:
   - gcc
@@ -8,4 +10,4 @@ script:
   - mkdir build
   - cd build
   - cmake .. && make
-  - ./bin/test_hello
+  - ./bin/test_code_generator

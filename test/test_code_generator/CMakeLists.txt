@@ -1,9 +1,9 @@
-set(target test_hello)
+set(target test_code_generator)
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../../3rdparty")
 
 set(sources
-  test_hello.cc
+  test_code_generator.cc
   test_main.cc
 )
 
