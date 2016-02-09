@@ -1,1 +1,2 @@
 add_subdirectory(test_code_generator)
+add_subdirectory(test_bijective_checker)
