@@ -18,7 +18,7 @@ void CodeGenerator::GenCode(int code_length, int max_elem_code_length,
   std::vector<int> bin_elem_codes;
   for (int i = 0; i < max_elem_code_length; ++i) {
     if (code_lengths[i] != 0) {
-      GenUniqueUnnegatives((1 << i + 1) - 1, code_lengths[i], &bin_elem_codes);
+      GenUniqueUnnegatives(pow(2, i + 1) - 1, code_lengths[i], &bin_elem_codes);
       for (int j = 0; j < code_lengths[i]; ++j) {
         std::string elem_code = "";
         for (int k = 0; k <= i; ++k) {
@@ -50,7 +50,7 @@ void CodeGenerator::GenCodeLengths(int code_length, int max_elem_code_length,
     int id = rand() % not_full.size();
     int length = not_full[id];
     ++lengths[length - 1];
-    if (lengths[length - 1] == (1 << length)) {
+    if (lengths[length - 1] == pow(2, length)) {
       not_full.erase(not_full.begin() + id);
     }
     current_code_length += length;
@@ -104,61 +104,11 @@ void CodeGenerator::GenCodeLengths(int code_length, int max_elem_code_length,
 
     --lengths[decremented_length - 1];
     ++lengths[incremented_length - 1];
-    if (lengths[incremented_length - 1] == (1 << incremented_length)) {
+    if (lengths[incremented_length - 1] == pow(2, incremented_length)) {
       not_full.erase(not_full.begin() + inc_length_id);
     }
     current_code_length += incremented_length - decremented_length;
-     /* else {
-      incremented_length = decremented_length;
-      if (current_code_length > code_length) {
-        min_decremented_length = decremented_length + 1;
-        max_decremented_length = max_elem_code_length;
-      } else {
-        min_decremented_length = 1;
-        max_decremented_length = decremented_length - 1;
-      }
-      for (int length = min_decremented_length;
-           length <= max_decremented_length; ++length) {
-        if ((*lengths)[length - 1] != 0 && (length != max_elem_code_length ||
-                                            (*lengths)[length - 1] != 1)) {
-          candidates.push_back(length);
-        }
-      }
-      decremented_length = candidates[rand() % candidates.size()];
-    }*/
   }
-//  while (current_code_length != code_length) {
-//    int decremented_length;
-//    do {
-//      decremented_length = rand() % max_elem_code_length + 1;
-//    } while ((*lengths)[decremented_length - 1] == 0 ||
-//             decremented_length == max_elem_code_length &&
-//             (*lengths)[max_elem_code_length - 1] == 1);
-
-//    std::vector<int> candidates;
-//    int inc = current_code_length > code_length ? -1 : 1;
-//    for (int i = 0; i < 2; ++i) {
-//      for (int j = decremented_length + inc;
-//           1 <= j && j <= max_elem_code_length; j += inc) {
-//        if ((*lengths)[j - 1] < (1 << j)) {
-//          candidates.push_back(j);
-//        }
-//      }
-//      if (candidates.size() != 0) {
-//        break;
-//      } else {
-//        inc *= -1;
-//      }
-//    }
-//    if (candidates.size() != 0) {
-//      int incremented_length = candidates[rand() % candidates.size()];
-//      --(*lengths)[decremented_length - 1];
-//      ++(*lengths)[incremented_length - 1];
-//      current_code_length += incremented_length - decremented_length;
-//    } else {
-//      int t = 1 + 2;
-//    }
-//  }
 }
 
 int CodeGenerator::MinCodeLength(int max_elem_code_length, int n_elem_codes) {
@@ -175,16 +125,9 @@ int CodeGenerator::MinCodeLength(int max_elem_code_length, int n_elem_codes) {
   //        (N - 2^{x+1} + 2) * (x + 1) = 2^{x+1} * (x - 1) + 2 +
   //        (N + 2) * (x + 1) - 2^{x+1} * (x + 1) =
   //        (N + 2) * (x + 1) + 2 - 2^{x+2}
-//  if (n_elem_codes <= (2 << max_elem_code_length) - 2) {
-//    n_elem_codes -= 1;  // For garanted elementary code with length M.
-//    int x = log(n_elem_codes + 2) / log(2) - 1;
-//    return (n_elem_codes + 2) * (x + 1) + 2 - (4 << x) + max_elem_code_length;
-//  } else {
-//    return 0;
-//  }
-    if (n_elem_codes <= (2 << max_elem_code_length) - 2) {
+    if (n_elem_codes <= pow(2, max_elem_code_length + 1) - 2) {
       int m = log(n_elem_codes + 1) / log(2);
-      return (n_elem_codes + 1) * m - (2 << m) + max_elem_code_length + 2;
+      return (n_elem_codes + 1) * m - pow(2, m + 1) + max_elem_code_length + 2;
     } else {
       return 0;
     }
@@ -207,17 +150,17 @@ int CodeGenerator::MaxCodeLength(int max_elem_code_length, int n_elem_codes) {
   // 3) L = L_full + (x - 1) * (N - 2^{M+1} + 2^x) = 2^x * (2 - x) +
   //        2^{M+1} * (M - 1) + (x - 1) * (N - 2^{M+1} + 2^x) =
   //        2^{M+1} * (M - x) + 2^x + N * (x - 1)
-  if (n_elem_codes <= (2 << max_elem_code_length) - 2) {
-    int x = ceil(log((2 << max_elem_code_length) - n_elem_codes) / log(2));
-    return (2 << max_elem_code_length) * (max_elem_code_length - x) +
-           (1 << x) + n_elem_codes * (x - 1);
+  if (n_elem_codes <= pow(2, max_elem_code_length + 1) - 2) {
+    int x = ceil(log(pow(2, max_elem_code_length + 1) - n_elem_codes) / log(2));
+    return pow(2, max_elem_code_length + 1) * (max_elem_code_length - x) +
+           pow(2, x) + n_elem_codes * (x - 1);
   } else {
     return 0;
   }
 }
 
 int CodeGenerator::MaxNumberElemCodes(int max_elem_code_length) {
-  return (2 << max_elem_code_length) - 2;
+  return pow(2, max_elem_code_length + 1) - 2;
 }
 
 void CodeGenerator::GenUniqueUnnegatives(int upper_value, int number,
