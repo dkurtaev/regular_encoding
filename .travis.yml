@@ -5,4 +5,4 @@ compiler:
   - clang
 os: linux
 script:
-  echo ./
+  - echo ${PWD}
