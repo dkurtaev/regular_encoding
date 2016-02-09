@@ -1,0 +1,8 @@
+language: cpp
+sudo: false
+compiler:
+  - gcc
+  - clang
+os: linux
+script:
+  echo ./
