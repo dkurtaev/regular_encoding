@@ -67,7 +67,7 @@ TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
 
       unsigned L_min = CodeGenerator::MinCodeLength(M, N);
       unsigned L_max = CodeGenerator::GetLNSetLimit(M, N);
-      for (unsigned L = L_min; L < L_max; ++L) {
+      for (unsigned L = L_min; L <= L_max; ++L) {
         for (unsigned gen = 0; gen < kNumberGenerations; ++gen) {
           CodeGenerator::GenCode(L, M, N, code);
           ASSERT_FALSE(checker.IsBijective(code, state_machine));
