@@ -26,12 +26,12 @@ void StateMachineOfAllWords(int n_words, StateMachine& state_machine) {
 // This test for checking LN set limit correctness
 // (outside it McMillan's equation is false).
 TEST(BijectiveChecker, LN_set_limit) {
-  static const unsigned kNumberGenerations = 10;
+  static const unsigned kNumberGenerations = 100;
 
   std::vector<std::string> code;
-  for (unsigned M = 3; M <= 5; ++M) {
+  for (unsigned M = 3; M <= 6; ++M) {
     unsigned N_max = CodeGenerator::MaxNumberElemCodes(M);
-    for (unsigned N = 1; N <= N_max; ++N) {
+    for (unsigned N = 2; N <= N_max; ++N) {
       unsigned L_min = CodeGenerator::MinCodeLength(M, N);
       unsigned L_max = CodeGenerator::GetLNSetLimit(M, N);
       for (unsigned L = L_min; L < L_max; ++L) {
@@ -54,14 +54,14 @@ TEST(BijectiveChecker, LN_set_limit) {
 // (LN set - set of parameters L and N where code garanted does not satisfy
 // McMillan's condition).
 TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
-  static const unsigned kNumberGenerations = 20;
+  static const unsigned kNumberGenerations = 100;
 
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
-  for (unsigned M = 3; M <= 5; ++M) {
+  for (unsigned M = 3; M <= 6; ++M) {
     unsigned N_max = CodeGenerator::MaxNumberElemCodes(M);
-    for (unsigned N = 1; N <= N_max; ++N) {
+    for (unsigned N = 2; N <= N_max; ++N) {
       // Generate state machine for code of all words.
       StateMachineOfAllWords(N, state_machine);
 
