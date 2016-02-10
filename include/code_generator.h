@@ -20,6 +20,9 @@ class CodeGenerator {
   static void GenStateMachine(int n_elem_codes, int n_states,
                               StateMachine* state_machine);
 
+  static unsigned GetLNSetLimit(unsigned max_elem_code_length,
+                                unsigned n_elem_codes);
+
  private:
   static void GenCodeLengths(int code_length, int max_elem_code_length,
                              int n_elem_codes, std::vector<int>& lengths);

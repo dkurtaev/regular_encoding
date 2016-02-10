@@ -375,3 +375,10 @@ void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
     }
   }
 }
+
+unsigned CodeGenerator::GetLNSetLimit(unsigned max_elem_code_length,
+                                      unsigned n_elem_codes) {
+  unsigned log2 = ceil(log(n_elem_codes) / log(2));
+  unsigned L_max = MaxCodeLength(max_elem_code_length, n_elem_codes);
+  return std::min(n_elem_codes * (log2 + 1) - (1 << log2), L_max);
+}
