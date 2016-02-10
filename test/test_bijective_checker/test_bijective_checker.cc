@@ -54,7 +54,7 @@ TEST(BijectiveChecker, LN_set_limit) {
 // (LN set - set of parameters L and N where code garanted does not satisfy
 // McMillan's condition).
 TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
-  static const unsigned kNumberGenerations = 10;
+  static const unsigned kNumberGenerations = 20;
 
   std::vector<std::string> code;
   BijectiveChecker checker;
