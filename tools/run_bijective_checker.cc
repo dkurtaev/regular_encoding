@@ -2,6 +2,8 @@
 
 #include "include/code_generator.h"
 #include "include/bijective_checker.h"
+#include "include/state_machine.h"
+#include "include/alphabetic_encoder.h"
 
 void StateMachineOfAllWords(int n_words, StateMachine& state_machine) {
   state_machine.Clear();
