@@ -5,7 +5,7 @@
 #include "include/code_generator.h"
 
 TEST(CodeGenerator, gen_code_lengths) {
-  static const int kNumberGenerations = 100;
+  static const int kNumberGenerations = 25;
 
   std::vector<std::string> code;
   for (int M = 3; M <= 6; ++M) {
@@ -36,7 +36,7 @@ TEST(CodeGenerator, gen_code_lengths) {
 }
 
 TEST(CodeGenerator, elem_codes_uniqueness) {
-  static const int kNumberGenerations = 100;
+  static const int kNumberGenerations = 25;
 
   std::vector<std::string> code;
   for (int M = 3; M <= 6; ++M) {
@@ -65,7 +65,7 @@ TEST(CodeGenerator, elem_codes_uniqueness) {
 // This test for checking LN set limit correctness
 // (outside it McMillan's equation is false).
 TEST(BijectiveChecker, LN_set_limit) {
-  static const unsigned kNumberGenerations = 100;
+  static const unsigned kNumberGenerations = 25;
 
   std::vector<std::string> code;
   for (unsigned M = 3; M <= 6; ++M) {

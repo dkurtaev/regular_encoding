@@ -43,7 +43,13 @@ void BijectiveChecker::BuildDeficitsStateMachine() {
   // Build deficits machine.
   std::queue<int> deficits_up_to_build;
   for (int i = 0; i < code_.size(); ++i) {
-    // [0] suffix is a full elementary code
+    // Suffixes in descending order:
+    // for elementary code 01011
+    // [0]: 01011
+    // [1]: 1011
+    // ...
+    // [4]: 1
+    // [5]: empty suffix
     int state_id = -code_[i]->suffixes[0]->id;
     deficits_state_machine_->AddState(state_id);
     deficits_state_machine_->AddTransition(0, state_id, i);
@@ -55,10 +61,7 @@ void BijectiveChecker::BuildDeficitsStateMachine() {
   }
 
   // Tracking processed deficits.
-  std::vector<bool> processed_deficits(1 + code_suffixes_.size() * 2);
-  for (int i = 0; i < processed_deficits.size(); ++i) {
-    processed_deficits[i] = false;
-  }
+  std::vector<bool> processed_deficits(1 + code_suffixes_.size() * 2, false);
 
   // Identity deficit already processed.
   processed_deficits[code_suffixes_.size()] = true;
@@ -68,25 +71,24 @@ void BijectiveChecker::BuildDeficitsStateMachine() {
     int deficit_id = deficits_up_to_build.front();
     deficits_up_to_build.pop();
     if (!processed_deficits[deficit_id + code_suffixes_.size() - 1]) {
-      AddAntitropicDeficits(deficit_id,
-                            &deficits_up_to_build);
-      AddIsotropicDeficits(deficit_id,
-                           &deficits_up_to_build);
+      AddAntitropicDeficits(deficit_id, deficits_up_to_build);
+      AddIsotropicDeficits(deficit_id, deficits_up_to_build);
       processed_deficits[deficit_id + code_suffixes_.size() - 1] = true;
     }
   }
 }
 
 void BijectiveChecker::AddIsotropicDeficits(
-    int deficit_id,
-    std::queue<int>* deficits_up_to_build) {
+  int deficit_id,
+  std::queue<int>& deficits_up_to_build) {
   // Alpha = elem_code + beta.
   // Find all elementary codes which are preffixes of alpha.
   Suffix* alpha_suffix = code_suffixes_[abs(deficit_id)];
   std::string alpha_suffix_str = alpha_suffix->str();
+  int alpha_suffix_length = alpha_suffix->length;
   CodeTreeNode* code_tree_node = code_tree_->GetRoot();
   std::vector<ElementaryCode*> founded_elem_codes;
-  for (int i = 0; i < alpha_suffix->length; ++i) {
+  for (int i = 0; i < alpha_suffix_length; ++i) {
     if (alpha_suffix_str[i] == '0') {
       code_tree_node = code_tree_node->GetLeft();
     } else {
@@ -106,14 +108,9 @@ void BijectiveChecker::AddIsotropicDeficits(
                           founded_elem_codes[i]->str.length();
     Suffix* beta_suffix = alpha_suffix->owners[0]->suffixes[beta_suffix_idx];
     int state_id;
-    if (deficit_id < 0) {
-      state_id = -beta_suffix->id;
-    } else {
-      state_id = beta_suffix->id;
-    }
+    state_id = (deficit_id < 0 ? -beta_suffix->id : beta_suffix->id);
     deficits_state_machine_->AddState(state_id);
-    deficits_state_machine_->AddTransition(deficit_id,
-                                           state_id,
+    deficits_state_machine_->AddTransition(deficit_id, state_id,
                                            founded_elem_codes[i]->id);
     if (state_id != 0) {
       deficits_up_to_build->push(state_id);
