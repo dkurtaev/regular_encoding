@@ -34,10 +34,10 @@ class BijectiveChecker {
   void BuildDeficitsStateMachine();
 
   void AddIsotropicDeficits(int deficit_id,
-                            std::queue<int>* deficits_up_to_build);
+                            std::queue<int>& deficits_up_to_build);
 
   void AddAntitropicDeficits(int deficit_id,
-                             std::queue<int>* deficits_up_to_build);
+                             std::queue<int>& deficits_up_to_build);
 
   void LogDeficitsBuilding(int state_id_from,
                            int state_id_to,
