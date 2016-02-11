@@ -113,7 +113,7 @@ void BijectiveChecker::AddIsotropicDeficits(
     deficits_state_machine_->AddTransition(deficit_id, state_id,
                                            founded_elem_codes[i]->id);
     if (state_id != 0) {
-      deficits_up_to_build->push(state_id);
+      deficits_up_to_build.push(state_id);
     }
 //    LogDeficitsBuilding(deficit_id, state_id, founded_elem_codes[i]);
   }
@@ -121,7 +121,7 @@ void BijectiveChecker::AddIsotropicDeficits(
 
 void BijectiveChecker::AddAntitropicDeficits(
     int deficit_id,
-    std::queue<int>* deficits_up_to_build) {
+    std::queue<int>& deficits_up_to_build) {
   // Elem_code = alpha + beta.
   // Find all elementary codes with prefix [alpha].
   Suffix* alpha_suffix = code_suffixes_[abs(deficit_id)];
@@ -161,7 +161,7 @@ void BijectiveChecker::AddAntitropicDeficits(
       deficits_state_machine_->AddTransition(deficit_id,
                                              state_id,
                                              founded_elem_codes[i]->id);
-      deficits_up_to_build->push(state_id);
+      deficits_up_to_build.push(state_id);
  //     LogDeficitsBuilding(deficit_id, state_id, founded_elem_codes[i]);
     }
   }
