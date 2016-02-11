@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <iostream>
+
 #include "include/simple_suffix_tree.h"
 #include "include/alphabetic_encoder.h"
 
@@ -16,7 +18,8 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   // Select all suffixes.
   SimpleSuffixTree sst;
   sst.Build(&code_);
-  sst.GetSuffixes(&code_suffixes_);
+  sst.GetSuffixes(&code_suffixes_);  // Includes empty suffix.
+                                     // Suffixies in increasing order.
 
   // Build code tree.
   code_tree_ = new CodeTree(code_);
@@ -61,10 +64,14 @@ void BijectiveChecker::BuildDeficitsStateMachine() {
   }
 
   // Tracking processed deficits.
-  std::vector<bool> processed_deficits(1 + code_suffixes_.size() * 2, false);
+  // ... -3 -2 -1 0 1 2 3 ...
+  // Where -i: deficit lambda/alpha[i], 
+  //       +i: deficit alpha[i]/lambda, 
+  //        0: identity deficit lambda/lambda.
+  std::vector<bool> processed_deficits(code_suffixes_.size() * 2 - 1, false);
 
   // Identity deficit already processed.
-  processed_deficits[code_suffixes_.size()] = true;
+  processed_deficits[code_suffixes_.size() - 1] = true;
 
   // Inductive building.
   while (!deficits_up_to_build.empty()) {
@@ -107,14 +114,11 @@ void BijectiveChecker::AddIsotropicDeficits(
                           alpha_suffix->length +
                           founded_elem_codes[i]->str.length();
     Suffix* beta_suffix = alpha_suffix->owners[0]->suffixes[beta_suffix_idx];
-    int state_id;
-    state_id = (deficit_id < 0 ? -beta_suffix->id : beta_suffix->id);
+    int state_id = (deficit_id < 0 ? -beta_suffix->id : beta_suffix->id);
     deficits_state_machine_->AddState(state_id);
     deficits_state_machine_->AddTransition(deficit_id, state_id,
                                            founded_elem_codes[i]->id);
-    if (state_id != 0) {
-      deficits_up_to_build.push(state_id);
-    }
+    deficits_up_to_build.push(state_id);
 //    LogDeficitsBuilding(deficit_id, state_id, founded_elem_codes[i]);
   }
 }
@@ -151,12 +155,7 @@ void BijectiveChecker::AddAntitropicDeficits(
 
     // Let identity deficit is an isotropic deficit.
     if (beta_suffix->id != 0) {
-      int state_id;
-      if (deficit_id < 0) {
-        state_id = beta_suffix->id;
-      } else {
-        state_id = -beta_suffix->id;
-      }
+      int state_id = (deficit_id < 0 ? beta_suffix->id : -beta_suffix->id);
       deficits_state_machine_->AddState(state_id);
       deficits_state_machine_->AddTransition(deficit_id,
                                              state_id,

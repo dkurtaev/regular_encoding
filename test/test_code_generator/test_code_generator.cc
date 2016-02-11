@@ -64,7 +64,7 @@ TEST(CodeGenerator, elem_codes_uniqueness) {
 
 // This test for checking LN set limit correctness
 // (outside it McMillan's equation is false).
-TEST(BijectiveChecker, LN_set_limit) {
+TEST(CodeGenerator, LN_set_limit) {
   static const unsigned kNumberGenerations = 25;
 
   std::vector<std::string> code;
