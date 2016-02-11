@@ -208,9 +208,10 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
                                              std::queue<LoopState*>* states) {
   int def_id = def_transition->to->id;
   int char_id = def_transition->event_id;
-  int result = 0;  // 0 - transition not exists,
-                   // 1 - founded loop
-                   // 2 - transition exists.
+  enum ProcessingResult {TRANSITION_NOT_EXISTS,
+                         TRANSITION_EXISTS,
+                         FOUND_LOOP};
+  ProcessingResult result = TRANSITION_NOT_EXISTS;
   LoopState* transited_state = new LoopState();
   transited_state->upper_word_trace = state->upper_word_trace;
   transited_state->lower_word_trace = state->lower_word_trace;
@@ -231,11 +232,7 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
         transited_state->lower_word.push_back(char_id);
         transited_state->lower_word_trace[word_transition->id] = true;
         transited_state->deficits_trace[def_transition->id] = true;
-        if (def_id != 0) {
-          result = 2;
-        } else {
-          result = 1;
-        }
+        result = (def_id != 0 ? TRANSITION_EXISTS : FOUND_LOOP);
       }
     }
   } else {
@@ -247,21 +244,17 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
         transited_state->upper_word.push_back(char_id);
         transited_state->upper_word_trace[word_transition->id] = true;
         transited_state->deficits_trace[def_transition->id] = true;
-        if (def_id != 0) {
-          result = 2;
-        } else {
-          result = 1;
-        }
+        result = (def_id != 0 ? TRANSITION_EXISTS : FOUND_LOOP);
       }
     }
   }
 
   switch (result) {
-    case 0: {  // 0 - transition not exists,
+    case TRANSITION_NOT_EXISTS: {
       delete transited_state;
       break;
     }
-    case 1: {  // 1 - founded loop
+    case FOUND_LOOP: {
       states->push(transited_state);
       bool nontrivial_loop_founded = false;
       if (transited_state->upper_word.size() ==
@@ -286,7 +279,7 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
       }
       break;
     }
-    case 2: {  // 2 - transition exists.
+    case TRANSITION_EXISTS: {
       states->push(transited_state);
       break;
     }

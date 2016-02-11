@@ -34,6 +34,7 @@ include_directories(${CMAKE_SOURCE_DIR})
 
 add_subdirectory(3rdparty/gtest)
 add_subdirectory(test)
+add_subdirectory(tools)
 
 add_library(${CMAKE_PROJECT_NAME} STATIC ${sources} ${headers})
 target_link_libraries(${CMAKE_PROJECT_NAME})
