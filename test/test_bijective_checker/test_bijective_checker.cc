@@ -32,7 +32,7 @@ TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
-  for (unsigned M = 3; M <= 5; ++M) {
+  for (unsigned M = 3; M <= 6; ++M) {
     unsigned N_max = CodeGenerator::MaxNumberElemCodes(M);
     for (unsigned N = 2; N <= N_max; ++N) {
       // Generate state machine for code of all words.
@@ -44,6 +44,8 @@ TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
         for (unsigned gen = 0; gen < kNumberGenerations; ++gen) {
           CodeGenerator::GenCode(L, M, N, code);
           ASSERT_FALSE(checker.IsBijective(code, state_machine));
+          printf("\rProcessed: M=%05d N=%05d L=%05d gen=%05d/%05d",
+                 M, N, L, gen, kNumberGenerations);
         }
       }
     }
@@ -77,6 +79,8 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
             }
             ASSERT_LE(sum, 1 << M);
           }
+          printf("\rProcessed: M=%05d N=%05d L=%05d gen=%05d/%05d",
+                 M, N, L, gen, kNumberGenerations);
         }
       }
     }
