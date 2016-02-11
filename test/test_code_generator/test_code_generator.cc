@@ -8,7 +8,7 @@ TEST(CodeGenerator, gen_code_lengths) {
   static const int kNumberGenerations = 100;
 
   std::vector<std::string> code;
-  for (int M = 3; M <= 5; ++M) {
+  for (int M = 3; M <= 6; ++M) {
     int N_max = CodeGenerator::MaxNumberElemCodes(M);
     for (int N = 2; N <= N_max; ++N) {
       int L_min = CodeGenerator::MinCodeLength(M, N);
@@ -39,7 +39,7 @@ TEST(CodeGenerator, elem_codes_uniqueness) {
   static const int kNumberGenerations = 100;
 
   std::vector<std::string> code;
-  for (int M = 3; M <= 5; ++M) {
+  for (int M = 3; M <= 6; ++M) {
     int N_max = CodeGenerator::MaxNumberElemCodes(M);
     for (int N = 2; N <= N_max; ++N) {
       int L_min = CodeGenerator::MinCodeLength(M, N);
