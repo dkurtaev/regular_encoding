@@ -300,33 +300,14 @@ void BijectiveChecker::LogDeficitsBuilding(int state_id_from,
     beta_suffix = "E";
   }
   std::string log_str = "Added transition (";
+  log_str += (state_id_from < 0 ? "b[%d]/E, E/%s)=" : "E/b[%d], %s/E)=");
+  log_str += (state_id_to < 0 ? "E/%s, E/%s = " : "%s/E, %s/E = ");
+  printf(log_str.c_str(), elem_code->id, alpha_suffix.c_str(),
+         beta_suffix.c_str(), beta_suffix.c_str());
   if (state_id_from < 0) {
-    log_str += "b[%d]/E, E/%s)=";
+    printf("[%s/%s\n", elem_code->str.c_str(), alpha_suffix.c_str());
   } else {
-    log_str += "E/b[%d], %s/E)=";
-  }
-  if (state_id_to < 0) {
-    log_str += "E/%s, ";
-  } else {
-     log_str += "%s/E, ";
-  }
-
-  if (state_id_from < 0) {
-    printf((log_str + "E/%s = [%s/%s\n").c_str(),
-           elem_code->id,
-           alpha_suffix.c_str(),
-           beta_suffix.c_str(),
-           beta_suffix.c_str(),
-           elem_code->str.c_str(),
-           alpha_suffix.c_str());
-  } else {
-    printf((log_str + "%s/E = [%s/%s\n").c_str(),
-           elem_code->id,
-           alpha_suffix.c_str(),
-           beta_suffix.c_str(),
-           beta_suffix.c_str(),
-           alpha_suffix.c_str(),
-           elem_code->str.c_str());
+    printf("[%s/%s\n", alpha_suffix.c_str(), elem_code->str.c_str());
   }
   fflush(stdout);
 }
