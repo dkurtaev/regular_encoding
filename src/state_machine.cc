@@ -1,6 +1,7 @@
 #include "include/state_machine.h"
 
 #include <fstream>
+#include <iostream>
 
 StateMachine::StateMachine()
   : start_state_(0) {
@@ -15,6 +16,30 @@ bool StateMachine::AddState(int id) {
   }
 }
 
+bool StateMachine::DelState(int id) {
+  if (states_.find(id) != states_.end()) {
+    State* state = states_[id];
+
+    // Delete transitions.
+    std::vector<int> ids;
+    for (int i = 0; i < state->transitions.size(); ++i) {
+      ids.push_back(state->transitions[i]->id);
+    }
+    for (int i = 0; i < state->transitions_to.size(); ++i) {
+      ids.push_back(state->transitions_to[i]->id);
+    }
+    for (int i = 0; i < ids.size(); ++i) {
+      DelTransition(ids[i]);
+    }
+
+    states_.erase(states_.find(id));
+    delete state;
+    return true;
+  } else {
+    return false;
+  }
+}
+
 bool StateMachine::AddTransition(int from_id, int to_id, int event_id) {
   State* from = states_[from_id];
   State* to = states_[to_id];
@@ -22,6 +47,7 @@ bool StateMachine::AddTransition(int from_id, int to_id, int event_id) {
     Transition* transition =
         new Transition(transitions_.size(), from, to, event_id);
     from->transitions.push_back(transition);
+    to->transitions_to.push_back(transition);
     transitions_[transitions_.size()] = transition;
     return true;
   } else {
@@ -32,17 +58,12 @@ bool StateMachine::AddTransition(int from_id, int to_id, int event_id) {
 bool StateMachine::DelTransition(int id) {
   if (transitions_.find(id) != transitions_.end()) {
     Transition* transition = transitions_[id];
-
-    // Remove transition from corresponding state.
-    State* from_state = transition->from;
-    std::vector<Transition*>::iterator it = from_state->transitions.begin();
-    for (it; it != from_state->transitions.end(); ++it) {
-      if (*it == transition) {
-        delete *it;
-        from_state->transitions.erase(it);
-        transitions_.erase(transitions_.find(id));
-        return true;
-      }
+    bool erased_from = transition->from->DelTransition(id);
+    bool erased_to = transition->to->DelTransitionTo(id);
+    if (erased_from && erased_to) {
+      transitions_.erase(transitions_.find(id));
+      delete transition;
+      return true;
     }
   }
   return false;

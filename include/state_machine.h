@@ -15,6 +15,8 @@ class StateMachine {
 
   bool AddState(int state_id);
 
+  bool DelState(int state_id);
+
   bool AddTransition(int from_id, int to_id, int event_id);
 
   bool DelTransition(int id);

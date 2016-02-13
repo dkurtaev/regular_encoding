@@ -29,6 +29,7 @@ struct Suffix {
 struct Transition;
 struct State {
   int id;
+  std::vector<Transition*> transitions_to;
   std::vector<Transition*> transitions;
 
   explicit State(int id);
@@ -37,7 +38,11 @@ struct State {
   State* DoTransition(int event_id);
 
   Transition* GetTransition(int event_id);
+
+  bool DelTransition(int id);
+  bool DelTransitionTo(int id);
 };
+
 
 struct Transition {
   int id;

@@ -1,5 +1,7 @@
 #include "include/structures.h"
 
+#include <iostream>
+
 ElementaryCode::ElementaryCode(int id, const std::string& str)
   : id(id),
     str(str) {
@@ -45,4 +47,28 @@ Transition* State::GetTransition(int event_id) {
     }
   }
   return 0;
+}
+
+bool State::DelTransition(int id) {
+  std::vector<Transition*>::iterator it;
+  for (it = transitions.begin(); it != transitions.end(); ++it) {
+    Transition* transition = *it;
+    if (transition->id == id) {
+      transitions.erase(it);
+      return true;
+    }
+  }
+  return false;
+}
+
+bool State::DelTransitionTo(int id) {
+  std::vector<Transition*>::iterator it;
+  for (it = transitions_to.begin(); it != transitions_to.end(); ++it) {
+    Transition* transition = *it;
+    if (transition->id == id) {
+      transitions_to.erase(it);
+      return true;
+    }
+  }
+  return false;
 }

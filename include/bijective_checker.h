@@ -54,6 +54,8 @@ class BijectiveChecker {
 
   void RemoveDeadTransitions(const StateMachine& code_state_machine);
 
+  void RemoveBottlenecks();
+
   void Reset();
 
   std::vector<ElementaryCode*> code_;

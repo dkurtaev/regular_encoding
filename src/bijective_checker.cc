@@ -28,7 +28,15 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
 
   BuildDeficitsStateMachine();
 
+  this->WriteDeficitsStateMachine("/home/dmitry/tmp_full.dot");
+
   RemoveDeadTransitions(code_state_machine);
+
+  this->WriteDeficitsStateMachine("/home/dmitry/tmp.dot");
+
+  RemoveBottlenecks();
+
+  this->WriteDeficitsStateMachine("/home/dmitry/tmp_short.dot");
 
   bool target_loop_founded = FindTargetLoop(code_state_machine);
 
@@ -387,6 +395,34 @@ void BijectiveChecker::RemoveDeadTransitions(
   for (int i = 0; i < n_transitions; ++i) {
     if (!is_visited[i]) {
       deficits_state_machine_->DelTransition(i);
+    }
+  }
+}
+
+void BijectiveChecker::RemoveBottlenecks() {
+  const int n_suffixes = code_suffixes_.size();
+
+  std::queue<State*> states;
+  states.push(deficits_state_machine_->GetStartState());
+
+  std::vector<bool> achievable(deficits_state_machine_->GetNumberStates(),
+                               false);
+  while (!states.empty()) {
+    State* state = states.front();
+    states.pop();
+    achievable[state->id + n_suffixes - 1] = true;
+    std::vector<Transition*>::iterator it = state->transitions_to.begin();
+    for (it; it != state->transitions_to.end(); ++it) {
+      State* state_from = (*it)->from;
+      if (!achievable[state_from->id + n_suffixes - 1]) {
+        states.push(state_from);
+      }
+    }
+  }
+  const int n_states = deficits_state_machine_->GetNumberStates();
+  for (int i = 0; i < n_states; ++i) {
+    if (!achievable[i]) {
+      deficits_state_machine_->DelState(i - n_suffixes + 1);
     }
   }
 }
