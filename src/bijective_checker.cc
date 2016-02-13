@@ -220,7 +220,9 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
   transited_state->lower_word_trace = state->lower_word_trace;
   transited_state->deficits_trace = state->deficits_trace;
   transited_state->deficit_state = def_transition->to;
+  transited_state->lower_word = state->lower_word;
   transited_state->lower_word_state = state->lower_word_state;
+  transited_state->upper_word = state->upper_word;
   transited_state->upper_word_state = state->upper_word_state;
 
   Transition* word_transition;
