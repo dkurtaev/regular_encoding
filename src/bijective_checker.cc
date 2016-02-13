@@ -258,7 +258,7 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
       break;
     }
     case FOUND_LOOP: {
-      states->push(transited_state);
+//      states->push(transited_state);
       bool nontrivial_loop_founded = false;
       if (transited_state->upper_word.size() ==
           transited_state->lower_word.size()) {
