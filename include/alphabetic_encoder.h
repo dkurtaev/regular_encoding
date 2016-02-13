@@ -9,9 +9,7 @@
 
 class AlphabeticEncoder {
  public:
-  static const int kStateMachineStartStateId;
-  static const int kStateMachineEndStateId;
-  static const int kEndCharacterId;
+//  static const int kEndCharacterId;
 
   explicit AlphabeticEncoder(const std::string& config_file);
 
@@ -19,10 +17,17 @@ class AlphabeticEncoder {
 
   void WriteCodeStateMachine(const std::string& file_path) const;
 
-  void WriteDeficitsStateMachine(const std::string& file_path) const;
+  void WriteDeficitsStateMachine(const std::string& file_path);
 
  private:
   BijectiveChecker bijective_checker;
+
+  // First state of state machine - start state.
+  // Second state of state machine - end state.
+  // Other states starts from third state.
+  //
+  // Events id - elementary code id.
+  // Event for end character - next available after elementary codes.
   StateMachine state_machine_;
   std::vector<std::string> elem_codes_;
 };

@@ -193,9 +193,7 @@ void CodeGenerator::GenUniqueUnnegatives(int upper_value, int number,
 void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
                                     StateMachine* state_machine) {
   state_machine->Clear();
-  state_machine->AddState(AlphabeticEncoder::kStateMachineStartStateId);
-  state_machine->AddState(AlphabeticEncoder::kStateMachineEndStateId);
-  state_machine->SetStartState(AlphabeticEncoder::kStateMachineStartStateId);
+  state_machine->AddStates(n_states + 2);
 
   // We need use state machines with exists ways from start state to all
   // states and to end state:
@@ -205,11 +203,11 @@ void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
   // Transitions to end state.
   int garanted_transition_idx = rand() % n_states;
   for (int i = 0; i < n_states; ++i) {
-    state_machine->AddState(i);
+//    state_machine->AddState(i);
     if (rand() % 2 || (i == garanted_transition_idx)) {
-      state_machine->AddTransition(i,
-                                   AlphabeticEncoder::kStateMachineEndStateId,
-                                   AlphabeticEncoder::kEndCharacterId);
+//      state_machine->AddTransition(i,
+//                                   AlphabeticEncoder::kStateMachineEndStateId,
+//                                   AlphabeticEncoder::kEndCharacterId);
     }
   }
 
@@ -362,9 +360,9 @@ void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
   // Start state transitions.
   for (int i = 0; i < n_states; ++i) {
     for (int j = 0; j < transitions[0][i].size(); ++j) {
-      state_machine->AddTransition(AlphabeticEncoder::kStateMachineStartStateId,
-                                   i,
-                                   transitions[0][i][j]);
+//      state_machine->AddTransition(AlphabeticEncoder::kStateMachineStartStateId,
+//                                   i,
+//                                   transitions[0][i][j]);
     }
   }
   for (int i = 1; i <= n_states; ++i) {

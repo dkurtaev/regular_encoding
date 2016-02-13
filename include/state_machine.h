@@ -9,36 +9,34 @@
 
 class StateMachine {
  public:
-  StateMachine();
+  StateMachine(int n_states = 0);
 
   ~StateMachine();
 
-  bool AddState(int state_id);
+  void Clear();
 
-  bool DelState(int state_id);
+  void AddStates(int n_states);
 
-  bool AddTransition(int from_id, int to_id, int event_id);
+  void AddTransition(unsigned from_id, unsigned to_id, unsigned event_id);
 
-  bool DelTransition(int id);
+  void DelTransition(unsigned id);
 
-  bool SetStartState(int state_id);
+  void DelState(unsigned id);
 
+  // First added state is start state.
   State* GetStartState() const;
 
   int GetNumberStates() const;
 
   int GetNumberTransitions() const;
 
-  void Clear();
-
   void WriteDot(const std::string& file_path,
-                const std::map<int, std::string>& states_names,
-                const std::map<int, std::string>& events_names) const;
+                const std::vector<std::string>& states_names,
+                const std::vector<std::string>& events_names) const;
 
  private:
-  State* start_state_;
-  std::map<int, State*> states_;
-  std::map<int, Transition*> transitions_;
+  std::vector<State*> states_;
+  std::vector<Transition*> transitions_;
 };
 
 #endif  // INCLUDE_STATE_MACHINE_H_

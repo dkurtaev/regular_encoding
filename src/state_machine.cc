@@ -1,99 +1,63 @@
 #include "include/state_machine.h"
 
 #include <fstream>
-#include <iostream>
 
-StateMachine::StateMachine()
-  : start_state_(0) {
-}
-
-bool StateMachine::AddState(int id) {
-  if (states_.find(id) == states_.end()) {
-    states_[id] = new State(id);
-    return true;
-  } else {
-    return false;
+StateMachine::StateMachine(int n_states) {
+  if (n_states != 0) {
+    AddStates(n_states);
   }
-}
-
-bool StateMachine::DelState(int id) {
-  if (states_.find(id) != states_.end()) {
-    State* state = states_[id];
-
-    // Delete transitions.
-    std::vector<int> ids;
-    for (int i = 0; i < state->transitions.size(); ++i) {
-      ids.push_back(state->transitions[i]->id);
-    }
-    for (int i = 0; i < state->transitions_to.size(); ++i) {
-      ids.push_back(state->transitions_to[i]->id);
-    }
-    for (int i = 0; i < ids.size(); ++i) {
-      DelTransition(ids[i]);
-    }
-
-    states_.erase(states_.find(id));
-    delete state;
-    return true;
-  } else {
-    return false;
-  }
-}
-
-bool StateMachine::AddTransition(int from_id, int to_id, int event_id) {
-  State* from = states_[from_id];
-  State* to = states_[to_id];
-  if (from != 0 & to != 0) {
-    Transition* transition =
-        new Transition(transitions_.size(), from, to, event_id);
-    from->transitions.push_back(transition);
-    to->transitions_to.push_back(transition);
-    transitions_[transitions_.size()] = transition;
-    return true;
-  } else {
-    return false;
-  }
-}
-
-bool StateMachine::DelTransition(int id) {
-  if (transitions_.find(id) != transitions_.end()) {
-    Transition* transition = transitions_[id];
-    bool erased_from = transition->from->DelTransition(id);
-    bool erased_to = transition->to->DelTransitionTo(id);
-    if (erased_from && erased_to) {
-      transitions_.erase(transitions_.find(id));
-      delete transition;
-      return true;
-    }
-  }
-  return false;
-}
-
-bool StateMachine::SetStartState(int id) {
-  std::map<int, State*>::iterator it = states_.find(id);
-  if (it != states_.end()) {
-    start_state_ = (*it).second;
-    return true;
-  } else {
-    return false;
-  }
-}
-
-void StateMachine::Clear() {
-  std::map<int, State*>::iterator it;
-  for (it = states_.begin(); it != states_.end(); ++it) {
-    delete it->second;
-  }
-  states_.clear();
-  start_state_ = 0;
 }
 
 StateMachine::~StateMachine() {
   Clear();
 }
 
+void StateMachine::Clear() {
+  int n_states = states_.size();
+  for (int i = 0; i < n_states; ++i) {
+    delete states_[i];
+  }
+  states_.clear();
+
+  int n_trans = transitions_.size();
+  for (int i = 0; i < n_trans; ++i) {
+    delete transitions_[i];
+  }
+  transitions_.clear();
+}
+
+void StateMachine::AddStates(int n_states) {
+  for (int i = 0; i < n_states; ++i) {
+    states_.push_back(new State(i));
+  }
+}
+
+void StateMachine::AddTransition(unsigned from_id, unsigned to_id,
+                                 unsigned event_id) {
+  Transition* trans = new Transition(transitions_.size(),
+                                     states_[from_id],
+                                     states_[to_id],
+                                     event_id);
+  transitions_.push_back(trans);
+}
+
+void StateMachine::DelTransition(unsigned id) {
+  transitions_[id]->from->DelTransitionFrom(id);
+  transitions_[id]->to->DelTransitionTo(id);
+}
+
+void StateMachine::DelState(unsigned id) {
+  State* state = states_[id];
+  for (int i = 0; i < state->transitions_from.size(); ++i) {
+    DelTransition(state->transitions_from[i]->id);
+  }
+  for (int i = 0; i < state->transitions_to.size(); ++i) {
+    DelTransition(state->transitions_to[i]->id);
+  }
+}
+
 State* StateMachine::GetStartState() const {
-  return start_state_;
+  return states_[0];
 }
 
 int StateMachine::GetNumberStates() const {
@@ -104,34 +68,38 @@ int StateMachine::GetNumberTransitions() const {
   return transitions_.size();
 }
 
-void StateMachine::WriteDot(
-        const std::string& file_path,
-        const std::map<int, std::string>& states_names,
-        const std::map<int, std::string>& events_names) const {
+void StateMachine::WriteDot(const std::string& file_path,
+                           const std::vector<std::string>& states_names,
+                           const std::vector<std::string>& events_names) const {
   std::ofstream file(file_path.c_str());
   file << "strict digraph state_machine {\n";
 
-  std::map<std::pair<int, int>, std::string> edges;
-  std::map<int, State*>::const_iterator it;
+  const int n_states = states_.size();
+  std::string edges[n_states][n_states];
+  for (int i = 0; i < n_states; ++i) {
+    for (int j = 0; j < n_states; ++j) {
+      edges[i][j] = "";
+    }
+  }
 
-  for (it = states_.begin(); it != states_.end(); ++it) {
-    int state_from_id = it->second->id;
-    std::string state_from = states_names.find(state_from_id)->second;
-    for (int i = 0; i < it->second->transitions.size(); ++i) {
-      int state_to_id = it->second->transitions[i]->to->id;
-      int event_id = it->second->transitions[i]->event_id;
-      std::string state_to = states_names.find(state_to_id)->second;
-      std::string event = events_names.find(event_id)->second;
+  for (int i = 0; i < n_states; ++i) {
+    State* state = states_[i];
+    const int n_trans = state->transitions_from.size();
+    std::string state_from_name = states_names[i];
+    for (int j = 0; j < n_trans; ++j) {
+      Transition* trans = state->transitions_from[j];
+      const int state_to_id = trans->to->id;
+      std::string state_to_name = states_names[state_to_id];
+      std::string event_name = events_names[trans->event_id];
 
-      std::pair<int, int> edge_id(state_from_id, state_to_id);
-      if (edges.find(edge_id) == edges.end()) {
-        edges[edge_id] = event;
+      if (edges[i][state_to_id] != "") {
+        edges[i][state_to_id] += ", " + event_name;
       } else {
-        edges[edge_id] += ", " + event;
+        edges[i][state_to_id] = event_name;
       }
 
-      file << state_from << "->" << state_to
-           << "[label=\"" << edges[edge_id] << "\"];\n";
+      file << state_from_name << "->" << state_to_name
+           << "[label=\"" <<  edges[i][state_to_id] << "\"];\n";
     }
   }
 

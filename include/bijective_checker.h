@@ -16,7 +16,7 @@ class BijectiveChecker {
   bool IsBijective(const std::vector<std::string>& code,
                    const StateMachine& code_state_machine);
 
-  void WriteDeficitsStateMachine(const std::string& file_path) const;
+  void WriteDeficitsStateMachine(const std::string& file_path);
 
  private:
   struct LoopState {
@@ -57,6 +57,14 @@ class BijectiveChecker {
   void RemoveBottlenecks();
 
   void Reset();
+
+  // From (-3 -2 -1 0 1 2 3)
+  // To (0 1 2 3 4 5 6 7)
+  inline unsigned UnsignedDeficitId(int id);
+
+  // From (0 1 2 3 4 5 6 7)
+  // To (-3 -2 -1 0 1 2 3)
+  inline int SignedDeficitId(unsigned id);
 
   std::vector<ElementaryCode*> code_;
   std::vector<Suffix*> code_suffixes_;

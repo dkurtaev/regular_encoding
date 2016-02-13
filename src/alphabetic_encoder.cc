@@ -9,9 +9,7 @@
 #include <map>
 #include <sstream>
 
-const int AlphabeticEncoder::kStateMachineStartStateId = -1;
-const int AlphabeticEncoder::kStateMachineEndStateId = -2;
-const int AlphabeticEncoder::kEndCharacterId = -2;
+//const int AlphabeticEncoder::kEndCharacterId = -2;
 
 AlphabeticEncoder::AlphabeticEncoder(const std::string& config_file) {
   // File format:
@@ -28,37 +26,29 @@ AlphabeticEncoder::AlphabeticEncoder(const std::string& config_file) {
   // state id -2 is a finish state, for
   // reserved character '.' as end of word
   std::ifstream file(config_file.c_str());
-  if (file.is_open()) {
-    // Read alphabet encoding.
-    int alphabet_size;
-    file >> alphabet_size;
-    elem_codes_.resize(alphabet_size);
-    for (int i = 0; i < alphabet_size; ++i) {
-      file >> elem_codes_[i];
-    }
 
-    // Read state machine.
-    state_machine_.AddState(kStateMachineStartStateId);
-    state_machine_.SetStartState(kStateMachineStartStateId);
-    state_machine_.AddState(kStateMachineEndStateId);
+  // Read alphabet encoding.
+  int alphabet_size;
+  file >> alphabet_size;
+  elem_codes_.resize(alphabet_size);
+  for (int i = 0; i < alphabet_size; ++i) {
+    file >> elem_codes_[i];
+  }
 
-    int number_states;
-    file >> number_states;
-    for (int i = 0; i < number_states; ++i) {
-      state_machine_.AddState(i);
-    }
+  int number_states;
+  file >> number_states;
+  state_machine_.AddStates(2 + number_states);
 
-    int number_transitions;
-    file >> number_transitions;
-    for (int i = 0; i < number_transitions; ++i) {
-      int from_id;
-      int to_id;
-      int character_id;
-      file >> from_id;
-      file >> to_id;
-      file >> character_id;
-      state_machine_.AddTransition(from_id, to_id, character_id);
-    }
+  int number_transitions;
+  file >> number_transitions;
+  for (int i = 0; i < number_transitions; ++i) {
+    int from_id;
+    int to_id;
+    int character_id;
+    file >> from_id;
+    file >> to_id;
+    file >> character_id;
+    state_machine_.AddTransition(from_id, to_id, character_id);
   }
 }
 
@@ -67,29 +57,29 @@ bool AlphabeticEncoder::CheckBijective() {
 }
 
 void AlphabeticEncoder::WriteCodeStateMachine(
-  const std::string& file_path) const {
-  // Set states names.
-  std::map<int, std::string> states_names;
-  states_names[kStateMachineStartStateId] = "start";
-  states_names[kStateMachineEndStateId] = "end";
-  int n_states = state_machine_.GetNumberStates();
-  for (int i = 0; i < n_states - 2; ++i) {
-    std::ostringstream ss;
-    ss << i;
-    states_names[i] = ss.str();
-  }
+    const std::string& file_path) const {
+//  // Set states names.
+//  std::vector<std::string> states_names;
+//  states_names.push_back("start");
+//  int n_states = state_machine_.GetNumberStates();
+//  for (int i = 0; i < n_states - 2; ++i) {
+//    std::ostringstream ss;
+//    ss << i;
+//    states_names[i] = ss.str();
+//  }
+//  states_names.push_back("end");
 
-  // Set transitions names.
-  std::map<int, std::string> events_names;
-  events_names[kEndCharacterId] = "";
-  for (int i = 0; i < elem_codes_.size(); ++i) {
-    events_names[i] = elem_codes_[i];
-  }
+//  // Set transitions names.
+//  std::vector<std::string> events_names;
+//  events_names[kEndCharacterId] = "";
+//  for (int i = 0; i < elem_codes_.size(); ++i) {
+//    events_names[i] = elem_codes_[i];
+//  }
 
-  state_machine_.WriteDot(file_path, states_names, events_names);
+//  state_machine_.WriteDot(file_path, states_names, events_names);
 }
 
 void AlphabeticEncoder::WriteDeficitsStateMachine(
-    const std::string& file_path) const {
+    const std::string& file_path) {
   bijective_checker.WriteDeficitsStateMachine(file_path);
 }

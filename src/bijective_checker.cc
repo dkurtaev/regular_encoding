@@ -21,7 +21,6 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   SimpleSuffixTree sst;
   sst.Build(&code_);
   sst.GetSuffixes(&code_suffixes_);  // Includes empty suffix.
-                                     // Suffixies in increasing order.
 
   // Build code tree.
   code_tree_ = new CodeTree(code_);
@@ -33,14 +32,22 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   RemoveDeadTransitions(code_state_machine);
 
   this->WriteDeficitsStateMachine("/home/dmitry/tmp.dot");
-
+return true;
   RemoveBottlenecks();
 
-  this->WriteDeficitsStateMachine("/home/dmitry/tmp_short.dot");
+//  this->WriteDeficitsStateMachine("/home/dmitry/tmp_short.dot");
 
   bool target_loop_founded = FindTargetLoop(code_state_machine);
 
   return !target_loop_founded;
+}
+
+unsigned BijectiveChecker::UnsignedDeficitId(int id) {
+  return id + code_suffixes_.size() - 1;
+}
+
+int BijectiveChecker::SignedDeficitId(unsigned id) {
+  return id - code_suffixes_.size() + 1;
 }
 
 void BijectiveChecker::BuildDeficitsStateMachine() {
@@ -50,9 +57,9 @@ void BijectiveChecker::BuildDeficitsStateMachine() {
   //                   alpha - suffix with index |i|
   //   i>0 state idx - upper deficit alpha/lambda,
   //                   alpha index is |i|
-  deficits_state_machine_ = new StateMachine();
-  deficits_state_machine_->AddState(0);
-  deficits_state_machine_->SetStartState(0);
+  const int n_deficits = code_suffixes_.size() * 2 - 1;
+  deficits_state_machine_ = new StateMachine(n_deficits);
+  const int identity_deficit_id = UnsignedDeficitId(0);
 
   // Build deficits machine.
   std::queue<int> deficits_up_to_build;
@@ -64,10 +71,12 @@ void BijectiveChecker::BuildDeficitsStateMachine() {
     // ...
     // [4]: 1
     // [5]: empty suffix
-    int state_id = -code_[i]->suffixes[0]->id;
-    deficits_state_machine_->AddState(state_id);
-    deficits_state_machine_->AddTransition(0, state_id, i);
-    deficits_up_to_build.push(state_id);
+    int deficit_id = -code_[i]->suffixes[0]->id;
+
+    deficits_state_machine_->AddTransition(identity_deficit_id,
+                                           UnsignedDeficitId(deficit_id),
+                                           i);
+    deficits_up_to_build.push(deficit_id);
 
     // printf("Added transition (E/b[%d], E/E)=E/%s\n",
     //        i, code_[i]->str.c_str());
@@ -79,19 +88,20 @@ void BijectiveChecker::BuildDeficitsStateMachine() {
   // Where -i: deficit lambda/alpha[i], 
   //       +i: deficit alpha[i]/lambda, 
   //        0: identity deficit lambda/lambda.
-  std::vector<bool> processed_deficits(code_suffixes_.size() * 2 - 1, false);
+  std::vector<bool> processed_deficits(n_deficits, false);
 
   // Identity deficit already processed.
-  processed_deficits[code_suffixes_.size() - 1] = true;
+  processed_deficits[identity_deficit_id] = true;
 
   // Inductive building.
   while (!deficits_up_to_build.empty()) {
-    int deficit_id = deficits_up_to_build.front();
+    const int deficit_id = deficits_up_to_build.front();
+    const unsigned u_deficit_id = UnsignedDeficitId(deficit_id);
     deficits_up_to_build.pop();
-    if (!processed_deficits[deficit_id + code_suffixes_.size() - 1]) {
+    if (!processed_deficits[u_deficit_id]) {
       AddAntitropicDeficits(deficit_id, deficits_up_to_build);
       AddIsotropicDeficits(deficit_id, deficits_up_to_build);
-      processed_deficits[deficit_id + code_suffixes_.size() - 1] = true;
+      processed_deficits[u_deficit_id] = true;
     }
   }
 }
@@ -126,11 +136,11 @@ void BijectiveChecker::AddIsotropicDeficits(
                           founded_elem_codes[i]->str.length();
     Suffix* beta_suffix = alpha_suffix->owners[0]->suffixes[beta_suffix_idx];
     int state_id = (deficit_id < 0 ? -beta_suffix->id : beta_suffix->id);
-    deficits_state_machine_->AddState(state_id);
-    deficits_state_machine_->AddTransition(deficit_id, state_id,
+    deficits_state_machine_->AddTransition(UnsignedDeficitId(deficit_id),
+                                           UnsignedDeficitId(state_id),
                                            founded_elem_codes[i]->id);
     deficits_up_to_build.push(state_id);
-    // LogDeficitsBuilding(deficit_id, state_id, founded_elem_codes[i]);
+//     LogDeficitsBuilding(deficit_id, state_id, founded_elem_codes[i]);
   }
 }
 
@@ -167,9 +177,8 @@ void BijectiveChecker::AddAntitropicDeficits(
     // Let identity deficit is an isotropic deficit.
     if (beta_suffix->id != 0) {
       int state_id = (deficit_id < 0 ? beta_suffix->id : -beta_suffix->id);
-      deficits_state_machine_->AddState(state_id);
-      deficits_state_machine_->AddTransition(deficit_id,
-                                             state_id,
+      deficits_state_machine_->AddTransition(UnsignedDeficitId(deficit_id),
+                                             UnsignedDeficitId(state_id),
                                              founded_elem_codes[i]->id);
       deficits_up_to_build.push(state_id);
       // LogDeficitsBuilding(deficit_id, state_id, founded_elem_codes[i]);
@@ -195,10 +204,11 @@ bool BijectiveChecker::FindTargetLoop(const StateMachine& code_state_machine) {
 
   while (!loop_states.empty()) {
     loop_state = loop_states.front();
-    for (int i = 0; i < loop_state->deficit_state->transitions.size(); ++i) {
+    State* deficit_state = loop_state->deficit_state;
+    for (int i = 0; i < deficit_state->transitions_from.size(); ++i) {
       bool target_loop_founded =
           ProcessLoopTransition(loop_state,
-                                loop_state->deficit_state->transitions[i],
+                                deficit_state->transitions_from[i],
                                 &loop_states);
       if (target_loop_founded) {
         while (!loop_states.empty()) {
@@ -281,10 +291,9 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
       }
       if (nontrivial_loop_founded) {
         // Check for word ending.
-        if (transited_state->lower_word_state
-            ->GetTransition(AlphabeticEncoder::kEndCharacterId) != 0 &&
-            transited_state->upper_word_state
-            ->GetTransition(AlphabeticEncoder::kEndCharacterId) != 0) {
+        const int end_char_id = code_.size();
+        if (transited_state->lower_word_state->GetTransition(end_char_id) &&
+            transited_state->upper_word_state->GetTransition(end_char_id)) {
           return true;
         }
       }
@@ -338,19 +347,21 @@ void BijectiveChecker::Reset() {
   delete deficits_state_machine_;
 }
 
-void BijectiveChecker::WriteDeficitsStateMachine(
-  const std::string& file_path) const {
+void BijectiveChecker::WriteDeficitsStateMachine(const std::string& file_path) {
   // Set states names.
-  std::map<int, std::string> states_names;
-  states_names[0] = "\"/\"";
+  const int n_states = code_suffixes_.size() * 2 - 1;
+  std::vector<std::string> states_names(n_states);
+  states_names[UnsignedDeficitId(0)] = "\"/\"";
+
   // First suffix if empty suffix, starts from 1.
   for (int i = 1; i < code_suffixes_.size(); ++i) {
-    states_names[i] = "\"" + code_suffixes_[i]->str() + "/\"";
-    states_names[-i] = "\"/" + code_suffixes_[i]->str() + "\"";
+    std::string str = code_suffixes_[i]->str();
+    states_names[UnsignedDeficitId(i)] = "\"" + str + "/\"";
+    states_names[UnsignedDeficitId(-i)] = "\"/" + str + "\"";
   }
 
   // Set transitions names.
-  std::map<int, std::string> events_names;
+  std::vector<std::string> events_names(code_.size());
   for (int i = 0; i < code_.size(); ++i) {
     events_names[i] = code_[i]->str;
   }
@@ -373,8 +384,8 @@ void BijectiveChecker::RemoveDeadTransitions(
     State* code_sm_state = code_sm_states.front();
     deficit_states.pop();
     code_sm_states.pop();
-    for (int i = 0; i < deficit_state->transitions.size(); ++i) {
-      Transition* deficit_transition = deficit_state->transitions[i];
+    for (int i = 0; i < deficit_state->transitions_from.size(); ++i) {
+      Transition* deficit_transition = deficit_state->transitions_from[i];
 
       // If transition not visited yet.
       if (!is_visited[deficit_transition->id]) {
