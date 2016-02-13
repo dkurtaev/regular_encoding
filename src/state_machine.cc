@@ -3,8 +3,7 @@
 #include <fstream>
 
 StateMachine::StateMachine()
-  : start_state_(0),
-    n_transitions_(0) {
+  : start_state_(0) {
 }
 
 bool StateMachine::AddState(int id) {
@@ -20,12 +19,33 @@ bool StateMachine::AddTransition(int from_id, int to_id, int event_id) {
   State* from = states_[from_id];
   State* to = states_[to_id];
   if (from != 0 & to != 0) {
-    from->transitions.push_back(new Transition(n_transitions_, to, event_id));
-    ++n_transitions_;
+    Transition* transition =
+        new Transition(transitions_.size(), from, to, event_id);
+    from->transitions.push_back(transition);
+    transitions_[transitions_.size()] = transition;
     return true;
   } else {
     return false;
   }
+}
+
+bool StateMachine::DelTransition(int id) {
+  if (transitions_.find(id) != transitions_.end()) {
+    Transition* transition = transitions_[id];
+
+    // Remove transition from corresponding state.
+    State* from_state = transition->from;
+    std::vector<Transition*>::iterator it = from_state->transitions.begin();
+    for (it; it != from_state->transitions.end(); ++it) {
+      if (*it == transition) {
+        delete *it;
+        from_state->transitions.erase(it);
+        transitions_.erase(transitions_.find(id));
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 bool StateMachine::SetStartState(int id) {
@@ -44,7 +64,6 @@ void StateMachine::Clear() {
     delete it->second;
   }
   states_.clear();
-  n_transitions_ = 0;
   start_state_ = 0;
 }
 
@@ -61,7 +80,7 @@ int StateMachine::GetNumberStates() const {
 }
 
 int StateMachine::GetNumberTransitions() const {
-  return n_transitions_;
+  return transitions_.size();
 }
 
 void StateMachine::WriteDot(

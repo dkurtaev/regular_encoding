@@ -18,8 +18,9 @@ std::string Suffix::str() {
   return owners[0]->str.substr(owners[0]->str.length() - length);
 }
 
-Transition::Transition(int id, State *to, int event_id)
-  : to(to),
+Transition::Transition(int id, State* from, State *to, int event_id)
+  : from(from),
+    to(to),
     event_id(event_id),
     id(id) {
 }

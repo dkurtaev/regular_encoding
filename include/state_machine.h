@@ -17,6 +17,8 @@ class StateMachine {
 
   bool AddTransition(int from_id, int to_id, int event_id);
 
+  bool DelTransition(int id);
+
   bool SetStartState(int state_id);
 
   State* GetStartState() const;
@@ -34,7 +36,7 @@ class StateMachine {
  private:
   State* start_state_;
   std::map<int, State*> states_;
-  int n_transitions_;
+  std::map<int, Transition*> transitions_;
 };
 
 #endif  // INCLUDE_STATE_MACHINE_H_

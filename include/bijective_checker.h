@@ -52,6 +52,8 @@ class BijectiveChecker {
                              Transition* def_transition,
                              std::queue<LoopState*>* states);
 
+  void RemoveDeadTransitions(const StateMachine& code_state_machine);
+
   void Reset();
 
   std::vector<ElementaryCode*> code_;

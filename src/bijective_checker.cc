@@ -27,6 +27,9 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   code_tree_ = new CodeTree(code_);
 
   BuildDeficitsStateMachine();
+
+  RemoveDeadTransitions(code_state_machine);
+
   bool target_loop_founded = FindTargetLoop(code_state_machine);
 
   return !target_loop_founded;
@@ -217,9 +220,7 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
   transited_state->lower_word_trace = state->lower_word_trace;
   transited_state->deficits_trace = state->deficits_trace;
   transited_state->deficit_state = def_transition->to;
-  transited_state->lower_word = state->lower_word;
   transited_state->lower_word_state = state->lower_word_state;
-  transited_state->upper_word = state->upper_word;
   transited_state->upper_word_state = state->upper_word_state;
 
   Transition* word_transition;
@@ -345,4 +346,45 @@ void BijectiveChecker::WriteDeficitsStateMachine(
   }
 
   deficits_state_machine_->WriteDot(file_path, states_names, events_names);
+}
+
+void BijectiveChecker::RemoveDeadTransitions(
+  const StateMachine& code_state_machine) {
+  int n_transitions = deficits_state_machine_->GetNumberTransitions();
+  std::vector<bool> is_visited(n_transitions, false);
+
+  std::queue<State*> deficit_states;
+  std::queue<State*> code_sm_states;
+  deficit_states.push(deficits_state_machine_->GetStartState());
+  code_sm_states.push(code_state_machine.GetStartState());
+
+  while(!deficit_states.empty()) {
+    State* deficit_state = deficit_states.front();
+    State* code_sm_state = code_sm_states.front();
+    deficit_states.pop();
+    code_sm_states.pop();
+    for (int i = 0; i < deficit_state->transitions.size(); ++i) {
+      Transition* deficit_transition = deficit_state->transitions[i];
+
+      // If transition not visited yet.
+      if (!is_visited[deficit_transition->id]) {
+        int event_id = deficit_transition->event_id;
+        Transition* code_sm_transition = code_sm_state->GetTransition(event_id);
+
+        // If exists corresponding transition at code state machine.
+        if (code_sm_transition != 0) {
+          deficit_states.push(deficit_transition->to);
+          code_sm_states.push(code_sm_transition->to);
+          is_visited[deficit_transition->id] = true;
+        }
+      }
+    }
+  }
+
+  // Remove dead transitions (not visited due code state machine rules).
+  for (int i = 0; i < n_transitions; ++i) {
+    if (!is_visited[i]) {
+      deficits_state_machine_->DelTransition(i);
+    }
+  }
 }
