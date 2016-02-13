@@ -5,8 +5,13 @@
 
 #include <queue>
 #include <fstream>
+#include <string>
+#include <map>
+#include <sstream>
 
-#include "include/bijective_checker.h"
+const int AlphabeticEncoder::kStateMachineStartStateId = -1;
+const int AlphabeticEncoder::kStateMachineEndStateId = -2;
+const int AlphabeticEncoder::kEndCharacterId = -2;
 
 AlphabeticEncoder::AlphabeticEncoder(const std::string& config_file) {
   // File format:
@@ -58,7 +63,33 @@ AlphabeticEncoder::AlphabeticEncoder(const std::string& config_file) {
 }
 
 bool AlphabeticEncoder::CheckBijective() {
-  BijectiveChecker bich;
-  return bich.IsBijective(elem_codes_,
-                          state_machine_);
+  return bijective_checker.IsBijective(elem_codes_, state_machine_);
+}
+
+void AlphabeticEncoder::WriteCodeStateMachine(
+  const std::string& file_path) const {
+  // Set states names.
+  std::map<int, std::string> states_names;
+  states_names[kStateMachineStartStateId] = "start";
+  states_names[kStateMachineEndStateId] = "end";
+  int n_states = state_machine_.GetNumberStates();
+  for (int i = 0; i < n_states - 2; ++i) {
+    std::ostringstream ss;
+    ss << i;
+    states_names[i] = ss.str();
+  }
+
+  // Set transitions names.
+  std::map<int, std::string> events_names;
+  events_names[kEndCharacterId] = "";
+  for (int i = 0; i < elem_codes_.size(); ++i) {
+    events_names[i] = elem_codes_[i];
+  }
+
+  state_machine_.WriteDot(file_path, states_names, events_names);
+}
+
+void AlphabeticEncoder::WriteDeficitsStateMachine(
+    const std::string& file_path) const {
+  bijective_checker.WriteDeficitsStateMachine(file_path);
 }

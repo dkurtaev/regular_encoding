@@ -10,6 +10,8 @@
 
 bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
                                    const StateMachine& code_state_machine) {
+  Reset();
+
   code_.resize(code.size());
   for (int i = 0; i < code.size(); ++i) {
     code_[i] = new ElementaryCode(i, code[i]);
@@ -26,8 +28,6 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
 
   BuildDeficitsStateMachine();
   bool target_loop_founded = FindTargetLoop(code_state_machine);
-
-  Reset();
 
   return !target_loop_founded;
 }
@@ -58,9 +58,9 @@ void BijectiveChecker::BuildDeficitsStateMachine() {
     deficits_state_machine_->AddTransition(0, state_id, i);
     deficits_up_to_build.push(state_id);
 
- /*   printf("Added transition (E/b[%d], E/E)=E/%s\n",
-           i, code_[i]->str.c_str());
-    fflush(stdout);*/
+    // printf("Added transition (E/b[%d], E/E)=E/%s\n",
+    //        i, code_[i]->str.c_str());
+    // fflush(stdout);
   }
 
   // Tracking processed deficits.
@@ -119,7 +119,7 @@ void BijectiveChecker::AddIsotropicDeficits(
     deficits_state_machine_->AddTransition(deficit_id, state_id,
                                            founded_elem_codes[i]->id);
     deficits_up_to_build.push(state_id);
-//    LogDeficitsBuilding(deficit_id, state_id, founded_elem_codes[i]);
+    // LogDeficitsBuilding(deficit_id, state_id, founded_elem_codes[i]);
   }
 }
 
@@ -161,7 +161,7 @@ void BijectiveChecker::AddAntitropicDeficits(
                                              state_id,
                                              founded_elem_codes[i]->id);
       deficits_up_to_build.push(state_id);
- //     LogDeficitsBuilding(deficit_id, state_id, founded_elem_codes[i]);
+      // LogDeficitsBuilding(deficit_id, state_id, founded_elem_codes[i]);
     }
   }
 }
@@ -344,4 +344,24 @@ void BijectiveChecker::Reset() {
   code_suffixes_.clear();
   delete code_tree_;
   delete deficits_state_machine_;
+}
+
+void BijectiveChecker::WriteDeficitsStateMachine(
+  const std::string& file_path) const {
+  // Set states names.
+  std::map<int, std::string> states_names;
+  states_names[0] = "\"/\"";
+  // First suffix if empty suffix, starts from 1.
+  for (int i = 1; i < code_suffixes_.size(); ++i) {
+    states_names[i] = "\"" + code_suffixes_[i]->str() + "/\"";
+    states_names[-i] = "\"/" + code_suffixes_[i]->str() + "\"";
+  }
+
+  // Set transitions names.
+  std::map<int, std::string> events_names;
+  for (int i = 0; i < code_.size(); ++i) {
+    events_names[i] = code_[i]->str;
+  }
+
+  deficits_state_machine_->WriteDot(file_path, states_names, events_names);
 }

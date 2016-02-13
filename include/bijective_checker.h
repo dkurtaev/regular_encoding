@@ -16,6 +16,8 @@ class BijectiveChecker {
   bool IsBijective(const std::vector<std::string>& code,
                    const StateMachine& code_state_machine);
 
+  void WriteDeficitsStateMachine(const std::string& file_path) const;
+
  private:
   struct LoopState {
     // Visited transitions in deficits state machine.

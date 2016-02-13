@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <map>
+#include <string>
 
 #include "include/structures.h"
 
@@ -26,12 +27,13 @@ class StateMachine {
 
   void Clear();
 
-  void Log(std::ostream* s) const;
+  void WriteDot(const std::string& file_path,
+                const std::map<int, std::string>& states_names,
+                const std::map<int, std::string>& events_names) const;
 
  private:
   State* start_state_;
   std::map<int, State*> states_;
-  int n_states_;
   int n_transitions_;
 };
 

@@ -1,16 +1,14 @@
 #include "include/state_machine.h"
 
-#include <iostream>
+#include <fstream>
 
 StateMachine::StateMachine()
   : start_state_(0),
-    n_states_(0),
     n_transitions_(0) {
 }
 
 bool StateMachine::AddState(int id) {
   if (states_.find(id) == states_.end()) {
-    ++n_states_;
     states_[id] = new State(id);
     return true;
   } else {
@@ -46,7 +44,6 @@ void StateMachine::Clear() {
     delete it->second;
   }
   states_.clear();
-  n_states_ = 0;
   n_transitions_ = 0;
   start_state_ = 0;
 }
@@ -60,21 +57,44 @@ State* StateMachine::GetStartState() const {
 }
 
 int StateMachine::GetNumberStates() const {
-  return n_states_;
+  return states_.size();
 }
 
 int StateMachine::GetNumberTransitions() const {
   return n_transitions_;
 }
 
-void StateMachine::Log(std::ostream* s) const {
-  *s << ' ' << n_states_ - 2 << ' ' << n_transitions_;
+void StateMachine::WriteDot(
+        const std::string& file_path,
+        const std::map<int, std::string>& states_names,
+        const std::map<int, std::string>& events_names) const {
+  std::ofstream file(file_path.c_str());
+  file << "strict digraph state_machine {\n";
+
+  std::map<std::pair<int, int>, std::string> edges;
   std::map<int, State*>::const_iterator it;
+
   for (it = states_.begin(); it != states_.end(); ++it) {
+    int state_from_id = it->second->id;
+    std::string state_from = states_names.find(state_from_id)->second;
     for (int i = 0; i < it->second->transitions.size(); ++i) {
-      *s << ' ' << it->second->id
-         << ' ' << it->second->transitions[i]->to->id
-         << ' ' << it->second->transitions[i]->event_id;
+      int state_to_id = it->second->transitions[i]->to->id;
+      int event_id = it->second->transitions[i]->event_id;
+      std::string state_to = states_names.find(state_to_id)->second;
+      std::string event = events_names.find(event_id)->second;
+
+      std::pair<int, int> edge_id(state_from_id, state_to_id);
+      if (edges.find(edge_id) == edges.end()) {
+        edges[edge_id] = event;
+      } else {
+        edges[edge_id] += ", " + event;
+      }
+
+      file << state_from << "->" << state_to
+           << "[label=\"" << edges[edge_id] << "\"];\n";
     }
   }
+
+  file << "}";
+  file.close();
 }
