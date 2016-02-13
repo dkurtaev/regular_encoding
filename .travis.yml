@@ -9,6 +9,6 @@ script:
   - mkdir build
   - cd build
   - cmake .. && make
- # - ./bin/test_code_generator
+  - ./bin/test_code_generator
   - ./bin/test_bijective_checker
- # - ./bin/run_bijective_checker
+  
