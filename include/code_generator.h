@@ -25,6 +25,9 @@ class CodeGenerator {
 
   static std::string CodeFromBinary(unsigned data, unsigned length);
 
+  static void GenPrefixCode(int code_length, int max_elem_code_length,
+                            int n_elem_codes, std::vector<std::string>& code);
+
  private:
   static void GenCodeLengths(int code_length, int max_elem_code_length,
                              int n_elem_codes, std::vector<int>& lengths);
