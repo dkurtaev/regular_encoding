@@ -362,11 +362,7 @@ void CodeGenerator::GenPrefixCode(int code_length, int max_elem_code_length,
     }
   }
 
-  std::string elem_code = "";
-  for (int i = 0; i < min_length; ++i) {
-    elem_code += '0';
-  }
-  code.push_back(elem_code);
+  code.push_back(CodeFromBinary(0, min_length));
 
   unsigned last_elem_code = 0;
   for (int i = 1; i < code_lengths[min_length - 1]; ++i) {
