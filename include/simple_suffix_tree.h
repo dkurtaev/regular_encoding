@@ -2,7 +2,6 @@
 #define INCLUDE_SIMPLE_SUFFIX_TREE_H_
 
 #include <vector>
-#include <string>
 
 #include "include/structures.h"
 
@@ -18,6 +17,8 @@ class SimpleSuffixTree {
   // Index to vertex after corresponding symbol.
   std::vector<int> childs_[2];
   // Suffixes contained in vertices. 0 if simple node.
+  std::vector<Suffix*> vertices_content_;
+  // All suffixes.
   std::vector<Suffix*> suffixes_;
 };
 

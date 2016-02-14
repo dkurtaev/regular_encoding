@@ -28,23 +28,29 @@ struct Suffix {
 
 struct Transition;
 struct State {
-  int id;
-  std::vector<Transition*> transitions;
+  unsigned id;
+  std::vector<Transition*> transitions_to;  // Transitions to this state.
+  std::vector<Transition*> transitions_from;  // Transitions from this state.
 
-  explicit State(int id);
+  explicit State(unsigned id) : id(id) {}
 
   // Returns state by event or 0 if transition not exists.
   State* DoTransition(int event_id);
 
   Transition* GetTransition(int event_id);
+
+  bool DelTransitionFrom(int id);
+  bool DelTransitionTo(int id);
 };
 
+
 struct Transition {
-  int id;
+  unsigned id;
+  State* from;
   State* to;
   int event_id;
 
-  Transition(int id, State* to, int event_id);
+  Transition(unsigned id, State* from, State* to, unsigned event_id);
 };
 
 inline int rand(int a, int b) {
