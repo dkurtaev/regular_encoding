@@ -111,3 +111,19 @@ TEST(CodeGenerator, prefix_codes_uniqueness) {
 }
 
 // This test for checking that prefix code really prefix.
+TEST(CodeGenerator, prefix_codes_are_prefix) {
+  std::vector<std::string> code;
+  GEN_LOOP(M, N, L) {
+    CodeGenerator::GenPrefixCode(L, M, N, code);
+    for (int i = 0; i < code.size(); ++i) {
+      for (int j = 0; j < i; ++j) {
+        ASSERT_NE(code[i].find(code[j]), 0);
+      }
+      for (int j = i + 1; j < code.size(); ++j) {
+        ASSERT_NE(code[i].find(code[j]), 0);
+      }
+    }
+  }
+  END_GEN_LOOP
+}
+
