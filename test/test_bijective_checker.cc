@@ -25,7 +25,7 @@ TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
-  for (unsigned M = 2; M <= 5; ++M) {
+  for (unsigned M = 2; M <= 6; ++M) {
     unsigned N_max = CodeGenerator::MaxNumberElemCodes(M);
     for (unsigned N = 2; N <= N_max; ++N) {
       // Generate state machine for code of all words.
@@ -51,7 +51,7 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
-  for (unsigned M = 2; M <= 5; ++M) {
+  for (unsigned M = 2; M <= 6; ++M) {
     unsigned N_max = CodeGenerator::MaxNumberElemCodes(M);
     for (unsigned N = 2; N <= N_max; ++N) {
       StateMachineOfAllWords(N, state_machine);
