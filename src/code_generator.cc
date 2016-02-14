@@ -349,8 +349,8 @@ unsigned CodeGenerator::GetLNSetLimit(unsigned max_elem_code_length,
 void CodeGenerator::GenPrefixCode(int code_length, int max_elem_code_length,
                                   int n_elem_codes,
                                   std::vector<std::string>& code) {
-  code.clear()
-  
+  code.clear();
+
   std::vector<int> code_lengths;
   GenCodeLengths(code_length, max_elem_code_length, n_elem_codes, code_lengths);
 
