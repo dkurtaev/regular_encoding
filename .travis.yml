@@ -10,5 +10,5 @@ script:
   - cd build
   - cmake .. && make
   - ./bin/test_code_generator
-  - ./bin/test_bijective_checker
+  - ./bin/test_bijective_checker --gtest-filter="BijectiveChecker.all_words_codes_mcmillan"
   
