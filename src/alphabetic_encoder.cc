@@ -15,15 +15,11 @@ AlphabeticEncoder::AlphabeticEncoder(const std::string& config_file) {
   // [int] alphabet size
   // [string] alphabet encoding
   // state machine description:
-  // [number of states] - number of states, numerated from 0 to num - 1
-  //                      (without start and finish states)
+  // [number of states]
   // [number of transitions]
   // [int int int] - state id from,
   //                 state id to,
-  //                 character id on transition (-2 for '.')
-  // state id -1 is a start state
-  // state id -2 is a finish state, for
-  // reserved character '.' as end of word
+  //                 character id
   std::ifstream file(config_file.c_str());
 
   // Read alphabet encoding.
@@ -57,7 +53,7 @@ bool AlphabeticEncoder::CheckBijective() {
 
 void AlphabeticEncoder::WriteCodeStateMachine(
     const std::string& file_path) const {
-//  // Set states names.
+  // Set states names.
   std::vector<std::string> states_names;
   states_names.push_back("start");
   int n_states = state_machine_.GetNumberStates();

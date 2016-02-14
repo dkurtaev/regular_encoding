@@ -15,7 +15,6 @@ set(sources
   src/simple_suffix_tree.cc
   src/state_machine.cc
   src/structures.cc
-#  src/suffix_tree.cc
 )
 
 set(headers
@@ -27,7 +26,6 @@ set(headers
   include/simple_suffix_tree.h
   include/state_machine.h
   include/structures.h
-#  include/suffix_tree.h
 )
 
 include_directories(${CMAKE_SOURCE_DIR})

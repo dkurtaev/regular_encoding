@@ -19,13 +19,6 @@ class AlphabeticEncoder {
 
  private:
   BijectiveChecker bijective_checker;
-
-  // First state of state machine - start state.
-  // Second state of state machine - end state.
-  // Other states starts from third state.
-  //
-  // Events id - elementary code id.
-  // Event for end character - next available after elementary codes.
   StateMachine state_machine_;
   std::vector<std::string> elem_codes_;
 };

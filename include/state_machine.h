@@ -2,7 +2,6 @@
 #define INCLUDE_STATE_MACHINE_H_
 
 #include <vector>
-#include <map>
 #include <string>
 
 #include "include/structures.h"

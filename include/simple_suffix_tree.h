@@ -2,7 +2,6 @@
 #define INCLUDE_SIMPLE_SUFFIX_TREE_H_
 
 #include <vector>
-#include <string>
 
 #include "include/structures.h"
 

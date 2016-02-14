@@ -1,5 +1,7 @@
 #include "include/simple_suffix_tree.h"
 
+#include <string>
+
 void SimpleSuffixTree::Build(std::vector<ElementaryCode*>* code) {
   // Add root.
   Suffix* empty_suffix = new Suffix(0, 0);

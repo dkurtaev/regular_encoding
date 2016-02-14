@@ -26,24 +26,10 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   code_tree_ = new CodeTree(code_);
 
   BuildDeficitsStateMachine();
-
-//  this->WriteDeficitsStateMachine("/home/dmitry/Documents/regular_encoding_"
-//                                  "experiments/check_bijectivity/deficits_stat"
-//                                  "e_machine_full.dot");
-
   RemoveDeadTransitions(code_state_machine);
-
-
-//  this->WriteDeficitsStateMachine("/home/dmitry/Documents/regular_encoding_"
-//                                  "experiments/check_bijectivity/deficits_stat"
-//                                  "e_machine_dead.dot");
   RemoveBottlenecks();
 
-//  this->WriteDeficitsStateMachine("/home/dmitry/tmp_short.dot");
-
-  bool target_loop_founded = FindTargetLoop(code_state_machine);
-
-  return !target_loop_founded;
+  return !FindTargetLoop(code_state_machine);
 }
 
 unsigned BijectiveChecker::UnsignedDeficitId(int id) {
@@ -81,17 +67,8 @@ void BijectiveChecker::BuildDeficitsStateMachine() {
                                            UnsignedDeficitId(deficit_id),
                                            i);
     deficits_up_to_build.push(deficit_id);
-
-//     printf("Added transition (E/b[%d], E/E)=E/%s\n",
-//            i, code_[i]->str.c_str());
-//     fflush(stdout);
   }
 
-  // Tracking processed deficits.
-  // ... -3 -2 -1 0 1 2 3 ...
-  // Where -i: deficit lambda/alpha[i], 
-  //       +i: deficit alpha[i]/lambda, 
-  //        0: identity deficit lambda/lambda.
   std::vector<bool> processed_deficits(n_deficits, false);
 
   // Identity deficit already processed.
@@ -144,7 +121,6 @@ void BijectiveChecker::AddIsotropicDeficits(
                                            UnsignedDeficitId(state_id),
                                            founded_elem_codes[i]->id);
     deficits_up_to_build.push(state_id);
-//     LogDeficitsBuilding(deficit_id, state_id, founded_elem_codes[i]);
   }
 }
 
@@ -185,7 +161,6 @@ void BijectiveChecker::AddAntitropicDeficits(
                                              UnsignedDeficitId(state_id),
                                              founded_elem_codes[i]->id);
       deficits_up_to_build.push(state_id);
-//       LogDeficitsBuilding(deficit_id, state_id, founded_elem_codes[i]);
     }
   }
 }
