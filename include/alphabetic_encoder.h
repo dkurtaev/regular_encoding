@@ -5,18 +5,20 @@
 #include <string>
 
 #include "include/state_machine.h"
+#include "include/bijective_checker.h"
 
 class AlphabeticEncoder {
  public:
-  static const int kStateMachineStartStateId = -1;
-  static const int kStateMachineEndStateId = -2;
-  static const int kEndCharacterId = -2;
-
   explicit AlphabeticEncoder(const std::string& config_file);
 
   bool CheckBijective();
 
+  void WriteCodeStateMachine(const std::string& file_path) const;
+
+  void WriteDeficitsStateMachine(const std::string& file_path);
+
  private:
+  BijectiveChecker bijective_checker;
   StateMachine state_machine_;
   std::vector<std::string> elem_codes_;
 };

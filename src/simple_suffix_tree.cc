@@ -1,11 +1,12 @@
 #include "include/simple_suffix_tree.h"
 
-void SimpleSuffixTree::Build(std::vector<ElementaryCode*>* code) {
-  int suffix_id = 0;
+#include <string>
 
+void SimpleSuffixTree::Build(std::vector<ElementaryCode*>* code) {
   // Add root.
-  Suffix* empty_suffix = new Suffix(suffix_id++, 0);
+  Suffix* empty_suffix = new Suffix(0, 0);
   suffixes_.push_back(empty_suffix);
+  vertices_content_.push_back(empty_suffix);
   childs_[0].push_back(-1);
   childs_[1].push_back(-1);
 
@@ -24,19 +25,20 @@ void SimpleSuffixTree::Build(std::vector<ElementaryCode*>* code) {
           current_vertex = childs_[symbol].size();
           childs_[symbol].push_back(-1);
           childs_[1 - symbol].push_back(-1);
-          suffixes_.push_back(0);
+          vertices_content_.push_back(0);
         } else {
           current_vertex = childs_[symbol][current_vertex];
         }
       }
-      if (!suffixes_[current_vertex]) {
-        suffixes_[current_vertex] = new Suffix(suffix_id++,
-                                               word.size() - j,
-                                               elem_code);
+      if (!vertices_content_[current_vertex]) {
+        vertices_content_[current_vertex] = new Suffix(suffixes_.size(),
+                                                       word.size() - j,
+                                                       elem_code);
+        suffixes_.push_back(vertices_content_[current_vertex]);
       } else {
-        suffixes_[current_vertex]->owners.push_back(elem_code);
+        vertices_content_[current_vertex]->owners.push_back(elem_code);
       }
-      elem_code->suffixes.push_back(suffixes_[current_vertex]);
+      elem_code->suffixes.push_back(vertices_content_[current_vertex]);
     }
   }
   for (int i = 0; i < code->size(); ++i) {
@@ -48,9 +50,7 @@ void SimpleSuffixTree::Build(std::vector<ElementaryCode*>* code) {
 void SimpleSuffixTree::GetSuffixes(std::vector<Suffix*>* suffixes) {
   suffixes->clear();
   for (int i = 0; i < suffixes_.size(); ++i) {
-    if (suffixes_[i]) {
-      suffixes->push_back(suffixes_[i]);
-    }
+    suffixes->push_back(suffixes_[i]);
   }
 }
 

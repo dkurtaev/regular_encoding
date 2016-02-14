@@ -1,26 +1,16 @@
-#include <math.h>
-
 #include <vector>
 
 #include <gtest/gtest.h>
 
 #include "include/bijective_checker.h"
 #include "include/code_generator.h"
-#include "include/alphabetic_encoder.h"
 
 void StateMachineOfAllWords(int n_words, StateMachine& state_machine) {
   state_machine.Clear();
-  state_machine.AddState(AlphabeticEncoder::kStateMachineStartStateId);
-  state_machine.SetStartState(AlphabeticEncoder::kStateMachineStartStateId);
-  state_machine.AddState(AlphabeticEncoder::kStateMachineEndStateId);
-  state_machine.AddState(0);
+  state_machine.AddStates(1);
   for (int i = 0; i < n_words; ++i) {
-    state_machine.AddTransition(AlphabeticEncoder::kStateMachineStartStateId,
-                                0, i);
     state_machine.AddTransition(0, 0, i);
   }
-  state_machine.AddTransition(0, AlphabeticEncoder::kStateMachineEndStateId,
-                              AlphabeticEncoder::kEndCharacterId);
 }
 
 // This test for checking not bijective for codes of all words from LN set.
@@ -32,7 +22,7 @@ TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
-  for (unsigned M = 3; M <= 5; ++M) {
+  for (unsigned M = 2; M <= 5; ++M) {
     unsigned N_max = CodeGenerator::MaxNumberElemCodes(M);
     for (unsigned N = 2; N <= N_max; ++N) {
       // Generate state machine for code of all words.
@@ -58,7 +48,7 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
-  for (unsigned M = 3; M <= 5; ++M) {
+  for (unsigned M = 2; M <= 5; ++M) {
     unsigned N_max = CodeGenerator::MaxNumberElemCodes(M);
     for (unsigned N = 2; N <= N_max; ++N) {
       StateMachineOfAllWords(N, state_machine);
