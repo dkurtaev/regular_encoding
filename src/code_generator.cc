@@ -193,49 +193,27 @@ void CodeGenerator::GenUniqueUnnegatives(int upper_value, int number,
 void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
                                     StateMachine* state_machine) {
   state_machine->Clear();
-  state_machine->AddStates(n_states + 2);
+  state_machine->AddStates(n_states);
 
-  // We need use state machines with exists ways from start state to all
-  // states and to end state:
-  // start -> ... -> all
-  // start -> ... -> end
-
-  // Transitions to end state.
-  int garanted_transition_idx = rand() % n_states;
-  for (int i = 0; i < n_states; ++i) {
-//    state_machine->AddState(i);
-    if (rand() % 2 || (i == garanted_transition_idx)) {
-//      state_machine->AddTransition(i,
-//                                   AlphabeticEncoder::kStateMachineEndStateId,
-//                                   AlphabeticEncoder::kEndCharacterId);
-    }
-  }
-
+  // We need use state machines with exists ways from start state to all states.
   // Track this relations for keep all states are visited.
   // |I| - number of states
   // N - number of characters
   //        | to                                     |
   // | from |          0|          1| ...|      |I|-1|
   // |------|-----------|-----------|----|-----------|
-  // | start| {0/../N-1}| {0/../N-1}| ...| {0/../N-1}|
   // |     0| {0/../N-1}| {0/../N-1}| ...| {0/../N-1}|
   // |     1| {0/../N-1}| {0/../N-1}| ...| {0/../N-1}|
   // |   ...|        ...|        ...| ...|        ...|
   // | |I|-1| {0/../N-1}| {0/../N-1}| ...| {0/../N-1}|
-  std::vector<int> transitions[n_states + 1][n_states];
-  std::vector<int> unused_chars[n_states + 1];
+  std::vector<int> transitions[n_states][n_states];
+  std::vector<int> unused_chars[n_states];
 
   std::vector<int> visited_states;
-  bool state_is_visited[n_states];
-  for (int i = 0; i < n_states; ++i) {
-    state_is_visited[i] = false;
-  }
+  std::vector<bool> state_is_visited(n_states, false);
 
   // We need use all characters at least once.
-  bool char_is_used[n_elem_codes];
-  for (int i = 0; i < n_elem_codes; ++i) {
-    char_is_used[i] = false;
-  }
+  std::vector<bool> char_is_used(n_elem_codes, false);
 
   std::queue<int> states_from;
   states_from.push(0);
@@ -249,7 +227,7 @@ void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
         transitions[state_from_idx][state_to_idx].push_back(char_idx);
         if (!state_is_visited[state_to_idx]) {
           state_is_visited[state_to_idx] = true;
-          states_from.push(1 + state_to_idx);
+          states_from.push(state_to_idx);
         }
         if (!char_is_used[char_idx]) {
           char_is_used[char_idx] = true;
@@ -262,8 +240,8 @@ void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
   } while (!states_from.empty());
 
   // Check states to visited.
-  std::vector<int> dublicated_transitions[n_states + 1];
-  for (int i = 0; i <= n_states; ++i) {
+  std::vector<int> dublicated_transitions[n_states];
+  for (int i = 0; i < n_states; ++i) {
     for (int j = 0; j < n_states; ++j) {
       if (transitions[i][j].size() > 1) {
         dublicated_transitions[i].push_back(j);
@@ -273,7 +251,7 @@ void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
   for (int i = 0; i < n_states; ++i) {
     if (!state_is_visited[i]) {
       for (int char_idx = 0; char_idx < n_elem_codes; ++char_idx) {
-        unused_chars[i + 1].push_back(char_idx);
+        unused_chars[i].push_back(char_idx);
       }
       // Founded not visited state. We need add transition from already
       // visited state.
@@ -326,7 +304,7 @@ void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
           visited_states.erase(it);
         }
       } while (true);
-      visited_states.push_back(1 + i);
+      visited_states.push_back(i);
     }
   }
 
@@ -334,7 +312,7 @@ void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
   for (int i = 0; i < n_elem_codes; ++i) {
     if (!char_is_used[i]) {
       std::vector<int> states_with_unused_char;
-      for (int j = 0; j <= n_states; ++j) {
+      for (int j = 0; j < n_states; ++j) {
         for (int k = 0; k < unused_chars[j].size(); ++k)
         if (i == unused_chars[j][k]) {
           states_with_unused_char.push_back(j);
@@ -356,19 +334,10 @@ void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
       }
     }
   }
-
-  // Start state transitions.
   for (int i = 0; i < n_states; ++i) {
-    for (int j = 0; j < transitions[0][i].size(); ++j) {
-//      state_machine->AddTransition(AlphabeticEncoder::kStateMachineStartStateId,
-//                                   i,
-//                                   transitions[0][i][j]);
-    }
-  }
-  for (int i = 1; i <= n_states; ++i) {
     for (int j = 0; j < n_states; ++j) {
       for (int k = 0; k < transitions[i][j].size(); ++k) {
-        state_machine->AddTransition(i - 1, j, transitions[i][j][k]);
+        state_machine->AddTransition(i, j, transitions[i][j][k]);
       }
     }
   }
