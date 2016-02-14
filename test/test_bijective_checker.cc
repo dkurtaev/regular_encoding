@@ -40,6 +40,7 @@ TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
         }
       }
     }
+    std::cout << "Processed M == " << M << std::endl;
   }
 }
 
@@ -73,5 +74,6 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
         }
       }
     }
+    std::cout << "Processed M == " << M << std::endl;
   }
 }
