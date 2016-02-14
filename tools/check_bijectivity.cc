@@ -23,10 +23,10 @@ int main(int argc, char** argv) {
   }
 
   AlphabeticEncoder encoder(input_file);
+  bool is_bijective = encoder.CheckBijective();
   if (outdir != "") {
-    std::cout << encoder.CheckBijective() << std::endl;
-//    encoder.WriteCodeStateMachine(outdir + "code_state_machine.dot");
-//    encoder.WriteDeficitsStateMachine(outdir + "deficits_state_machine.dot");
+    encoder.WriteCodeStateMachine(outdir + "code_state_machine.dot");
+    encoder.WriteDeficitsStateMachine(outdir + "deficits_state_machine.dot");
   }
 }
 

@@ -26,6 +26,11 @@ class StateMachine {
   // First added state is start state.
   State* GetStartState() const;
 
+  // Last added state.
+  State* GetEndState() const;
+
+  State* GetState(int id) const;
+
   int GetNumberStates() const;
 
   int GetNumberTransitions() const;
@@ -37,6 +42,11 @@ class StateMachine {
  private:
   std::vector<State*> states_;
   std::vector<Transition*> transitions_;
+
+  // Used for tracking deleted states and transitions. If we delete state, we
+  // not erase it from vector.
+  int n_states_;
+  int n_transitions_;
 };
 
 #endif  // INCLUDE_STATE_MACHINE_H_

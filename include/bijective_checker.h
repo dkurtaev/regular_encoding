@@ -50,7 +50,8 @@ class BijectiveChecker {
   // Returns true if target loop founded.
   bool ProcessLoopTransition(LoopState* state,
                              Transition* def_transition,
-                             std::queue<LoopState*>* states);
+                             std::queue<LoopState*>& states,
+                             unsigned end_state_id);
 
   void RemoveDeadTransitions(const StateMachine& code_state_machine);
 

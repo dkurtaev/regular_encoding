@@ -27,12 +27,16 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
 
   BuildDeficitsStateMachine();
 
-  this->WriteDeficitsStateMachine("/home/dmitry/tmp_full.dot");
+//  this->WriteDeficitsStateMachine("/home/dmitry/Documents/regular_encoding_"
+//                                  "experiments/check_bijectivity/deficits_stat"
+//                                  "e_machine_full.dot");
 
   RemoveDeadTransitions(code_state_machine);
 
-  this->WriteDeficitsStateMachine("/home/dmitry/tmp.dot");
-return true;
+
+//  this->WriteDeficitsStateMachine("/home/dmitry/Documents/regular_encoding_"
+//                                  "experiments/check_bijectivity/deficits_stat"
+//                                  "e_machine_dead.dot");
   RemoveBottlenecks();
 
 //  this->WriteDeficitsStateMachine("/home/dmitry/tmp_short.dot");
@@ -78,9 +82,9 @@ void BijectiveChecker::BuildDeficitsStateMachine() {
                                            i);
     deficits_up_to_build.push(deficit_id);
 
-    // printf("Added transition (E/b[%d], E/E)=E/%s\n",
-    //        i, code_[i]->str.c_str());
-    // fflush(stdout);
+//     printf("Added transition (E/b[%d], E/E)=E/%s\n",
+//            i, code_[i]->str.c_str());
+//     fflush(stdout);
   }
 
   // Tracking processed deficits.
@@ -181,7 +185,7 @@ void BijectiveChecker::AddAntitropicDeficits(
                                              UnsignedDeficitId(state_id),
                                              founded_elem_codes[i]->id);
       deficits_up_to_build.push(state_id);
-      // LogDeficitsBuilding(deficit_id, state_id, founded_elem_codes[i]);
+//       LogDeficitsBuilding(deficit_id, state_id, founded_elem_codes[i]);
     }
   }
 }
@@ -199,7 +203,8 @@ bool BijectiveChecker::FindTargetLoop(const StateMachine& code_state_machine) {
       .resize(code_state_machine.GetNumberTransitions());
   loop_state->upper_word_state = code_state_machine.GetStartState();
   loop_state->lower_word_state = code_state_machine.GetStartState();
-  loop_state->deficit_state = deficits_state_machine_->GetStartState();
+  loop_state->deficit_state =
+      deficits_state_machine_->GetState(UnsignedDeficitId(0));
   loop_states.push(loop_state);
 
   while (!loop_states.empty()) {
@@ -209,7 +214,8 @@ bool BijectiveChecker::FindTargetLoop(const StateMachine& code_state_machine) {
       bool target_loop_founded =
           ProcessLoopTransition(loop_state,
                                 deficit_state->transitions_from[i],
-                                &loop_states);
+                                loop_states,
+                                code_state_machine.GetEndState()->id);
       if (target_loop_founded) {
         while (!loop_states.empty()) {
           delete loop_states.front();
@@ -226,7 +232,8 @@ bool BijectiveChecker::FindTargetLoop(const StateMachine& code_state_machine) {
 
 bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
                                              Transition* def_transition,
-                                             std::queue<LoopState*>* states) {
+                                             std::queue<LoopState*>& states,
+                                             unsigned end_state_id) {
   int def_id = def_transition->to->id;
   int char_id = def_transition->event_id;
   enum ProcessingResult {TRANSITION_NOT_EXISTS,
@@ -253,7 +260,8 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
         transited_state->lower_word.push_back(char_id);
         transited_state->lower_word_trace[word_transition->id] = true;
         transited_state->deficits_trace[def_transition->id] = true;
-        result = (def_id != 0 ? TRANSITION_EXISTS : FOUND_LOOP);
+        result = (def_id != UnsignedDeficitId(0) ?
+                              TRANSITION_EXISTS : FOUND_LOOP);
       }
     }
   } else {
@@ -265,7 +273,8 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
         transited_state->upper_word.push_back(char_id);
         transited_state->upper_word_trace[word_transition->id] = true;
         transited_state->deficits_trace[def_transition->id] = true;
-        result = (def_id != 0 ? TRANSITION_EXISTS : FOUND_LOOP);
+        result = (def_id != UnsignedDeficitId(0) ?
+                              TRANSITION_EXISTS : FOUND_LOOP);
       }
     }
   }
@@ -276,7 +285,7 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
       break;
     }
     case FOUND_LOOP: {
-      states->push(transited_state);
+      states.push(transited_state);
       bool nontrivial_loop_founded = false;
       if (transited_state->upper_word.size() ==
           transited_state->lower_word.size()) {
@@ -291,16 +300,15 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
       }
       if (nontrivial_loop_founded) {
         // Check for word ending.
-        const int end_char_id = code_.size();
-        if (transited_state->lower_word_state->GetTransition(end_char_id) &&
-            transited_state->upper_word_state->GetTransition(end_char_id)) {
+        if (transited_state->lower_word_state->id == end_state_id &&
+            transited_state->upper_word_state->id == end_state_id) {
           return true;
         }
       }
       break;
     }
     case TRANSITION_EXISTS: {
-      states->push(transited_state);
+      states.push(transited_state);
       break;
     }
     default: break;
@@ -376,7 +384,7 @@ void BijectiveChecker::RemoveDeadTransitions(
 
   std::queue<State*> deficit_states;
   std::queue<State*> code_sm_states;
-  deficit_states.push(deficits_state_machine_->GetStartState());
+  deficit_states.push(deficits_state_machine_->GetState(UnsignedDeficitId(0)));
   code_sm_states.push(code_state_machine.GetStartState());
 
   while(!deficit_states.empty()) {
@@ -384,6 +392,7 @@ void BijectiveChecker::RemoveDeadTransitions(
     State* code_sm_state = code_sm_states.front();
     deficit_states.pop();
     code_sm_states.pop();
+
     for (int i = 0; i < deficit_state->transitions_from.size(); ++i) {
       Transition* deficit_transition = deficit_state->transitions_from[i];
 
@@ -411,29 +420,25 @@ void BijectiveChecker::RemoveDeadTransitions(
 }
 
 void BijectiveChecker::RemoveBottlenecks() {
-  const int n_suffixes = code_suffixes_.size();
-
+  const int n_states = deficits_state_machine_->GetNumberStates();
   std::queue<State*> states;
-  states.push(deficits_state_machine_->GetStartState());
+  states.push(deficits_state_machine_->GetState(UnsignedDeficitId(0)));
 
-  std::vector<bool> achievable(deficits_state_machine_->GetNumberStates(),
-                               false);
+  std::vector<bool> achievable(n_states, false);
   while (!states.empty()) {
     State* state = states.front();
     states.pop();
-    achievable[state->id + n_suffixes - 1] = true;
-    std::vector<Transition*>::iterator it = state->transitions_to.begin();
-    for (it; it != state->transitions_to.end(); ++it) {
-      State* state_from = (*it)->from;
-      if (!achievable[state_from->id + n_suffixes - 1]) {
+    achievable[state->id] = true;
+    for (int i = 0; i < state->transitions_to.size(); ++i) {
+      State* state_from = state->transitions_to[i]->from;
+      if (!achievable[state_from->id]) {
         states.push(state_from);
       }
     }
   }
-  const int n_states = deficits_state_machine_->GetNumberStates();
   for (int i = 0; i < n_states; ++i) {
     if (!achievable[i]) {
-      deficits_state_machine_->DelState(i - n_suffixes + 1);
+      deficits_state_machine_->DelState(i);
     }
   }
 }

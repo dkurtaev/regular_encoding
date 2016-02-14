@@ -9,8 +9,6 @@
 
 class AlphabeticEncoder {
  public:
-//  static const int kEndCharacterId;
-
   explicit AlphabeticEncoder(const std::string& config_file);
 
   bool CheckBijective();

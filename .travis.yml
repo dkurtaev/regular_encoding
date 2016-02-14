@@ -1,0 +1,14 @@
+language: cpp
+notifications:
+  email: false
+sudo: false
+compiler:
+  - gcc
+os: linux
+script:
+  - mkdir build
+  - cd build
+  - cmake .. && make
+#  - ./bin/test_code_generator
+  - ./bin/test_bijective_checker
+  

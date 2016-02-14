@@ -9,16 +9,11 @@
 #include "include/alphabetic_encoder.h"
 
 void StateMachineOfAllWords(int n_words, StateMachine& state_machine) {
-  static const int kStartStateId = 0;
-  static const int kHiddenStateId = 1;
-  static const int kEndStateId = 2;
   state_machine.Clear();
-  state_machine.AddStates(3);
+  state_machine.AddStates(1);
   for (int i = 0; i < n_words; ++i) {
-    state_machine.AddTransition(kStartStateId, kHiddenStateId, i);
-    state_machine.AddTransition(kHiddenStateId, kHiddenStateId, i);
+    state_machine.AddTransition(0, 0, i);
   }
-  state_machine.AddTransition(kHiddenStateId, kEndStateId, n_words + 1);
 }
 
 // This test for checking not bijective for codes of all words from LN set.
@@ -56,7 +51,7 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
-  for (unsigned M = 5; M <= 5; ++M) {
+  for (unsigned M = 2; M <= 5; ++M) {
     unsigned N_max = CodeGenerator::MaxNumberElemCodes(M);
     for (unsigned N = 2; N <= N_max; ++N) {
       StateMachineOfAllWords(N, state_machine);
@@ -65,7 +60,6 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
       unsigned L_max = CodeGenerator::MaxCodeLength(M, N);
       for (unsigned L = L_min; L <= L_max; ++L) {
         for (unsigned gen = 0; gen < kNumberGenerations; ++gen) {
-          std::cout << N << ' ' << L << std::endl;
           CodeGenerator::GenCode(L, M, N, code);
           if (checker.IsBijective(code, state_machine)) {
             unsigned sum = 0;
