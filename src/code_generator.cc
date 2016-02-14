@@ -20,11 +20,7 @@ void CodeGenerator::GenCode(int code_length, int max_elem_code_length,
     if (code_lengths[i] != 0) {
       GenUniqueUnnegatives(pow(2, i + 1) - 1, code_lengths[i], &bin_elem_codes);
       for (int j = 0; j < code_lengths[i]; ++j) {
-        std::string elem_code = "";
-        for (int k = 0; k <= i; ++k) {
-          elem_code += (bin_elem_codes[j] >> k) & 1 ? '1' : '0';
-        }
-        code.push_back(elem_code);
+        code.push_back(CodeFromBinary(bin_elem_codes[j], i + 1));
       }
     }
   }
@@ -381,4 +377,46 @@ unsigned CodeGenerator::GetLNSetLimit(unsigned max_elem_code_length,
   unsigned log2 = ceil(log(n_elem_codes) / log(2));
   unsigned L_max = MaxCodeLength(max_elem_code_length, n_elem_codes);
   return std::min(n_elem_codes * (log2 + 1) - (1 << log2), L_max);
+}
+
+void CodeGenerator::GenPrefixCode(int code_length, int max_elem_code_length,
+                                  int n_elem_codes,
+                                  std::vector<std::string>& code) {
+  std::vector<int> code_lengths;
+  GenCodeLengths(code_length, max_elem_code_length, n_elem_codes, code_lengths);
+
+  unsigned min_length;
+  for (min_length = 0; min_length < max_elem_code_length; ++min_length) {
+    if (code_lengths[min_length] != 0) {
+      ++min_length;
+      break;
+    }
+  }
+
+  std::string elem_code = "";
+  for (int i = 0; i < min_length; ++i) {
+    elem_code += '0';
+  }
+  code.push_back(elem_code);
+
+  unsigned last_elem_code = 0;
+  for (int i = 1; i < code_lengths[min_length - 1]; ++i) {
+    last_elem_code += 1;
+    code.push_back(CodeFromBinary(last_elem_code, min_length));
+  }
+  for (int i = min_length; i < max_elem_code_length; ++i) {
+    for (int j = 0; j < code_lengths[i]; ++j) {
+      last_elem_code += 1;
+      code.push_back(CodeFromBinary(last_elem_code, i + 1));
+    }
+    last_elem_code << 1;
+  }
+}
+
+std::string CodeGenerator::CodeFromBinary(unsigned data, unsigned length) {
+  std::string elem_code = "";
+  for (int i = 0; i < length; ++i) {
+    elem_code += ((data >> i) & 1 ? '1' : '0');
+  }
+  return elem_code;
 }

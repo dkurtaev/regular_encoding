@@ -23,6 +23,8 @@ class CodeGenerator {
   static unsigned GetLNSetLimit(unsigned max_elem_code_length,
                                 unsigned n_elem_codes);
 
+  static std::string CodeFromBinary(unsigned data, unsigned length);
+
  private:
   static void GenCodeLengths(int code_length, int max_elem_code_length,
                              int n_elem_codes, std::vector<int>& lengths);
