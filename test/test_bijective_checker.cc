@@ -1,4 +1,5 @@
 #include <math.h>
+#include <sys/time.h>
 
 #include <vector>
 
@@ -22,6 +23,9 @@ void StateMachineOfAllWords(int n_words, StateMachine& state_machine) {
 TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
   static const unsigned kNumberGenerations = 25;
 
+  timeval last_log_time;
+  gettimeofday(&last_log_time, 0);
+
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
@@ -38,9 +42,15 @@ TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
           CodeGenerator::GenCode(L, M, N, code);
           ASSERT_FALSE(checker.IsBijective(code, state_machine));
         }
+        timeval current_time;
+        gettimeofday(&current_time, 0);
+        if (current_time.tv_sec - last_log_time.tv_sec >= 60) {
+          std::cout << "Processed M = " << M << " N = " << N << " L = " << L
+                    << std::endl;
+          last_log_time = current_time;
+        }
       }
     }
-    std::cout << "Processed M == " << M << std::endl;
   }
 }
 
@@ -48,6 +58,9 @@ TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
 // it is bijective, check McMillan's condition.
 TEST(BijectiveChecker, all_words_codes_mcmillan) {
   static const unsigned kNumberGenerations = 25;
+
+  timeval last_log_time;
+  gettimeofday(&last_log_time, 0);
 
   std::vector<std::string> code;
   BijectiveChecker checker;
@@ -72,8 +85,14 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
             ASSERT_LE(sum, 1 << M);
           }
         }
+        timeval current_time;
+        gettimeofday(&current_time, 0);
+        if (current_time.tv_sec - last_log_time.tv_sec >= 60) {
+          std::cout << "Processed M = " << M << " N = " << N << " L = " << L
+                    << std::endl;
+          last_log_time = current_time;
+        }
       }
     }
-    std::cout << "Processed M == " << M << std::endl;
   }
 }
