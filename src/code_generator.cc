@@ -5,6 +5,7 @@
 
 #include <queue>
 #include <iostream>
+#include <algorithm>
 
 #include "include/alphabetic_encoder.h"
 #include "include/structures.h"
@@ -346,36 +347,10 @@ unsigned CodeGenerator::GetLNSetLimit(unsigned max_elem_code_length,
   return std::min(n_elem_codes * (log2 + 1) - (1 << log2), L_max);
 }
 
-void CodeGenerator::GenPrefixCode(int code_length, int max_elem_code_length,
-                                  int n_elem_codes,
+void CodeGenerator::GenPrefixCode(int max_elem_code_length, int n_elem_codes,
                                   std::vector<std::string>& code) {
   code.clear();
-
-  std::vector<int> code_lengths;
-  GenCodeLengths(code_length, max_elem_code_length, n_elem_codes, code_lengths);
-
-  unsigned min_length;
-  for (min_length = 0; min_length < max_elem_code_length; ++min_length) {
-    if (code_lengths[min_length] != 0) {
-      ++min_length;
-      break;
-    }
-  }
-
-  code.push_back(CodeFromBinary(0, min_length));
-
-  unsigned last_elem_code = 0;
-  for (int i = 1; i < code_lengths[min_length - 1]; ++i) {
-    last_elem_code += 1;
-    code.push_back(CodeFromBinary(last_elem_code, min_length));
-  }
-  for (int i = min_length; i < max_elem_code_length; ++i) {
-    for (int j = 0; j < code_lengths[i]; ++j) {
-      last_elem_code += 1;
-      code.push_back(CodeFromBinary(last_elem_code, i + 1));
-    }
-    last_elem_code << 1;
-  }
+  GenLeafs("", n_elem_codes, max_elem_code_length, code);
 }
 
 std::string CodeGenerator::CodeFromBinary(unsigned data, unsigned length) {
@@ -384,4 +359,28 @@ std::string CodeGenerator::CodeFromBinary(unsigned data, unsigned length) {
     elem_code += ((data >> i) & 1 ? '1' : '0');
   }
   return elem_code;
+}
+
+void CodeGenerator::GenLeafs(const std::string& node_code, int n_leafs,
+                             int max_depth, std::vector<std::string>& codes) {
+  if (max_depth == 0 || n_leafs == 1 && (rand() % 2)) {
+    codes.push_back(node_code);
+    return;
+  }
+
+  max_depth -= 1;
+  int n_left_leafs = rand(std::max(0, n_leafs - (1 << max_depth)),
+                          std::min(n_leafs, 1 << max_depth));
+  if (n_left_leafs != 0) {
+    GenLeafs(node_code + '0', n_left_leafs, max_depth, codes);
+  }
+
+  int n_right_leafs = n_leafs - n_left_leafs;
+  if (n_right_leafs != 0) {
+    GenLeafs(node_code + '1', n_right_leafs, max_depth, codes);
+  }
+
+  if (n_left_leafs == 0 && n_right_leafs == 0) {
+    codes.push_back(node_code);
+  }
 }

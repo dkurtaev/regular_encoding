@@ -78,52 +78,37 @@ TEST(CodeGenerator, LN_set_limit) {
 
 TEST(CodeGenerator, prefix_codes_lengths) {
   std::vector<std::string> code;
-  GEN_LOOP(M, N, L) {
-    CodeGenerator::GenPrefixCode(L, M, N, code);
-
-    ASSERT_EQ(code.size(), N);
-    int max_length = 0;
-    int code_length = 0;
-    for (int i = 0; i < code.size(); ++i) {
-      int length = code[i].length();
-      code_length += length;
-      if (length > max_length) {
-        max_length = code[i].length();
-      }
-    }
-    ASSERT_EQ(code_length, L);
-    ASSERT_EQ(max_length, M);
-  }
-  END_GEN_LOOP
-}
-
-TEST(CodeGenerator, prefix_codes_uniqueness) {
-  std::vector<std::string> code;
-  GEN_LOOP(M, N, L) {
-    CodeGenerator::GenPrefixCode(L, M, N, code);
-    for (int i = 0; i < code.size(); ++i) {
-      for (int j = i + 1; j < code.size(); ++j) {
-        ASSERT_NE(code[i], code[j]);
+  for (unsigned M = 2; M <= 7; ++M) {
+    unsigned N_max = 1 << M;
+    for (unsigned N = 2; N <= N_max; ++N) {
+      for (unsigned gen = 0; gen < kNumberGenerations; ++gen) {
+        CodeGenerator::GenPrefixCode(M, N, code);
+        ASSERT_EQ(code.size(), N);
+        int max_length = 0;
+        for (int i = 0; i < code.size(); ++i) {
+          max_length = std::max(length, code[i].length());
+        }
+        ASSERT_LE(max_length, M);
       }
     }
   }
-  END_GEN_LOOP
 }
 
-// This test for checking that prefix code really prefix.
+// This test for checking that prefix codes are really prefix.
 TEST(CodeGenerator, prefix_codes_are_prefix) {
   std::vector<std::string> code;
-  GEN_LOOP(M, N, L) {
-    CodeGenerator::GenPrefixCode(L, M, N, code);
-    for (int i = 0; i < code.size(); ++i) {
-      for (int j = 0; j < i; ++j) {
-        ASSERT_NE(code[i].find(code[j]), 0);
-      }
-      for (int j = i + 1; j < code.size(); ++j) {
-        ASSERT_NE(code[i].find(code[j]), 0);
+  for (unsigned M = 2; M <= 7; ++M) {
+    unsigned N_max = 1 << M;
+    for (unsigned N = 2; N <= N_max; ++N) {
+      for (unsigned gen = 0; gen < kNumberGenerations; ++gen) {
+        CodeGenerator::GenPrefixCode(M, N, code);
+        for (int i = 0; i < N; ++i) {
+          for (int j = i + 1; j < N; ++j) {
+            ASSERT_NE(code[i].find(code[j]), 0);
+            ASSERT_NE(code[j].find(code[i]), 0);
+          }
+        }
       }
     }
   }
-  END_GEN_LOOP
 }
-

@@ -25,8 +25,8 @@ class CodeGenerator {
 
   static std::string CodeFromBinary(unsigned data, unsigned length);
 
-  static void GenPrefixCode(int code_length, int max_elem_code_length,
-                            int n_elem_codes, std::vector<std::string>& code);
+  static void GenPrefixCode(int max_elem_code_length, int n_elem_codes,
+                            std::vector<std::string>& code);
 
  private:
   static void GenCodeLengths(int code_length, int max_elem_code_length,
@@ -34,6 +34,11 @@ class CodeGenerator {
 
   static void GenUniqueUnnegatives(int upper_value, int number,
                                    std::vector<int>* values);
+
+  // Part of prefix code generation.
+  static void GenLeafs(const std::string& node_code, int n_leafs,
+                       int max_depth, std::vector<std::string>& codes);
+
 };
 
 #endif  // INCLUDE_CODE_GENERATOR_H_
