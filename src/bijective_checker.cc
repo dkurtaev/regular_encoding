@@ -257,6 +257,7 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
         for (int i = 0; i < transited_state->words[0].size(); ++i) {
           if (transited_state->words[0][i] != transited_state->words[1][i]) {
             nontrivial_loop_founded = true;
+            break;
           }
         }
       } else {

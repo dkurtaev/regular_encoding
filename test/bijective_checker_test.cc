@@ -1,9 +1,23 @@
+#include <sys/time.h>
+
 #include <vector>
+#include <iostream>
+#include <sstream>
 
 #include <gtest/gtest.h>
 
 #include "include/bijective_checker.h"
 #include "include/code_generator.h"
+
+static timeval last_log_time;
+static timeval current_time;
+#define LOG(text, period) \
+  gettimeofday(&current_time, 0); \
+  if (current_time.tv_sec - last_log_time.tv_sec >= period) { \
+    std::cout << text << std::endl; \
+    last_log_time = current_time; }
+
+static const unsigned kNumberGenerations = 25;
 
 void StateMachineOfAllWords(int n_words, StateMachine& state_machine) {
   state_machine.Clear();
@@ -17,8 +31,6 @@ void StateMachineOfAllWords(int n_words, StateMachine& state_machine) {
 // (LN set - set of parameters L and N where code garanted does not satisfy
 // McMillan's condition).
 TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
-  static const unsigned kNumberGenerations = 25;
-
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
@@ -43,8 +55,6 @@ TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
 // This test for generating all words code, check bijectivity and if
 // it is bijective, check McMillan's condition.
 TEST(BijectiveChecker, all_words_codes_mcmillan) {
-  static const unsigned kNumberGenerations = 25;
-
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
@@ -66,6 +76,35 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
               sum += 1 << (M - len);
             }
             ASSERT_LE(sum, 1 << M);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Generating prefix codes and random state machine. Check that are bijective.
+TEST(BijectiveChecker, prefix_codes) {
+  static const unsigned kNumberCodeGens = 5;
+  static const unsigned kMaxNumberStates = 5;
+  static const unsigned kNumberMachineGens = 5;
+
+  std::vector<std::string> code;
+  BijectiveChecker checker;
+  StateMachine state_machine;
+  for (unsigned M = 2; M <= 4; ++M) {
+    unsigned N_max = 1 << M;
+    for (unsigned N = 2; N <= N_max; ++N) {
+      for (unsigned i = 0; i < kNumberCodeGens; ++i) {
+        CodeGenerator::GenPrefixCode(M, N, code);
+        for (unsigned n_states = 1; n_states <= kMaxNumberStates; ++n_states) {
+          for (unsigned j = 0; j < kNumberMachineGens; ++j) {
+            CodeGenerator::GenStateMachine(N, n_states, &state_machine);
+            ASSERT_TRUE(checker.IsBijective(code, state_machine));
+
+            std::ostringstream ss;
+            ss << "Processed M=" << M << ", N=" << N;
+            LOG(ss.str(), 60);
           }
         }
       }
