@@ -1,10 +1,10 @@
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty")
 
-set(main test_main.cc)
+set(main main.cc)
 
 set(tests
-  test_code_generator.cc
-  test_bijective_checker.cc
+  code_generator_test.cc
+  bijective_checker_test.cc
 )
 
 foreach(test ${tests})

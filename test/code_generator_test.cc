@@ -86,7 +86,9 @@ TEST(CodeGenerator, prefix_codes_lengths) {
         ASSERT_EQ(code.size(), N);
         int max_length = 0;
         for (int i = 0; i < code.size(); ++i) {
-          max_length = std::max(length, code[i].length());
+          if (code[i].length() > max_length) {
+            max_length = code[i].length();
+          }
         }
         ASSERT_LE(max_length, M);
       }
