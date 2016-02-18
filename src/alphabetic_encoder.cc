@@ -53,24 +53,24 @@ bool AlphabeticEncoder::CheckBijective() {
 
 void AlphabeticEncoder::WriteCodeStateMachine(
     const std::string& file_path) const {
+  WriteCodeStateMachine(file_path, elem_codes_, state_machine_);
+}
+
+void AlphabeticEncoder::WriteCodeStateMachine(
+  const std::string& file_path,
+  const std::vector<std::string>& code,
+  const StateMachine& state_machine) {
   // Set states names.
   std::vector<std::string> states_names;
   states_names.push_back("start");
-  int n_states = state_machine_.GetNumberStates();
+  int n_states = state_machine.GetNumberStates();
   for (int i = 2; i < n_states; ++i) {
     std::ostringstream ss;
     ss << i;
     states_names.push_back(ss.str());
   }
   states_names.push_back("end");
-
-  // Set transitions names.
-  std::vector<std::string> events_names;
-  for (int i = 0; i < elem_codes_.size(); ++i) {
-    events_names.push_back(elem_codes_[i]);
-  }
-
-  state_machine_.WriteDot(file_path, states_names, events_names);
+  state_machine.WriteDot(file_path, states_names, code);
 }
 
 void AlphabeticEncoder::WriteDeficitsStateMachine(

@@ -17,6 +17,10 @@ class AlphabeticEncoder {
 
   void WriteDeficitsStateMachine(const std::string& file_path);
 
+  static void WriteCodeStateMachine(const std::string& file_path,
+                                    const std::vector<std::string>& code,
+                                    const StateMachine& state_machine);
+
  private:
   BijectiveChecker bijective_checker;
   StateMachine state_machine_;

@@ -26,8 +26,11 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   code_tree_ = new CodeTree(code_);
 
   BuildDeficitsStateMachine();
-  // RemoveDeadTransitions(code_state_machine);
+  RemoveDeadTransitions(code_state_machine);
   RemoveBottlenecks();
+
+  // WriteDeficitsStateMachine("/home/dmitry/dm.dot");
+  // AlphabeticEncoder::WriteCodeStateMachine("/home/dmitry/sm.dot", code, code_state_machine);
 
   return !FindTargetLoop(code_state_machine);
 }
