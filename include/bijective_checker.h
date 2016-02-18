@@ -19,17 +19,15 @@ class BijectiveChecker {
   void WriteDeficitsStateMachine(const std::string& file_path);
 
  private:
+  enum WordLocation { UPPER, LOWER };
   struct LoopState {
     // Visited transitions in deficits state machine.
     std::vector<bool> deficits_trace;
     // Visited transitions in code state machine for upper word.
-    std::vector<bool> upper_word_trace;
+    std::vector<bool> words_trace[2];
     // Visited transitions in code state machine for upper word.
-    std::vector<bool> lower_word_trace;
-    std::vector<int> upper_word;
-    std::vector<int> lower_word;
-    State* upper_word_state;
-    State* lower_word_state;
+    std::vector<int> words[2];
+    State* words_states[2];
     State* deficit_state;
   };
 

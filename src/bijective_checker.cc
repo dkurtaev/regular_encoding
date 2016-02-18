@@ -26,7 +26,7 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   code_tree_ = new CodeTree(code_);
 
   BuildDeficitsStateMachine();
-  RemoveDeadTransitions(code_state_machine);
+  // RemoveDeadTransitions(code_state_machine);
   RemoveBottlenecks();
 
   return !FindTargetLoop(code_state_machine);
@@ -166,31 +166,34 @@ void BijectiveChecker::AddAntitropicDeficits(
 }
 
 bool BijectiveChecker::FindTargetLoop(const StateMachine& code_state_machine) {
+  const int n_code_sm_trans = code_state_machine.GetNumberTransitions();
+  State* code_sm_start = code_state_machine.GetStartState();
+  const int code_sm_end_id = code_state_machine.GetEndState()->id;
+  const int n_deficits_sm_trans = deficits_state_machine_
+                                    ->GetNumberTransitions();
+  State* identity_deficit = deficits_state_machine_
+                              ->GetState(UnsignedDeficitId(0));
+
   std::queue<LoopState*> loop_states;
 
   // Add initial loop state at identity deficit and empty words.
   LoopState* loop_state = new LoopState();
-  loop_state->deficits_trace
-      .resize(deficits_state_machine_->GetNumberTransitions());
-  loop_state->upper_word_trace
-      .resize(code_state_machine.GetNumberTransitions());
-  loop_state->lower_word_trace
-      .resize(code_state_machine.GetNumberTransitions());
-  loop_state->upper_word_state = code_state_machine.GetStartState();
-  loop_state->lower_word_state = code_state_machine.GetStartState();
-  loop_state->deficit_state =
-      deficits_state_machine_->GetState(UnsignedDeficitId(0));
+  loop_state->deficits_trace.resize(n_deficits_sm_trans);
+  for (int i = 0; i < 2; ++i) {
+    loop_state->words_trace[i].resize(n_code_sm_trans);
+    loop_state->words_states[i] = code_sm_start;
+  }
+  loop_state->deficit_state = identity_deficit;
   loop_states.push(loop_state);
 
-  while (!loop_states.empty()) {
+  do {
     loop_state = loop_states.front();
     State* deficit_state = loop_state->deficit_state;
     for (int i = 0; i < deficit_state->transitions_from.size(); ++i) {
       bool target_loop_founded =
           ProcessLoopTransition(loop_state,
                                 deficit_state->transitions_from[i],
-                                loop_states,
-                                code_state_machine.GetEndState()->id);
+                                loop_states, code_sm_end_id);
       if (target_loop_founded) {
         while (!loop_states.empty()) {
           delete loop_states.front();
@@ -201,7 +204,8 @@ bool BijectiveChecker::FindTargetLoop(const StateMachine& code_state_machine) {
     }
     loop_states.pop();
     delete loop_state;
-  }
+  } while (!loop_states.empty());
+
   return false;
 }
 
@@ -209,48 +213,34 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
                                              Transition* def_transition,
                                              std::queue<LoopState*>& states,
                                              unsigned end_state_id) {
-  int def_id = def_transition->to->id;
+  int def_id = SignedDeficitId(def_transition->to->id);
   int char_id = def_transition->event_id;
   enum ProcessingResult {TRANSITION_NOT_EXISTS,
                          TRANSITION_EXISTS,
                          FOUND_LOOP};
   ProcessingResult result = TRANSITION_NOT_EXISTS;
+
   LoopState* transited_state = new LoopState();
-  transited_state->upper_word_trace = state->upper_word_trace;
-  transited_state->lower_word_trace = state->lower_word_trace;
+  for (int i = 0; i < 2; ++i) {
+    transited_state->words_trace[i] = state->words_trace[i];
+    transited_state->words[i] = state->words[i];
+    transited_state->words_states[i] = state->words_states[i];
+  }
   transited_state->deficits_trace = state->deficits_trace;
   transited_state->deficit_state = def_transition->to;
-  transited_state->lower_word = state->lower_word;
-  transited_state->lower_word_state = state->lower_word_state;
-  transited_state->upper_word = state->upper_word;
-  transited_state->upper_word_state = state->upper_word_state;
 
-  Transition* word_transition;
-  if (state->deficit_state->id >= 0) {
-    word_transition = transited_state->lower_word_state->GetTransition(char_id);
-    if (word_transition != 0) {
-      if (!transited_state->lower_word_trace[word_transition->id] ||
-          !transited_state->deficits_trace[def_transition->id]) {
-        transited_state->lower_word_state = word_transition->to;
-        transited_state->lower_word.push_back(char_id);
-        transited_state->lower_word_trace[word_transition->id] = true;
-        transited_state->deficits_trace[def_transition->id] = true;
-        result = (def_id != UnsignedDeficitId(0) ?
-                              TRANSITION_EXISTS : FOUND_LOOP);
-      }
-    }
-  } else {
-    word_transition = transited_state->upper_word_state->GetTransition(char_id);
-    if (word_transition != 0) {
-      if (!transited_state->upper_word_trace[word_transition->id] ||
-          !transited_state->deficits_trace[def_transition->id]) {
-        transited_state->upper_word_state = word_transition->to;
-        transited_state->upper_word.push_back(char_id);
-        transited_state->upper_word_trace[word_transition->id] = true;
-        transited_state->deficits_trace[def_transition->id] = true;
-        result = (def_id != UnsignedDeficitId(0) ?
-                              TRANSITION_EXISTS : FOUND_LOOP);
-      }
+  const int word_id = (SignedDeficitId(state->deficit_state->id) >= 0 ? LOWER :
+                                                                        UPPER);
+  Transition* word_transition = transited_state->words_states[word_id]
+                                               ->GetTransition(char_id);
+  if (word_transition != 0) {
+    if (!transited_state->words_trace[word_id][word_transition->id] ||
+        !transited_state->deficits_trace[def_transition->id]) {
+      transited_state->words_states[word_id] = word_transition->to;
+      transited_state->words[word_id].push_back(char_id);
+      transited_state->words_trace[word_id][word_transition->id] = true;
+      transited_state->deficits_trace[def_transition->id] = true;
+      result = (def_id != 0 ? TRANSITION_EXISTS : FOUND_LOOP);
     }
   }
 
@@ -262,11 +252,10 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
     case FOUND_LOOP: {
       states.push(transited_state);
       bool nontrivial_loop_founded = false;
-      if (transited_state->upper_word.size() ==
-          transited_state->lower_word.size()) {
-        for (int i = 0; i < transited_state->upper_word.size(); ++i) {
-          if (transited_state->upper_word[i] !=
-              transited_state->lower_word[i]) {
+      if (transited_state->words[word_id].size() == 
+          transited_state->words[word_id].size()) {
+        for (int i = 0; i < transited_state->words[0].size(); ++i) {
+          if (transited_state->words[0][i] != transited_state->words[1][i]) {
             nontrivial_loop_founded = true;
           }
         }
@@ -275,8 +264,8 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
       }
       if (nontrivial_loop_founded) {
         // Check for word ending.
-        if (transited_state->lower_word_state->id == end_state_id &&
-            transited_state->upper_word_state->id == end_state_id) {
+        if (transited_state->words_states[0]->id == end_state_id &&
+            transited_state->words_states[1]->id == end_state_id) {
           return true;
         }
       }
