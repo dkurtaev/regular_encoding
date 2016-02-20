@@ -29,9 +29,6 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   RemoveDeadTransitions(code_state_machine);
   RemoveBottlenecks();
 
-  // WriteDeficitsStateMachine("/home/dmitry/dm.dot");
-  // AlphabeticEncoder::WriteCodeStateMachine("/home/dmitry/sm.dot", code, code_state_machine);
-
   return !FindTargetLoop(code_state_machine);
 }
 
@@ -241,7 +238,14 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
         !transited_state->deficits_trace[def_transition->id]) {
       transited_state->words_states[word_id] = word_transition->to;
       transited_state->words[word_id].push_back(char_id);
-      transited_state->words_trace[word_id][word_transition->id] = true;
+
+      for (int i = 0; i < word_transition->from->transitions_from.size(); ++i) {
+        Transition* trans = word_transition->from->transitions_from[i];
+        if (trans->to->id == word_transition->to->id) {
+          transited_state->words_trace[word_id][trans->id] = true;
+        }
+      }
+
       transited_state->deficits_trace[def_transition->id] = true;
       result = (def_id != 0 ? TRANSITION_EXISTS : FOUND_LOOP);
     }
@@ -253,24 +257,28 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
       break;
     }
     case FOUND_LOOP: {
-      states.push(transited_state);
-      bool nontrivial_loop_founded = false;
-      if (transited_state->words[word_id].size() == 
-          transited_state->words[word_id].size()) {
-        for (int i = 0; i < transited_state->words[0].size(); ++i) {
-          if (transited_state->words[0][i] != transited_state->words[1][i]) {
-            nontrivial_loop_founded = true;
-            break;
-          }
-        }
-      } else {
-        nontrivial_loop_founded = true;
-      }
-      if (nontrivial_loop_founded) {
-        // Check for word ending.
+      if (transited_state->words_states[0]->id != 0 ||
+          transited_state->words_states[1]->id != 0 || end_state_id == 0) {
+        states.push(transited_state);
         if (transited_state->words_states[0]->id == end_state_id &&
             transited_state->words_states[1]->id == end_state_id) {
-          return true;
+          if (transited_state->words[0].size() ==
+              transited_state->words[1].size()) {
+            for (int i = 0; i < transited_state->words[0].size(); ++i) {
+              if (transited_state->words[0][i] !=
+                  transited_state->words[1][i]) {
+                return true;
+              }
+            }
+          } else {
+            return true;
+          }
+        } else {
+          if (transited_state->words_states[0]->id == 0 ||
+              transited_state->words_states[1]->id == 0) {
+            transited_state->words[0].clear();
+            transited_state->words[1].clear();
+          }
         }
       }
       break;
