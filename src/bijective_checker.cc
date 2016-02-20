@@ -29,6 +29,9 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   RemoveDeadTransitions(code_state_machine);
   RemoveBottlenecks();
 
+    WriteDeficitsStateMachine("/home/dmitry/dm.dot");
+  AlphabeticEncoder::WriteCodeStateMachine("/home/dmitry/sm.dot", code, code_state_machine);
+
   return !FindTargetLoop(code_state_machine);
 }
 
@@ -255,31 +258,33 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
       break;
     }
     case FOUND_LOOP: {
-      if (transited_state->words_states[0]->id != 0 ||
-          transited_state->words_states[1]->id != 0 || end_state_id == 0) {
-        states.push(transited_state);
-        if (transited_state->words_states[0]->id == end_state_id &&
-            transited_state->words_states[1]->id == end_state_id) {
-          if (transited_state->words[0].size() ==
-              transited_state->words[1].size()) {
-            for (int i = 0; i < transited_state->words[0].size(); ++i) {
-              if (transited_state->words[0][i] !=
-                  transited_state->words[1][i]) {
-                return true;
-              }
+      bool nontrivial_loop_found = false;
+      if (transited_state->words_states[0]->id == end_state_id &&
+          transited_state->words_states[1]->id == end_state_id) {
+        if (transited_state->words[0].size() ==
+            transited_state->words[1].size()) {
+          for (int i = 0; i < transited_state->words[0].size(); ++i) {
+            if (transited_state->words[0][i] !=
+                transited_state->words[1][i]) {
+              nontrivial_loop_found = true;
+              break;
             }
-          } else {
-            return true;
           }
         } else {
-          if (transited_state->words_states[0]->id == 0 ||
-              transited_state->words_states[1]->id == 0) {
-            transited_state->words[0].clear();
-            transited_state->words[1].clear();
-          }
+          nontrivial_loop_found = true;
+        }
+      }
+
+      if (!nontrivial_loop_found) {
+        if (transited_state->words_states[0]->id != 0 ||
+            transited_state->words_states[1]->id != 0) {
+          states.push(transited_state);
+        } else {
+          delete transited_state;
         }
       } else {
-        delete transited_state;
+        states.push(transited_state);
+        return true;
       }
       break;
     }
