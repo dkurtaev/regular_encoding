@@ -29,9 +29,6 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   RemoveDeadTransitions(code_state_machine);
   RemoveBottlenecks();
 
-    WriteDeficitsStateMachine("/home/dmitry/dm.dot");
-  AlphabeticEncoder::WriteCodeStateMachine("/home/dmitry/sm.dot", code, code_state_machine);
-
   return !FindTargetLoop(code_state_machine);
 }
 
