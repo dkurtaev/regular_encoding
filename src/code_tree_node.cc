@@ -9,15 +9,15 @@ CodeTreeNode::CodeTreeNode(CodeTreeNode* left,
 }
 
 
-CodeTreeNode* CodeTreeNode::GetLeft() {
+CodeTreeNode* CodeTreeNode::GetLeft() const {
   return left_;
 }
 
-CodeTreeNode* CodeTreeNode::GetRight() {
+CodeTreeNode* CodeTreeNode::GetRight() const {
   return right_;
 }
 
-ElementaryCode* CodeTreeNode::GetElemCode() {
+ElementaryCode* CodeTreeNode::GetElemCode() const {
   return elem_code_;
 }
 

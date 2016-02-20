@@ -1,21 +1,11 @@
-#include <sys/time.h>
-
 #include <vector>
-#include <iostream>
 #include <sstream>
 
 #include <gtest/gtest.h>
 
 #include "include/bijective_checker.h"
 #include "include/code_generator.h"
-
-static timeval last_log_time;
-static timeval current_time;
-#define LOG(text, period) \
-  gettimeofday(&current_time, 0); \
-  if (current_time.tv_sec - last_log_time.tv_sec >= period) { \
-    std::cout << text << std::endl; \
-    last_log_time = current_time; }
+#include "test/macros.h"
 
 static const unsigned kNumberGenerations = 25;
 
@@ -46,6 +36,10 @@ TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
         for (unsigned gen = 0; gen < kNumberGenerations; ++gen) {
           CodeGenerator::GenCode(L, M, N, code);
           ASSERT_FALSE(checker.IsBijective(code, state_machine));
+
+          std::ostringstream ss;
+          ss << "Processed M=" << M << ", N=" << N << ", L=" << L;
+          Log(ss.str(), 60);
         }
       }
     }
@@ -76,6 +70,10 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
               sum += 1 << (M - len);
             }
             ASSERT_LE(sum, 1 << M);
+
+            std::ostringstream ss;
+            ss << "Processed M=" << M << ", N=" << N << ", L=" << L;
+            Log(ss.str(), 60);
           }
         }
       }
@@ -104,7 +102,7 @@ TEST(BijectiveChecker, prefix_codes) {
 
             std::ostringstream ss;
             ss << "Processed M=" << M << ", N=" << N;
-            LOG(ss.str(), 60);
+            Log(ss.str(), 60);
           }
         }
       }

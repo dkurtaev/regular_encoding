@@ -31,12 +31,14 @@ class BijectiveChecker {
     State* deficit_state;
   };
 
-  void BuildDeficitsStateMachine();
+  void BuildDeficitsStateMachine(const CodeTree& code_tree);
 
   void AddIsotropicDeficits(int deficit_id,
+                            const CodeTree& code_tree,
                             std::queue<int>& deficits_up_to_build);
 
   void AddAntitropicDeficits(int deficit_id,
+                             const CodeTree& code_tree,
                              std::queue<int>& deficits_up_to_build);
 
   void LogDeficitsBuilding(int state_id_from,
@@ -67,7 +69,6 @@ class BijectiveChecker {
 
   std::vector<ElementaryCode*> code_;
   std::vector<Suffix*> code_suffixes_;
-  CodeTree* code_tree_;
   StateMachine* deficits_state_machine_;
 };
 
