@@ -5,9 +5,9 @@
 
 #include <iostream>
 
-static void Log(std::string text, int period = 0) {
+void Log(std::string text, int period = 0) {
   static timeval last_log_time;
-  static timeval current_time;
+  timeval current_time;
 
   gettimeofday(&current_time, 0);
   if (current_time.tv_sec - last_log_time.tv_sec >= period) {

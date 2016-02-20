@@ -38,8 +38,9 @@ TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
           ASSERT_FALSE(checker.IsBijective(code, state_machine));
 
           std::ostringstream ss;
-          ss << "Processed M=" << M << ", N=" << N << ", L=" << L;
-          Log(ss.str(), 60);
+          ss << "BijectiveChecker.all_words_codes_outside_LN_set: Processed M="
+             << M << ", N=" << N << ", L=" << L;
+          Log(ss.str(), 300);
         }
       }
     }
@@ -72,8 +73,9 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
             ASSERT_LE(sum, 1 << M);
 
             std::ostringstream ss;
-            ss << "Processed M=" << M << ", N=" << N << ", L=" << L;
-            Log(ss.str(), 60);
+            ss << "BijectiveChecker.all_words_codes_mcmillan: Processed M="
+               << M << ", N=" << N << ", L=" << L;
+            Log(ss.str(), 300);
           }
         }
       }
@@ -83,9 +85,9 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
 
 // Generating prefix codes and random state machine. Check that are bijective.
 TEST(BijectiveChecker, prefix_codes) {
-  static const unsigned kNumberCodeGens = 5;
+  static const unsigned kNumberCodeGens = 3;
   static const unsigned kMaxNumberStates = 5;
-  static const unsigned kNumberMachineGens = 5;
+  static const unsigned kNumberMachineGens = 3;
 
   std::vector<std::string> code;
   BijectiveChecker checker;
@@ -101,8 +103,9 @@ TEST(BijectiveChecker, prefix_codes) {
             ASSERT_TRUE(checker.IsBijective(code, state_machine));
 
             std::ostringstream ss;
-            ss << "Processed M=" << M << ", N=" << N;
-            Log(ss.str(), 60);
+            ss << "BijectiveChecker.prefix_codes: Processed M="
+               << M << ", N=" << N;
+            Log(ss.str(), 300);
           }
         }
       }

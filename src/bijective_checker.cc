@@ -96,7 +96,7 @@ void BijectiveChecker::AddIsotropicDeficits(
   std::string alpha_suffix_str = alpha_suffix->str();
   int alpha_suffix_length = alpha_suffix->length;
   const CodeTreeNode* code_tree_node = code_tree.GetRoot();
-  std::vector<ElementaryCode*> founded_elem_codes;
+  std::vector<ElementaryCode*> found_elem_codes;
   for (int i = 0; i < alpha_suffix_length; ++i) {
     if (alpha_suffix_str[i] == '0') {
       code_tree_node = code_tree_node->GetLeft();
@@ -107,19 +107,19 @@ void BijectiveChecker::AddIsotropicDeficits(
       break;
     }
     if (code_tree_node->GetElemCode() != 0) {
-      founded_elem_codes.push_back(code_tree_node->GetElemCode());
+      found_elem_codes.push_back(code_tree_node->GetElemCode());
     }
   }
 
-  for (int i = 0; i < founded_elem_codes.size(); ++i) {
+  for (int i = 0; i < found_elem_codes.size(); ++i) {
     int beta_suffix_idx = alpha_suffix->owners[0]->str.length() -
                           alpha_suffix->length +
-                          founded_elem_codes[i]->str.length();
+                          found_elem_codes[i]->str.length();
     Suffix* beta_suffix = alpha_suffix->owners[0]->suffixes[beta_suffix_idx];
     int state_id = (deficit_id < 0 ? -beta_suffix->id : beta_suffix->id);
     deficits_state_machine_->AddTransition(UnsignedDeficitId(deficit_id),
                                            UnsignedDeficitId(state_id),
-                                           founded_elem_codes[i]->id);
+                                           found_elem_codes[i]->id);
     deficits_up_to_build.push(state_id);
   }
 }
@@ -132,7 +132,7 @@ void BijectiveChecker::AddAntitropicDeficits(
   // Find all elementary codes with prefix [alpha].
   Suffix* alpha_suffix = code_suffixes_[abs(deficit_id)];
   CodeTreeNode* alpha_suffix_node = code_tree.Find(alpha_suffix->str());
-  std::vector<ElementaryCode*> founded_elem_codes;
+  std::vector<ElementaryCode*> found_elem_codes;
   if (alpha_suffix_node != 0) {
     std::queue<CodeTreeNode*> nodes;
     nodes.push(alpha_suffix_node);
@@ -142,25 +142,22 @@ void BijectiveChecker::AddAntitropicDeficits(
       ElementaryCode* node_elem_code = node->GetElemCode();
       CodeTreeNode* node_left = node->GetLeft();
       CodeTreeNode* node_right = node->GetRight();
-      if (node_elem_code)
-        founded_elem_codes.push_back(node_elem_code);
-      if (node_left)
-        nodes.push(node_left);
-      if (node_right)
-        nodes.push(node_right);
+      if (node_elem_code) found_elem_codes.push_back(node_elem_code);
+      if (node_left) nodes.push(node_left);
+      if (node_right) nodes.push(node_right);
     }
   }
 
-  for (int i = 0; i < founded_elem_codes.size(); ++i) {
+  for (int i = 0; i < found_elem_codes.size(); ++i) {
     // Suffixes ordered from largest to minimal.
-    Suffix* beta_suffix = founded_elem_codes[i]->suffixes[alpha_suffix->length];
+    Suffix* beta_suffix = found_elem_codes[i]->suffixes[alpha_suffix->length];
 
     // Let identity deficit is an isotropic deficit.
     if (beta_suffix->id != 0) {
       int state_id = (deficit_id < 0 ? beta_suffix->id : -beta_suffix->id);
       deficits_state_machine_->AddTransition(UnsignedDeficitId(deficit_id),
                                              UnsignedDeficitId(state_id),
-                                             founded_elem_codes[i]->id);
+                                             found_elem_codes[i]->id);
       deficits_up_to_build.push(state_id);
     }
   }
@@ -281,6 +278,8 @@ bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
             transited_state->words[1].clear();
           }
         }
+      } else {
+        delete transited_state;
       }
       break;
     }
