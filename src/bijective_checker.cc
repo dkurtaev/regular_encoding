@@ -9,8 +9,12 @@
 #include "include/alphabetic_encoder.h"
 
 bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
-                                   const StateMachine& code_state_machine) {
+                                   const StateMachine& code_state_machine,
+                                   std::vector<int>* first_bad_word,
+                                   std::vector<int>* second_bad_word) {
   Reset();
+  if (first_bad_word) first_bad_word->clear();
+  if (second_bad_word) second_bad_word->clear();
 
   code_.resize(code.size());
   for (int i = 0; i < code.size(); ++i) {
@@ -29,11 +33,10 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   RemoveDeadTransitions(code_state_machine);
   RemoveBottlenecks();
 
-
   if (DeficitsMachineIsTrivial()) {
     return true;
   } else {
-    return !FindTargetLoop(code_state_machine);
+    return !FindTargetLoop(code_state_machine, first_bad_word, second_bad_word);
   }
 }
 
@@ -168,7 +171,9 @@ void BijectiveChecker::AddAntitropicDeficits(
   }
 }
 
-bool BijectiveChecker::FindTargetLoop(const StateMachine& code_state_machine) {
+bool BijectiveChecker::FindTargetLoop(const StateMachine& code_state_machine,
+                                      std::vector<int>* first_bad_word,
+                                      std::vector<int>* second_bad_word) {
   const int n_code_sm_trans = code_state_machine.GetNumberTransitions();
   State* code_sm_start = code_state_machine.GetStartState();
   const int code_sm_end_id = code_state_machine.GetEndState()->id;
@@ -197,11 +202,17 @@ bool BijectiveChecker::FindTargetLoop(const StateMachine& code_state_machine) {
     loop_state = loop_states.front();
     State* deficit_state = loop_state->deficit_state;
     for (int i = 0; i < deficit_state->transitions_from.size(); ++i) {
-      bool target_loop_founded =
+      bool target_loop_found =
           ProcessLoopTransition(loop_state,
                                 deficit_state->transitions_from[i],
                                 loop_states, code_sm_end_id);
-      if (target_loop_founded) {
+      if (target_loop_found) {
+        if (first_bad_word != 0) {
+          *first_bad_word = loop_states.back()->words[0];
+        }
+        if (second_bad_word != 0) {
+          *second_bad_word = loop_states.back()->words[1];
+        }
         while (!loop_states.empty()) {
           delete loop_states.front();
           loop_states.pop();

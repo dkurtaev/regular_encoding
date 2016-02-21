@@ -14,7 +14,9 @@ class BijectiveChecker {
   BijectiveChecker();
 
   bool IsBijective(const std::vector<std::string>& code,
-                   const StateMachine& code_state_machine);
+                   const StateMachine& code_state_machine,
+                   std::vector<int>* first_bad_word = 0,
+                   std::vector<int>* second_bad_word = 0);
 
   void WriteDeficitsStateMachine(const std::string& file_path);
 
@@ -45,7 +47,9 @@ class BijectiveChecker {
                            int state_id_to,
                            ElementaryCode* elem_code);
 
-  bool FindTargetLoop(const StateMachine& code_state_machine);
+  bool FindTargetLoop(const StateMachine& code_state_machine,
+                      std::vector<int>* first_bad_word,
+                      std::vector<int>* second_bad_word);
 
   // Returns true if target loop founded.
   bool ProcessLoopTransition(LoopState* state,

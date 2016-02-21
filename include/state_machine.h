@@ -34,6 +34,8 @@ class StateMachine {
 
   int GetNumberTransitions() const;
 
+  bool IsRecognized(const std::vector<int> word) const;
+
   void WriteDot(const std::string& file_path,
                 const std::vector<std::string>& states_names,
                 const std::vector<std::string>& events_names) const;

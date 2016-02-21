@@ -128,3 +128,16 @@ void StateMachine::WriteDot(const std::string& file_path,
   file << "}";
   file.close();
 }
+
+bool StateMachine::IsRecognized(const std::vector<int> word) const {
+  State* state = states_[0];
+  for (int i = 0; i < word.size(); ++i) {
+    Transition* trans = state->GetTransition(word[i]);
+    if (trans != 0) {
+      state = trans->to;
+    } else {
+      return false;
+    }
+  }
+  return state == states_.back();
+}

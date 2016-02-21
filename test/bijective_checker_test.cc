@@ -112,3 +112,61 @@ TEST(BijectiveChecker, prefix_codes) {
     }
   }
 }
+
+TEST(BijectiveChecker, checker_output) {
+  static const unsigned kNumberCodeGens = 3;
+  static const unsigned kMaxNumberStates = 5;
+  static const unsigned kNumberMachineGens = 3;
+
+  std::vector<std::string> code;
+  BijectiveChecker checker;
+  StateMachine state_machine;
+  std::vector<int> first_bad_word;
+  std::vector<int> second_bad_word;
+  for (unsigned M = 2; M <= 5; ++M) {
+    unsigned N_max = CodeGenerator::MaxNumberElemCodes(M);
+    for (unsigned N = 2; N <= N_max; ++N) {
+      unsigned L_min = CodeGenerator::MinCodeLength(M, N);
+      unsigned L_max = CodeGenerator::MaxCodeLength(M, N);
+      for (unsigned L = L_min; L <= L_max; ++L) {
+        for (unsigned i = 0; i < kNumberCodeGens; ++i) {
+          CodeGenerator::GenCode(L, M, N, code);
+          for (int n_states = 1; n_states <= kMaxNumberStates; ++n_states) {
+            for (unsigned j = 0; j < kNumberMachineGens; ++j) {
+              CodeGenerator::GenStateMachine(N, n_states, &state_machine);
+              bool is_bijective = checker.IsBijective(code, state_machine,
+                                                      &first_bad_word,
+                                                      &second_bad_word);
+              if (!is_bijective) {
+                ASSERT_NE(first_bad_word.size(), 0);
+                ASSERT_NE(second_bad_word.size(), 0);
+
+                if (first_bad_word.size() == second_bad_word.size()) {
+                  int length = first_bad_word.size();
+                  bool words_are_different = false;
+                  for (int i = 0; i < length; ++i) {
+                    if (first_bad_word[i] != second_bad_word[i]) {
+                      words_are_different = true;
+                      break;
+                    }
+                  }
+                  ASSERT_TRUE(words_are_different);
+                }
+                ASSERT_TRUE(state_machine.IsRecognized(first_bad_word));
+                ASSERT_TRUE(state_machine.IsRecognized(second_bad_word));
+              } else {
+                ASSERT_EQ(first_bad_word.size(), 0);
+                ASSERT_EQ(second_bad_word.size(), 0);
+              }
+
+              std::ostringstream ss;
+              ss << "BijectiveChecker.checker_output: Processed M="
+                 << M << ", N=" << N << ", L=" << L;
+              Log(ss.str(), 300);
+            }
+          }
+        }
+      }
+    }
+  }
+}
