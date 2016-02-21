@@ -154,6 +154,16 @@ TEST(BijectiveChecker, checker_output) {
                 }
                 ASSERT_TRUE(state_machine.IsRecognized(first_bad_word));
                 ASSERT_TRUE(state_machine.IsRecognized(second_bad_word));
+
+                std::string first_word = "";
+                for (int i = 0; i < first_bad_word.size(); ++i) {
+                  first_word += code[first_bad_word[i]];
+                }
+                std::string second_word = "";
+                for (int i = 0; i < second_bad_word.size(); ++i) {
+                  second_word += code[second_bad_word[i]];
+                }
+                ASSERT_EQ(first_word, second_word);
               } else {
                 ASSERT_EQ(first_bad_word.size(), 0);
                 ASSERT_EQ(second_bad_word.size(), 0);
