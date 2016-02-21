@@ -29,6 +29,7 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   RemoveDeadTransitions(code_state_machine);
   RemoveBottlenecks();
 
+
   if (DeficitsMachineIsTrivial()) {
     return true;
   } else {

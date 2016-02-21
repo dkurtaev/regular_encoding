@@ -34,9 +34,6 @@ struct State {
 
   explicit State(unsigned id) : id(id) {}
 
-  // Returns state by event or 0 if transition not exists.
-  State* DoTransition(int event_id);
-
   Transition* GetTransition(int event_id);
 
   bool DelTransitionFrom(int id);
