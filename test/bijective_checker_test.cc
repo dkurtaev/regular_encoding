@@ -70,6 +70,12 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
               ASSERT_LE(len, M);
               sum += 1 << (M - len);
             }
+            if (sum > (1 << M)) {
+              for (int i = 0; i < N; ++i) {
+                std::cout << code[i] << ' ';
+              }
+              std::cout << std::endl;
+            }
             ASSERT_LE(sum, 1 << M);
 
             std::ostringstream ss;
