@@ -177,8 +177,12 @@ bool BijectiveChecker::FindTargetLoop(const StateMachine& code_state_machine) {
   // Add initial loop state at identity deficit and empty words.
   LoopState* loop_state = new LoopState();
   loop_state->deficits_trace.resize(n_deficits_sm_trans);
+  std::fill(loop_state->deficits_trace.begin(),
+            loop_state->deficits_trace.end(), false);
   for (int i = 0; i < 2; ++i) {
     loop_state->words_trace[i].resize(n_code_sm_trans);
+    std::fill(loop_state->words_trace[i].begin(),
+              loop_state->words_trace[i].end(), false);
     loop_state->words_states[i] = code_sm_start;
   }
   loop_state->deficit_state = identity_deficit;
@@ -327,8 +331,14 @@ void BijectiveChecker::Reset() {
     delete code_[i];
   }
   code_.clear();
+
+  for (int i = 0; i < code_suffixes_.size(); ++i) {
+    delete code_suffixes_[i];
+  }
   code_suffixes_.clear();
+
   delete deficits_state_machine_;
+  deficits_state_machine_ = 0;
 }
 
 void BijectiveChecker::WriteDeficitsStateMachine(const std::string& file_path) {

@@ -16,15 +16,15 @@ StateMachine::~StateMachine() {
 }
 
 void StateMachine::Clear() {
-  int n_states = states_.size();
-  for (int i = 0; i < n_states; ++i) {
+  n_states_ = states_.size();
+  for (int i = 0; i < n_states_; ++i) {
     delete states_[i];
   }
   states_.clear();
   n_states_ = 0;
 
-  int n_trans = transitions_.size();
-  for (int i = 0; i < n_trans; ++i) {
+  n_transitions_ = transitions_.size();
+  for (int i = 0; i < n_transitions_; ++i) {
     delete transitions_[i];
   }
   transitions_.clear();
