@@ -29,7 +29,11 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   RemoveDeadTransitions(code_state_machine);
   RemoveBottlenecks();
 
-  return !FindTargetLoop(code_state_machine);
+  if (DeficitsMachineIsTrivial()) {
+    return true;
+  } else {
+    return !FindTargetLoop(code_state_machine);
+  }
 }
 
 unsigned BijectiveChecker::UnsignedDeficitId(int id) {
@@ -427,4 +431,16 @@ void BijectiveChecker::RemoveBottlenecks() {
       deficits_state_machine_->DelState(i);
     }
   }
+}
+
+bool BijectiveChecker::DeficitsMachineIsTrivial() {
+  for (int i = 0; i < code_.size(); ++i) {
+    int deficit_id = UnsignedDeficitId(-code_[i]->suffixes[0]->id);
+    State* state = deficits_state_machine_->GetState(deficit_id);
+    if (state != 0 && (state->transitions_from.size() != 1 ||
+        state->transitions_from[0]->to->id != UnsignedDeficitId(0))) {
+      return false;
+    }
+  }
+  return true;
 }

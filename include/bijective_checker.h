@@ -57,6 +57,8 @@ class BijectiveChecker {
 
   void RemoveBottlenecks();
 
+  bool DeficitsMachineIsTrivial();
+
   void Reset();
 
   // From (-3 -2 -1 0 1 2 3)
