@@ -15,11 +15,11 @@ class CodeTreeNode {
 
   void SetElemCode(ElementaryCode* elem_code);
 
-  CodeTreeNode* GetLeft();
+  CodeTreeNode* GetLeft() const;
 
-  CodeTreeNode* GetRight();
+  CodeTreeNode* GetRight() const;
 
-  ElementaryCode* GetElemCode();
+  ElementaryCode* GetElemCode() const;
 
   ~CodeTreeNode();
 

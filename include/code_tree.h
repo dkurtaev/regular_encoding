@@ -18,9 +18,9 @@ class CodeTree {
 
   void Add(const std::vector<ElementaryCode*>& code);
 
-  CodeTreeNode* Find(const std::string& code);
+  CodeTreeNode* Find(const std::string& code) const;
 
-  CodeTreeNode* GetRoot();
+  CodeTreeNode* GetRoot() const;
 
  private:
   CodeTreeNode* root_;

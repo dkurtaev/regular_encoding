@@ -5,6 +5,7 @@
 
 #include <queue>
 #include <iostream>
+#include <algorithm>
 
 #include "include/alphabetic_encoder.h"
 #include "include/structures.h"
@@ -20,11 +21,7 @@ void CodeGenerator::GenCode(int code_length, int max_elem_code_length,
     if (code_lengths[i] != 0) {
       GenUniqueUnnegatives(pow(2, i + 1) - 1, code_lengths[i], &bin_elem_codes);
       for (int j = 0; j < code_lengths[i]; ++j) {
-        std::string elem_code = "";
-        for (int k = 0; k <= i; ++k) {
-          elem_code += (bin_elem_codes[j] >> k) & 1 ? '1' : '0';
-        }
-        code.push_back(elem_code);
+        code.push_back(CodeFromBinary(bin_elem_codes[j], i + 1));
       }
     }
   }
@@ -348,4 +345,42 @@ unsigned CodeGenerator::GetLNSetLimit(unsigned max_elem_code_length,
   unsigned log2 = ceil(log(n_elem_codes) / log(2));
   unsigned L_max = MaxCodeLength(max_elem_code_length, n_elem_codes);
   return std::min(n_elem_codes * (log2 + 1) - (1 << log2), L_max);
+}
+
+void CodeGenerator::GenPrefixCode(int max_elem_code_length, int n_elem_codes,
+                                  std::vector<std::string>& code) {
+  code.clear();
+  GenLeafs("", n_elem_codes, max_elem_code_length, code);
+}
+
+std::string CodeGenerator::CodeFromBinary(unsigned data, unsigned length) {
+  std::string elem_code = "";
+  for (int i = 0; i < length; ++i) {
+    elem_code += ((data >> i) & 1 ? '1' : '0');
+  }
+  return elem_code;
+}
+
+void CodeGenerator::GenLeafs(const std::string& node_code, int n_leafs,
+                             int max_depth, std::vector<std::string>& codes) {
+  if (max_depth == 0 || n_leafs == 1 && (rand() % 2)) {
+    codes.push_back(node_code);
+    return;
+  }
+
+  max_depth -= 1;
+  int n_left_leafs = rand(std::max(0, n_leafs - (1 << max_depth)),
+                          std::min(n_leafs, 1 << max_depth));
+  if (n_left_leafs != 0) {
+    GenLeafs(node_code + '0', n_left_leafs, max_depth, codes);
+  }
+
+  int n_right_leafs = n_leafs - n_left_leafs;
+  if (n_right_leafs != 0) {
+    GenLeafs(node_code + '1', n_right_leafs, max_depth, codes);
+  }
+
+  if (n_left_leafs == 0 && n_right_leafs == 0) {
+    codes.push_back(node_code);
+  }
 }

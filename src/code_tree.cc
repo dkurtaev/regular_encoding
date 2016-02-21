@@ -39,7 +39,7 @@ void CodeTree::Add(const std::vector<ElementaryCode*>& code) {
   }
 }
 
-CodeTreeNode* CodeTree::Find(const std::string& code) {
+CodeTreeNode* CodeTree::Find(const std::string& code) const {
   CodeTreeNode* current_node = root_;
   for (int i = 0; i < code.length(); ++i) {
     if (code[i] == '0') {
@@ -59,7 +59,7 @@ CodeTreeNode* CodeTree::Find(const std::string& code) {
   return current_node;
 }
 
-CodeTreeNode* CodeTree::GetRoot() {
+CodeTreeNode* CodeTree::GetRoot() const {
   return root_;
 }
 

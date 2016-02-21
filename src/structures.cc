@@ -29,15 +29,6 @@ Transition::Transition(unsigned id, State* from, State *to, unsigned event_id)
   to->transitions_to.push_back(this);
 }
 
-State* State::DoTransition(int event_id) {
-  for (int i = 0; i < transitions_from.size(); ++i) {
-    if (transitions_from[i]->event_id == event_id) {
-      return transitions_from[i]->to;
-    }
-  }
-  return 0;
-}
-
 Transition* State::GetTransition(int event_id) {
   for (int i = 0; i < transitions_from.size(); ++i) {
     if (transitions_from[i]->event_id == event_id) {

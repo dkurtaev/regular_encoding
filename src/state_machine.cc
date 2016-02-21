@@ -4,8 +4,6 @@
 #include <iostream>
 
 StateMachine::StateMachine(int n_states) {
-  n_states_ = 0;
-  n_transitions_ = 0;
   if (n_states != 0) {
     AddStates(n_states);
   }
@@ -21,21 +19,19 @@ void StateMachine::Clear() {
     delete states_[i];
   }
   states_.clear();
-  n_states_ = 0;
 
-  int n_trans = transitions_.size();
-  for (int i = 0; i < n_trans; ++i) {
+  int n_transitions = transitions_.size();
+  for (int i = 0; i < n_transitions; ++i) {
     delete transitions_[i];
   }
   transitions_.clear();
-  n_transitions_ = 0;
 }
 
 void StateMachine::AddStates(int n_states) {
+  int offset = states_.size();
   for (int i = 0; i < n_states; ++i) {
-    states_.push_back(new State(i));
+    states_.push_back(new State(i + offset));
   }
-  n_states_ += n_states;
 }
 
 void StateMachine::AddTransition(unsigned from_id, unsigned to_id,
@@ -45,7 +41,6 @@ void StateMachine::AddTransition(unsigned from_id, unsigned to_id,
                                      states_[to_id],
                                      event_id);
   transitions_.push_back(trans);
-  ++n_transitions_;
 }
 
 void StateMachine::DelTransition(unsigned id) {
@@ -54,7 +49,6 @@ void StateMachine::DelTransition(unsigned id) {
   trans->to->DelTransitionTo(id);
   delete trans;
   transitions_[id] = 0;
-  --n_transitions_;
 }
 
 void StateMachine::DelState(unsigned id) {
@@ -69,7 +63,6 @@ void StateMachine::DelState(unsigned id) {
   for (int i = 0; i < ids.size(); ++i) {
     DelTransition(ids[i]);
   }
-  --n_states_;
   delete state;
   states_[id] = 0;
 }
@@ -87,11 +80,11 @@ State* StateMachine::GetState(int id) const {
 }
 
 int StateMachine::GetNumberStates() const {
-  return n_states_;
+  return states_.size();
 }
 
 int StateMachine::GetNumberTransitions() const {
-  return n_transitions_;
+  return transitions_.size();
 }
 
 void StateMachine::WriteDot(const std::string& file_path,

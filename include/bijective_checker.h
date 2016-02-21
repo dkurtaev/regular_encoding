@@ -19,26 +19,26 @@ class BijectiveChecker {
   void WriteDeficitsStateMachine(const std::string& file_path);
 
  private:
+  enum WordLocation { UPPER, LOWER };
   struct LoopState {
     // Visited transitions in deficits state machine.
     std::vector<bool> deficits_trace;
     // Visited transitions in code state machine for upper word.
-    std::vector<bool> upper_word_trace;
+    std::vector<bool> words_trace[2];
     // Visited transitions in code state machine for upper word.
-    std::vector<bool> lower_word_trace;
-    std::vector<int> upper_word;
-    std::vector<int> lower_word;
-    State* upper_word_state;
-    State* lower_word_state;
+    std::vector<int> words[2];
+    State* words_states[2];
     State* deficit_state;
   };
 
-  void BuildDeficitsStateMachine();
+  void BuildDeficitsStateMachine(const CodeTree& code_tree);
 
   void AddIsotropicDeficits(int deficit_id,
+                            const CodeTree& code_tree,
                             std::queue<int>& deficits_up_to_build);
 
   void AddAntitropicDeficits(int deficit_id,
+                             const CodeTree& code_tree,
                              std::queue<int>& deficits_up_to_build);
 
   void LogDeficitsBuilding(int state_id_from,
@@ -57,6 +57,8 @@ class BijectiveChecker {
 
   void RemoveBottlenecks();
 
+  bool DeficitsMachineIsTrivial();
+
   void Reset();
 
   // From (-3 -2 -1 0 1 2 3)
@@ -69,7 +71,6 @@ class BijectiveChecker {
 
   std::vector<ElementaryCode*> code_;
   std::vector<Suffix*> code_suffixes_;
-  CodeTree* code_tree_;
   StateMachine* deficits_state_machine_;
 };
 
