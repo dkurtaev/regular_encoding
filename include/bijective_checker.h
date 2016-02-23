@@ -21,12 +21,9 @@ class BijectiveChecker {
   void WriteDeficitsStateMachine(const std::string& file_path);
 
  private:
-  // enum WordLocation { UPPER, LOWER };
   struct LoopState {
     std::vector<bool> deficits_transitions_trace;
-    // std::vector<bool> words_trace[2];
     std::vector<int> words[2];
-    // State* words_states[2];
     State* deficit_state;
   };
 
@@ -40,33 +37,15 @@ class BijectiveChecker {
                              const CodeTree& code_tree,
                              std::queue<int>& deficits_up_to_build);
 
-  void LogDeficitsBuilding(int state_id_from,
-                           int state_id_to,
-                           ElementaryCode* elem_code);
-
-  // bool FindTargetLoop(const StateMachine& code_state_machine,
-  //                     std::vector<int>* first_bad_word,
-  //                     std::vector<int>* second_bad_word);
-
-  bool AlternativeFindTargetLoop(const StateMachine& code_state_machine,
-                                 std::vector<int>* first_bad_word,
-                                 std::vector<int>* second_bad_word);
+  bool FindTargetLoop(const StateMachine& code_state_machine,
+                      std::vector<int>* first_bad_word,
+                      std::vector<int>* second_bad_word);
 
   bool ProcessLoopState(const StateMachine& code_state_machine,
                         LoopState* loop_state,
                         std::queue<LoopState*>& loop_states);
 
-  // Returns true if target loop founded.
-  // bool ProcessLoopTransition(LoopState* state,
-  //                            Transition* def_transition,
-  //                            std::queue<LoopState*>& states,
-  //                            unsigned end_state_id);
-
-  // void RemoveDeadTransitions(const StateMachine& code_state_machine);
-
   void RemoveBottlenecks();
-
-  // bool DeficitsMachineIsTrivial();
 
   void Reset();
 
