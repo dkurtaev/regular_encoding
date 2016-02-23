@@ -40,7 +40,7 @@ TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
           std::ostringstream ss;
           ss << "BijectiveChecker.all_words_codes_outside_LN_set: Processed M="
              << M << ", N=" << N << ", L=" << L;
-          Log(ss.str(), 300);
+          Log(ss.str(), 10);
         }
       }
     }
@@ -71,12 +71,11 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
               sum += 1 << (M - len);
             }
             ASSERT_LE(sum, 1 << M);
-
-            std::ostringstream ss;
-            ss << "BijectiveChecker.all_words_codes_mcmillan: Processed M="
-               << M << ", N=" << N << ", L=" << L;
-            Log(ss.str(), 300);
           }
+          std::ostringstream ss;
+          ss << "BijectiveChecker.all_words_codes_mcmillan: Processed M="
+             << M << ", N=" << N << ", L=" << L;
+          Log(ss.str(), 0);
         }
       }
     }
@@ -105,7 +104,7 @@ TEST(BijectiveChecker, prefix_codes) {
             std::ostringstream ss;
             ss << "BijectiveChecker.prefix_codes: Processed M="
                << M << ", N=" << N;
-            Log(ss.str(), 300);
+            Log(ss.str(), 10);
           }
         }
       }
@@ -152,6 +151,14 @@ TEST(BijectiveChecker, checker_output) {
                   }
                   ASSERT_TRUE(words_are_different);
                 }
+                for (int i = 0; i < first_bad_word.size(); ++i) {
+                  std::cout << code[first_bad_word[i]] <<'.';
+                }
+                std::cout << '|';
+                 for (int i = 0; i < second_bad_word.size(); ++i) {
+                  std::cout << code[second_bad_word[i]] <<'.';
+                }
+                std::cout << std::endl;
                 ASSERT_TRUE(state_machine.IsRecognized(first_bad_word));
                 ASSERT_TRUE(state_machine.IsRecognized(second_bad_word));
 

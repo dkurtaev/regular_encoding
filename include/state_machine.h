@@ -34,13 +34,33 @@ class StateMachine {
 
   int GetNumberTransitions() const;
 
-  bool IsRecognized(const std::vector<int> word) const;
+  bool IsRecognized(const std::vector<int>& word) const;
+
+  bool FindContext(std::vector<int>& first_substr,
+                   std::vector<int>& second_substr) const;
 
   void WriteDot(const std::string& file_path,
                 const std::vector<std::string>& states_names,
                 const std::vector<std::string>& events_names) const;
 
  private:
+  typedef std::pair<State*, State*> StatesPair;
+
+  bool FindSubwords(const std::vector<int>& word,
+                    std::vector<StatesPair>& pairs) const;
+
+  bool FindAnyPath(int from, int to, std::vector<int>& word) const;
+
+  // Find set of characters which achieves end state for both input states.
+  bool FindEndOfContext(State* first_state, State* second_state,
+                        std::vector<int>& end_context) const;
+
+  inline void InsertBack(std::vector<int>& dst,
+                         const std::vector<int>& src) const;
+
+  inline void InsertFront(const std::vector<int>& src,
+                          std::vector<int>& dst) const;
+
   std::vector<State*> states_;
   std::vector<Transition*> transitions_;
 };

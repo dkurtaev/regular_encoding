@@ -1,6 +1,7 @@
 #include "include/state_machine.h"
 
 #include <fstream>
+#include <queue>
 #include <iostream>
 
 StateMachine::StateMachine(int n_states) {
@@ -129,7 +130,7 @@ void StateMachine::WriteDot(const std::string& file_path,
   file.close();
 }
 
-bool StateMachine::IsRecognized(const std::vector<int> word) const {
+bool StateMachine::IsRecognized(const std::vector<int>& word) const {
   State* state = states_[0];
   for (int i = 0; i < word.size(); ++i) {
     Transition* trans = state->GetTransition(word[i]);
@@ -140,4 +141,212 @@ bool StateMachine::IsRecognized(const std::vector<int> word) const {
     }
   }
   return state == states_.back();
+}
+
+bool StateMachine::FindSubwords(
+                        const std::vector<int>& word,
+                        std::vector<StatesPair>& pairs) const {
+  for (int i = 0; i < word.size(); ++i) {
+    if (!pairs.empty()) {
+      const int n_traces = pairs.size();
+      for (int j = 0; j < n_traces; ++j) {
+        StatesPair trace = pairs.front();
+        pairs.erase(pairs.begin());
+
+        Transition* trans = trace.second->GetTransition(word[i]);
+        if (trans != 0) {
+          pairs.push_back(StatesPair(trace.first, trans->to));
+        }
+      }
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool StateMachine::FindContext(std::vector<int>& first_substr,
+                               std::vector<int>& second_substr) const {
+  // Track first subword.
+  std::vector<StatesPair> first_traces(states_.size());
+  for (int i = 0; i < states_.size(); ++i) {
+    first_traces[i] = StatesPair(states_[i], states_[i]);
+  }
+  bool found = FindSubwords(first_substr, first_traces);
+
+  if (!found) return false;
+
+  std::vector<StatesPair> second_traces(first_traces.size());
+  for (int i = 0; i < first_traces.size(); ++i) {
+    StatesPair pair = first_traces[i];
+    pair.second = pair.first;
+    second_traces[i] = pair;
+  }
+  found = FindSubwords(second_substr, second_traces);
+
+  if (!found) return false;
+
+  // Find intersections by first state.
+  int idx = 0;
+  std::vector<int> context;
+  for (int i = 0; i < second_traces.size(); ++i) {
+    for (int j = idx; j < first_traces.size(); ++j) {
+      if (first_traces[i].first->id == second_traces[i].first->id) {
+        bool found = false;
+
+        // Find ways with similar characters from .second states to end state.
+        if (first_traces[i].second->id == second_traces[i].second->id) {
+          if (first_traces[i].second->id != states_.back()->id) {
+            found = FindAnyPath(first_traces[i].second->id, states_.back()->id,
+                                context);
+          }
+        } else {
+          found = FindEndOfContext(first_traces[i].second, 
+                                   second_traces[i].second, context);
+        }
+
+
+        // Find way from start state to .first
+        if (found) {
+          InsertBack(first_substr, context);
+          InsertBack(second_substr, context);
+          if (first_traces[i].first->id != 0) {
+            FindAnyPath(0, first_traces[i].first->id, context);
+            InsertFront(context, first_substr);
+            InsertFront(context, second_substr);
+          }
+          return true;
+        }
+      }
+      ++idx;
+    }
+  }
+  return false;
+}
+
+bool StateMachine::FindAnyPath(int from, int to, std::vector<int>& word) const {
+  word.clear();
+  std::vector<bool> visited_states(states_.size(), false);
+  visited_states[from] = true;
+
+  std::queue<std::vector<int>* > paths;
+  std::queue<State*> states;
+  paths.push(new std::vector<int>());
+  states.push(states_[from]);
+
+  do {
+    std::vector<int>* path = paths.front();
+    State* state = states.front();
+
+    for (int i = 0; i < state->transitions_from.size(); ++i) {
+      Transition* trans = state->transitions_from[i];
+      State* trans_to = trans->to;
+
+      if (trans_to->id == to) {
+        word.resize(path->size());
+        std::copy(path->begin(), path->end(), word.begin());
+        word.push_back(trans->event_id);
+
+        while (!paths.empty()) {
+          delete paths.front();
+          paths.pop();
+        }
+        return true;
+      } else {
+        if (!visited_states[trans_to->id]) {
+          visited_states[trans_to->id] = true;
+          states.push(trans_to);
+          std::vector<int>* new_path = new std::vector<int>(*path);
+          new_path->push_back(trans->event_id);
+          paths.push(new_path);
+        }
+      }
+    }
+
+    delete path;
+    paths.pop();
+    states.pop();
+  } while (!paths.empty());
+  return false;
+}
+
+bool StateMachine::FindEndOfContext(State* first_state,
+                                    State* second_state,
+                                    std::vector<int>& end_context) const {
+  end_context.clear();
+  std::queue<std::vector<int>* > contexts;
+  std::queue<std::vector<bool>* > used_transitions;
+  std::queue<StatesPair> states;
+
+  states.push(StatesPair(first_state, second_state));
+  contexts.push(new std::vector<int>());
+  used_transitions.push(new std::vector<bool>(transitions_.size(), false));
+
+  do {
+    std::vector<int>* context = contexts.front();
+    std::vector<bool>* transitions = used_transitions.front();
+    first_state = states.front().first;
+    second_state = states.front().second;
+
+    if (first_state->id != second_state->id) {
+      for (int i = 0; i < first_state->transitions_from.size(); ++i) {
+        Transition* first_trans = first_state->transitions_from[i];
+        const int event_id = first_trans->event_id;
+        Transition* second_trans = second_state->GetTransition(event_id);
+        if (second_trans != 0 && (!transitions->operator[](first_trans->id) ||
+                                  !transitions->operator[](second_trans->id))) {
+          std::vector<bool>* new_trans = new std::vector<bool>(*transitions);
+          new_trans->operator[](first_trans->id) = true;
+          new_trans->operator[](second_trans->id) = true;
+          used_transitions.push(new_trans);
+
+          states.push(StatesPair(first_trans->to, second_trans->to));
+
+          std::vector<int>* new_context = new std::vector<int>(*context);
+          new_context->push_back(event_id);
+          contexts.push(new_context);
+        }
+      }
+    } else {
+      bool found = false;
+      if (first_state->id != states_.back()->id) {
+        found = FindAnyPath(first_state->id, states_.back()->id, end_context);
+      } else {
+        end_context.resize(context->size());
+        std::copy(context->begin(), context->end(), end_context.begin());
+        found = true;
+      }
+      if (found) {
+        while (!contexts.empty()) {
+          delete contexts.front();
+          contexts.pop();
+          delete used_transitions.front();
+          used_transitions.pop();
+        }
+        return true;
+      }
+    }
+    delete context;
+    delete transitions;
+    contexts.pop();
+    used_transitions.pop();
+    states.pop();
+  } while(!states.empty());
+  return false;
+}
+
+void StateMachine::InsertBack(std::vector<int>& dst,
+                              const std::vector<int>& src) const {
+  if (src.size() != 0) {
+    dst.reserve(dst.size() + src.size());
+    dst.insert(dst.end(), src.begin(), src.end());
+  }
+}
+
+void StateMachine::InsertFront(const std::vector<int>& src,
+                               std::vector<int>& dst) const {
+  if (src.size() != 0) {
+    dst.reserve(dst.size() + src.size());
+    dst.insert(dst.begin(), src.begin(), src.end());
+  }
 }

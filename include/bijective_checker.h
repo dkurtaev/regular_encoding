@@ -21,15 +21,12 @@ class BijectiveChecker {
   void WriteDeficitsStateMachine(const std::string& file_path);
 
  private:
-  enum WordLocation { UPPER, LOWER };
+  // enum WordLocation { UPPER, LOWER };
   struct LoopState {
-    // Visited transitions in deficits state machine.
-    std::vector<bool> deficits_trace;
-    // Visited transitions in code state machine for upper word.
-    std::vector<bool> words_trace[2];
-    // Visited transitions in code state machine for upper word.
+    std::vector<bool> deficits_transitions_trace;
+    // std::vector<bool> words_trace[2];
     std::vector<int> words[2];
-    State* words_states[2];
+    // State* words_states[2];
     State* deficit_state;
   };
 
@@ -47,21 +44,29 @@ class BijectiveChecker {
                            int state_id_to,
                            ElementaryCode* elem_code);
 
-  bool FindTargetLoop(const StateMachine& code_state_machine,
-                      std::vector<int>* first_bad_word,
-                      std::vector<int>* second_bad_word);
+  // bool FindTargetLoop(const StateMachine& code_state_machine,
+  //                     std::vector<int>* first_bad_word,
+  //                     std::vector<int>* second_bad_word);
+
+  bool AlternativeFindTargetLoop(const StateMachine& code_state_machine,
+                                 std::vector<int>* first_bad_word,
+                                 std::vector<int>* second_bad_word);
+
+  bool ProcessLoopState(const StateMachine& code_state_machine,
+                        LoopState* loop_state,
+                        std::queue<LoopState*>& loop_states);
 
   // Returns true if target loop founded.
-  bool ProcessLoopTransition(LoopState* state,
-                             Transition* def_transition,
-                             std::queue<LoopState*>& states,
-                             unsigned end_state_id);
+  // bool ProcessLoopTransition(LoopState* state,
+  //                            Transition* def_transition,
+  //                            std::queue<LoopState*>& states,
+  //                            unsigned end_state_id);
 
-  void RemoveDeadTransitions(const StateMachine& code_state_machine);
+  // void RemoveDeadTransitions(const StateMachine& code_state_machine);
 
-  void RemoveBottlenecks();
+  // void RemoveBottlenecks();
 
-  bool DeficitsMachineIsTrivial();
+  // bool DeficitsMachineIsTrivial();
 
   void Reset();
 
