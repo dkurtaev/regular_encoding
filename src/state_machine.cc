@@ -199,6 +199,8 @@ bool StateMachine::FindContext(std::vector<int>& first_substr,
           if (first_traces[i].second->id != states_.back()->id) {
             found = FindAnyPath(first_traces[i].second->id, states_.back()->id,
                                 context);
+          } else {
+            found = true;
           }
         } else {
           found = FindEndOfContext(first_traces[i].second, 
@@ -312,11 +314,10 @@ bool StateMachine::FindEndOfContext(State* first_state,
       if (first_state->id != states_.back()->id) {
         found = FindAnyPath(first_state->id, states_.back()->id, end_context);
       } else {
-        end_context.resize(context->size());
-        std::copy(context->begin(), context->end(), end_context.begin());
         found = true;
       }
       if (found) {
+        InsertFront(*context, end_context);
         while (!contexts.empty()) {
           delete contexts.front();
           contexts.pop();

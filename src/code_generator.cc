@@ -214,6 +214,7 @@ void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
 
   std::queue<int> states_from;
   states_from.push(0);
+  state_is_visited[0] = true;
   do {
     int state_from_idx = states_from.front();
     states_from.pop();
