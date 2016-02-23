@@ -315,7 +315,7 @@ void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
         if (i == unused_chars[j][k]) {
           states_with_unused_char.push_back(j);
         } else {
-          if (i < unused_chars[j][j]) {
+          if (i < unused_chars[j][k]) {
             break;
           }
         }
