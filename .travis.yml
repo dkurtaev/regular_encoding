@@ -9,6 +9,6 @@ script:
   - mkdir build
   - cd build
   - cmake .. && make
-  - ./bin/code_generator_test
-  - ./bin/bijective_checker_test
+#  - ./bin/code_generator_test
+  - gdb -ex 'run' -ex 'backtrace' ./bin/bijective_checker_test
   
