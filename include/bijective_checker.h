@@ -64,7 +64,7 @@ class BijectiveChecker {
 
   // void RemoveDeadTransitions(const StateMachine& code_state_machine);
 
-  // void RemoveBottlenecks();
+  void RemoveBottlenecks();
 
   // bool DeficitsMachineIsTrivial();
 

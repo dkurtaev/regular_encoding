@@ -30,6 +30,7 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   CodeTree code_tree(code_);
 
   BuildDeficitsStateMachine(code_tree);
+  RemoveBottlenecks();
   // RemoveDeadTransitions(code_state_machine);
   // RemoveBottlenecks();
 
@@ -38,8 +39,6 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   // } else {
   //   return !FindTargetLoop(code_state_machine, first_bad_word, second_bad_word);
   // }
-  WriteDeficitsStateMachine("/home/dmitry/dm.dot");
-  AlphabeticEncoder::WriteCodeStateMachine("/home/dmitry/sm.dot", code, code_state_machine);
   return !AlternativeFindTargetLoop(code_state_machine, first_bad_word, second_bad_word);
 }
 
@@ -424,29 +423,29 @@ void BijectiveChecker::WriteDeficitsStateMachine(const std::string& file_path) {
 //   }
 // }
 
-// void BijectiveChecker::RemoveBottlenecks() {
-//   const int n_states = deficits_state_machine_->GetNumberStates();
-//   std::queue<State*> states;
-//   states.push(deficits_state_machine_->GetState(UnsignedDeficitId(0)));
+void BijectiveChecker::RemoveBottlenecks() {
+  const int n_states = deficits_state_machine_->GetNumberStates();
+  std::queue<State*> states;
+  states.push(deficits_state_machine_->GetState(UnsignedDeficitId(0)));
 
-//   std::vector<bool> achievable(n_states, false);
-//   while (!states.empty()) {
-//     State* state = states.front();
-//     states.pop();
-//     achievable[state->id] = true;
-//     for (int i = 0; i < state->transitions_to.size(); ++i) {
-//       State* state_from = state->transitions_to[i]->from;
-//       if (!achievable[state_from->id]) {
-//         states.push(state_from);
-//       }
-//     }
-//   }
-//   for (int i = 0; i < n_states; ++i) {
-//     if (!achievable[i]) {
-//       deficits_state_machine_->DelState(i);
-//     }
-//   }
-// }
+  std::vector<bool> achievable(n_states, false);
+  while (!states.empty()) {
+    State* state = states.front();
+    states.pop();
+    achievable[state->id] = true;
+    for (int i = 0; i < state->transitions_to.size(); ++i) {
+      State* state_from = state->transitions_to[i]->from;
+      if (!achievable[state_from->id]) {
+        states.push(state_from);
+      }
+    }
+  }
+  for (int i = 0; i < n_states; ++i) {
+    if (!achievable[i]) {
+      deficits_state_machine_->DelState(i);
+    }
+  }
+}
 
 // bool BijectiveChecker::DeficitsMachineIsTrivial() {
 //   for (int i = 0; i < code_.size(); ++i) {
@@ -525,14 +524,18 @@ bool BijectiveChecker::ProcessLoopState(const StateMachine& code_state_machine,
         } 
         new_loop_state->words[word_id].push_back(trans->event_id);
         new_loop_state->deficit_state = to;
-        loop_states.push(new_loop_state);
 
         if (to->id == identity_deficit_id) {
           if (code_state_machine.FindContext(new_loop_state->words[0],
                                              new_loop_state->words[1])) {
+            loop_states.push(new_loop_state);
             delete loop_state;
             return true;
+          } else {
+            delete new_loop_state;
           }
+        } else {
+          loop_states.push(new_loop_state);
         }
       }
     }
