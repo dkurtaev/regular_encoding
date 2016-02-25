@@ -21,12 +21,6 @@ class BijectiveChecker {
   void WriteDeficitsStateMachine(const std::string& file_path);
 
  private:
-  struct LoopState {
-    std::vector<bool> deficits_transitions_trace;
-    std::vector<int> words[2];
-    State* deficit_state;
-  };
-
   void BuildDeficitsStateMachine(const CodeTree& code_tree);
 
   void AddIsotropicDeficits(int deficit_id,
@@ -41,13 +35,15 @@ class BijectiveChecker {
                       std::vector<int>* first_bad_word,
                       std::vector<int>* second_bad_word);
 
-  bool ProcessLoopState(const StateMachine& code_state_machine,
-                        LoopState* loop_state,
-                        std::queue<LoopState*>& loop_states);
+  bool ProcessNextPath(const StateMachine& code_state_machine,
+                       std::queue<std::vector<int>* >& paths);
 
   void RemoveBottlenecks();
 
   void Reset();
+
+  void CollectWords(const std::vector<int>& path, std::vector<int>& first_word,
+                    std::vector<int>& second_word);
 
   // From (-3 -2 -1 0 1 2 3)
   // To (0 1 2 3 4 5 6 7)
