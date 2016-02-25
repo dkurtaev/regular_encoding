@@ -192,150 +192,79 @@ void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
   state_machine->Clear();
   state_machine->AddStates(n_states);
 
-  // We need use state machines with exists ways from start state to all states.
-  // Track this relations for keep all states are visited.
-  // |I| - number of states
-  // N - number of characters
-  //        | to                                     |
-  // | from |          0|          1| ...|      |I|-1|
-  // |------|-----------|-----------|----|-----------|
-  // |     0| {0/../N-1}| {0/../N-1}| ...| {0/../N-1}|
-  // |     1| {0/../N-1}| {0/../N-1}| ...| {0/../N-1}|
-  // |   ...|        ...|        ...| ...|        ...|
-  // | |I|-1| {0/../N-1}| {0/../N-1}| ...| {0/../N-1}|
-  std::vector<int> transitions[n_states][n_states];
   std::vector<int> unused_chars[n_states];
+  unused_chars[0].resize(n_elem_codes);
+  for (int i = 0; i < n_elem_codes; ++i) {
+    unused_chars[0][i] = i;
+  }
+  for (int i = 1; i < n_states; ++i) {
+    unused_chars[i].resize(n_elem_codes);
+    std::copy(unused_chars[0].begin(), unused_chars[0].end(),
+              unused_chars[i].begin());
+  }
 
-  std::vector<int> visited_states;
-  std::vector<bool> state_is_visited(n_states, false);
-
-  // We need use all characters at least once.
+  // Make all states are visited.
+  std::vector<int> visited_states(1, 0);
   std::vector<bool> char_is_used(n_elem_codes, false);
+  int n_used_chars = 0;
+  for (int i = 1; i < n_states; ++i) {
+    std::vector<int>::iterator from_it = visited_states.begin() +
+                                         rand() % visited_states.size();
+    int from_idx = *from_it;
+    std::vector<int>::iterator char_it = unused_chars[from_idx].begin() +
+                                         rand() % unused_chars[from_idx].size();
+    int char_idx = *char_it;
 
-  std::queue<int> states_from;
-  states_from.push(0);
-  state_is_visited[0] = true;
-  do {
-    int state_from_idx = states_from.front();
-    states_from.pop();
-    for (int char_idx = 0; char_idx < n_elem_codes; ++char_idx) {
+    state_machine->AddTransition(from_idx, i, char_idx);
+    if (!char_is_used[char_idx]) {
+      char_is_used[char_idx] = true;
+      ++n_used_chars;
+    }
+    unused_chars[from_idx].erase(char_it);
+
+    if (unused_chars[from_idx].empty()) {
+      visited_states.erase(from_it);
+    }
+    visited_states.push_back(i);
+  }
+
+  // Random transitions.
+  for (int i = 0; i < visited_states.size(); ++i) {
+    const int from_idx = visited_states[i];
+    for (int j = 0; j < unused_chars[from_idx].size(); ++j) {
       if (rand() % 2) {
-        // Use character [char_idx] as transition event
-        int state_to_idx = rand() % n_states;
-        transitions[state_from_idx][state_to_idx].push_back(char_idx);
-        if (!state_is_visited[state_to_idx]) {
-          state_is_visited[state_to_idx] = true;
-          states_from.push(state_to_idx);
-        }
+        const int char_idx = unused_chars[from_idx][j];
+        state_machine->AddTransition(from_idx, rand() % n_states, char_idx);
         if (!char_is_used[char_idx]) {
           char_is_used[char_idx] = true;
+          ++n_used_chars;
         }
-      } else {
-        unused_chars[state_from_idx].push_back(char_idx);
-      }
-    }
-    visited_states.push_back(state_from_idx);
-  } while (!states_from.empty());
 
-  // Check states to visited.
-  std::vector<int> dublicated_transitions[n_states];
-  for (int i = 0; i < n_states; ++i) {
-    for (int j = 0; j < n_states; ++j) {
-      if (transitions[i][j].size() > 1) {
-        dublicated_transitions[i].push_back(j);
+        unused_chars[from_idx].erase(unused_chars[from_idx].begin() + j);
+        if (unused_chars[from_idx].empty()) {
+          visited_states.erase(visited_states.begin() + i);
+          --i;
+        }
+        --j;
       }
     }
   }
-  for (int i = 0; i < n_states; ++i) {
-    if (!state_is_visited[i]) {
-      for (int char_idx = 0; char_idx < n_elem_codes; ++char_idx) {
-        unused_chars[i].push_back(char_idx);
-      }
-      // Founded not visited state. We need add transition from already
-      // visited state.
-      do {
-        std::vector<int>::iterator it = visited_states.begin() +
-                                        rand() % visited_states.size();
-        int idx = *it;
 
-        // We have three cases:
-        // 1) Visited state has unused characters.
-        //    We can use it for creating new transition.
-        // 2) Visited state has dublicated transitions to some states
-        //    (different characters to same state). We can use one character
-        //    and redirect transition to unvisited state. This is not breaks
-        //    exists visiting (more than two transitions have).
-        // 3) Visited state has not unused characters and all transitions
-        //    from it are to different states. We need to delete this state
-        //    as useless for current procedure.
-        bool has_chars = unused_chars[idx].size() != 0;
-        bool has_doubles = dublicated_transitions[idx].size() != 0;
-
-        if (has_chars || has_doubles) {
-          if (has_chars && ((rand() % 2) || !has_doubles)) {
-            // Use unused character.
-            std::vector<int>::iterator char_it =
-                unused_chars[idx].begin() + rand() % unused_chars[idx].size();
-            transitions[idx][i].push_back(*char_it);
-            if (!char_is_used[*char_it]) {
-              char_is_used[*char_it] = true;
-            }
-            unused_chars[idx].erase(char_it);
-            break;
-          } else {
-            // Use dublicated transition.
-            std::vector<int>::iterator trans_it =
-                dublicated_transitions[idx].begin() +
-                rand() % dublicated_transitions[idx].size();
-            std::vector<int>::iterator char_it =
-                transitions[idx][*trans_it].begin() +
-                rand() % transitions[idx][*trans_it].size();
-            transitions[idx][i].push_back(*char_it);
-            transitions[idx][*trans_it].erase(char_it);
-            if (transitions[idx][*trans_it].size() == 1) {
-              dublicated_transitions[idx].erase(trans_it);
-            }
-            break;
-          }
-        } else {
-          // This state is useless. Delete it.
-          visited_states.erase(it);
-        }
-      } while (true);
-      visited_states.push_back(i);
-    }
-  }
-
-  // Check usage of all character.
-  for (int i = 0; i < n_elem_codes; ++i) {
-    if (!char_is_used[i]) {
-      std::vector<int> states_with_unused_char;
-      for (int j = 0; j < n_states; ++j) {
-        for (int k = 0; k < unused_chars[j].size(); ++k)
-        if (i == unused_chars[j][k]) {
-          states_with_unused_char.push_back(j);
-        } else {
-          if (i < unused_chars[j][k]) {
-            break;
-          }
-        }
-      }
-      std::vector<int>::iterator it = states_with_unused_char.begin() +
-                                      rand() % states_with_unused_char.size();
-      transitions[*it][rand() % n_states].push_back(i);
-      for (std::vector<int>::iterator char_it = unused_chars[*it].begin();
-           char_it != unused_chars[*it].end(); ++char_it) {
-        if (i == *char_it) {
-          unused_chars[*it].erase(char_it);
-          break;
-        }
+  // Make all characters are used.
+  if (n_used_chars != n_elem_codes) {
+    std::vector<int> candidates[n_elem_codes];
+    for (int i = 0; i < visited_states.size(); ++i) {
+      const int from_idx = visited_states[i];
+      for (int j = 0; j < unused_chars[from_idx].size(); ++j) {
+        const int char_idx = unused_chars[from_idx][j];
+        candidates[char_idx].push_back(from_idx);
       }
     }
-  }
-  for (int i = 0; i < n_states; ++i) {
-    for (int j = 0; j < n_states; ++j) {
-      for (int k = 0; k < transitions[i][j].size(); ++k) {
-        state_machine->AddTransition(i, j, transitions[i][j][k]);
+
+    for (int i = 0; i < n_elem_codes; ++i) {
+      if (!char_is_used[i]) {
+        int from_idx = candidates[i][rand() % candidates[i].size()];
+        state_machine->AddTransition(from_idx, rand() % n_states, i);
       }
     }
   }

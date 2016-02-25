@@ -8,7 +8,7 @@ os: linux
 script:
   - mkdir build
   - cd build
-  - cmake .. -DCMAKE_BUILD_TYPE=Debug && make
-#  - ./bin/code_generator_test
-  - gdb -ex 'run' -ex 'backtrace' ./bin/bijective_checker_test
+  - cmake .. && make
+  - ./bin/code_generator_test
+  - ./bin/bijective_checker_test
   
