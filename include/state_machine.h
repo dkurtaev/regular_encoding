@@ -30,8 +30,6 @@ class StateMachine {
 
   State* GetState(int id) const;
 
-  Transition* GetTransition(int id) const;
-
   int GetNumberStates() const;
 
   int GetNumberTransitions() const;

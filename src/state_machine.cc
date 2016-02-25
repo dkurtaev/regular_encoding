@@ -80,10 +80,6 @@ State* StateMachine::GetState(int id) const {
   return states_[id];
 }
 
-Transition* StateMachine::GetTransition(int id) const {
-  return transitions_[id];
-}
-
 int StateMachine::GetNumberStates() const {
   return states_.size();
 }

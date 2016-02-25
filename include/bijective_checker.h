@@ -36,13 +36,16 @@ class BijectiveChecker {
                       std::vector<int>* second_bad_word);
 
   bool ProcessNextPath(const StateMachine& code_state_machine,
-                       std::queue<std::vector<int>* >& paths);
+                       std::queue<std::vector<Transition*>* >& paths,
+                       std::vector<int>* first_bad_word,
+                       std::vector<int>* second_bad_word);
 
   void RemoveBottlenecks();
 
   void Reset();
 
-  void CollectWords(const std::vector<int>& path, std::vector<int>& first_word,
+  void CollectWords(const std::vector<Transition*>& path,
+                    std::vector<int>& first_word,
                     std::vector<int>& second_word);
 
   // From (-3 -2 -1 0 1 2 3)

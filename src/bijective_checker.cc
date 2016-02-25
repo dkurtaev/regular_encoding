@@ -238,18 +238,16 @@ bool BijectiveChecker::FindTargetLoop(const StateMachine& code_state_machine,
   State* identity_deficit = deficits_state_machine_
                               ->GetState(UnsignedDeficitId(0));
 
-  std::queue<std::vector<int>* > paths;
+  std::queue<std::vector<Transition*>* > paths;
   for (int i = 0; i < identity_deficit->transitions_from.size(); ++i) {
-    std::vector<int>* new_path = new std::vector<int>();
-    new_path->push_back(identity_deficit->transitions_from[i]->id);
+    std::vector<Transition*>* new_path = new std::vector<Transition*>();
+    new_path->push_back(identity_deficit->transitions_from[i]);
     paths.push(new_path);
   }
   while (!paths.empty()) {
-    bool target_loop_found = ProcessNextPath(code_state_machine, paths);
+    bool target_loop_found = ProcessNextPath(code_state_machine, paths,
+                                             first_bad_word, second_bad_word);
     if (target_loop_found) {
-      if (first_bad_word != 0 && second_bad_word != 0) {
-        CollectWords(*paths.back(), *first_bad_word, *second_bad_word);
-      }
       while (!paths.empty()) {
         delete paths.front();
         paths.pop();
@@ -260,33 +258,38 @@ bool BijectiveChecker::FindTargetLoop(const StateMachine& code_state_machine,
   return false;
 }
 
-bool BijectiveChecker::ProcessNextPath(const StateMachine& code_state_machine,
-                                       std::queue<std::vector<int>* >& paths) {
-  std::vector<int>* path = paths.front();
+bool BijectiveChecker::ProcessNextPath(
+                                const StateMachine& code_state_machine,
+                                std::queue<std::vector<Transition*>* >& paths,
+                                std::vector<int>* first_bad_word,
+                                std::vector<int>* second_bad_word) {
+  std::vector<Transition*>* path = paths.front();
   paths.pop();
 
   const int identity_deficit_id = UnsignedDeficitId(0);
-  State* deficit = deficits_state_machine_->GetTransition(path->back())->to;
+  State* deficit = path->back()->to;
 
   for (int i = 0; i < deficit->transitions_from.size(); ++i) {
     Transition* trans = deficit->transitions_from[i];
     State* to = trans->to;
-    if (std::find(path->begin(), path->end(), trans->id) == path->end()) {
+    if (std::find(path->begin(), path->end(), trans) == path->end()) {
       if (to->id != identity_deficit_id || path->size() > 1) {
-        std::vector<int>* new_path = new std::vector<int>(*path);
-        new_path->push_back(trans->id);
+        std::vector<Transition*>* new_path 
+            = new std::vector<Transition*>(*path);
+        new_path->push_back(trans);
 
         if (to->id == identity_deficit_id) {
           std::vector<int> first_word;
           std::vector<int> second_word;
           CollectWords(*new_path, first_word, second_word);
+          delete new_path;
 
           if (code_state_machine.FindContext(first_word, second_word)) {
-            paths.push(new_path);
+            if (first_bad_word) *first_bad_word = first_word;
+            if (second_bad_word) *second_bad_word = second_word;
+
             delete path;
             return true;
-          } else {
-            delete new_path;
           }
         } else {
           paths.push(new_path);
@@ -298,7 +301,7 @@ bool BijectiveChecker::ProcessNextPath(const StateMachine& code_state_machine,
   return false;
 }
 
-void BijectiveChecker::CollectWords(const std::vector<int>& path,
+void BijectiveChecker::CollectWords(const std::vector<Transition*>& path,
                                     std::vector<int>& first_word,
                                     std::vector<int>& second_word) {
   first_word.clear();
@@ -306,7 +309,7 @@ void BijectiveChecker::CollectWords(const std::vector<int>& path,
 
   unsigned size = path.size();
   for (int i = 0; i < size; ++i) {
-    Transition* trans = deficits_state_machine_->GetTransition(path[i]);
+    Transition* trans = path[i];
     if (SignedDeficitId(trans->from->id) >= 0) {
       first_word.push_back(trans->event_id);
     } else {
