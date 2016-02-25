@@ -277,8 +277,6 @@ bool BijectiveChecker::ProcessLoopState(const StateMachine& code_state_machine,
     Transition* trans = deficit->transitions_from[i];
     State* to = trans->to;
     if (!loop_state->deficits_transitions_trace[trans->id]) {
-      loop_state->deficits_transitions_trace[trans->id] = true;
-
       if (to->id != identity_deficit_id || loop_state->words[0].size() != 0 &&
                                            loop_state->words[1].size() != 0) {
         const int word_id = (SignedDeficitId(deficit->id) >= 0 ? 0 : 1);
@@ -286,6 +284,7 @@ bool BijectiveChecker::ProcessLoopState(const StateMachine& code_state_machine,
         LoopState* new_loop_state = new LoopState();
         new_loop_state->deficits_transitions_trace =
             loop_state->deficits_transitions_trace;
+        new_loop_state->deficits_transitions_trace[trans->id] = true;
         for (int i = 0; i < 2; ++i) {
           new_loop_state->words[i] = loop_state->words[i];
         } 
