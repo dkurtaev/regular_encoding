@@ -278,21 +278,25 @@ bool BijectiveChecker::ProcessNextPath(
             = new std::vector<Transition*>(*path);
         new_path->push_back(trans);
 
-        if (to->id == identity_deficit_id) {
-          std::vector<int> first_word;
-          std::vector<int> second_word;
-          CollectWords(*new_path, first_word, second_word);
-          delete new_path;
+        std::vector<int> first_word;
+        std::vector<int> second_word;
+        CollectWords(*new_path, first_word, second_word);
+        bool context_found = code_state_machine.FindContext(first_word, second_word);
 
-          if (code_state_machine.FindContext(first_word, second_word)) {
+        if (context_found) {
+          if (to->id == identity_deficit_id) {
+            delete new_path;
+
             if (first_bad_word) *first_bad_word = first_word;
             if (second_bad_word) *second_bad_word = second_word;
 
             delete path;
             return true;
+          } else {
+            paths.push(new_path);
           }
         } else {
-          paths.push(new_path);
+          delete new_path;
         }
       }
     }
