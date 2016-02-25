@@ -271,8 +271,8 @@ bool BijectiveChecker::ProcessNextPath(const StateMachine& code_state_machine,
   for (int i = 0; i < deficit->transitions_from.size(); ++i) {
     Transition* trans = deficit->transitions_from[i];
     State* to = trans->to;
-    if (std::find(path->begin(), path->end(), trans->id) != path->end()) {
-      if (to->id != identity_deficit_id || path->size() > 2) {
+    if (std::find(path->begin(), path->end(), trans->id) == path->end()) {
+      if (to->id != identity_deficit_id || path->size() > 1) {
         std::vector<int>* new_path = new std::vector<int>(*path);
         new_path->push_back(trans->id);
 
