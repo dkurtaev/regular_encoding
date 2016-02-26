@@ -189,8 +189,7 @@ void CodeGenerator::GenUniqueUnnegatives(int upper_value, int number,
 
 void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
                                     StateMachine* state_machine) {
-  state_machine->Clear();
-  state_machine->AddStates(n_states);
+  state_machine->Init(n_states);
 
   std::vector<int> unused_chars[n_states];
   unused_chars[0].resize(n_elem_codes);

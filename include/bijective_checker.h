@@ -14,7 +14,7 @@ class BijectiveChecker {
   BijectiveChecker();
 
   bool IsBijective(const std::vector<std::string>& code,
-                   const StateMachine& code_state_machine,
+                   StateMachine& code_state_machine,
                    std::vector<int>* first_bad_word = 0,
                    std::vector<int>* second_bad_word = 0);
 

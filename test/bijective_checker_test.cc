@@ -10,8 +10,7 @@
 static const unsigned kNumberGenerations = 25;
 
 void StateMachineOfAllWords(int n_words, StateMachine& state_machine) {
-  state_machine.Clear();
-  state_machine.AddStates(1);
+  state_machine.Init(1);
   for (int i = 0; i < n_words; ++i) {
     state_machine.AddTransition(0, 0, i);
   }

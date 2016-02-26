@@ -12,21 +12,17 @@ class StateMachine {
 
   ~StateMachine();
 
-  void Clear();
+  void Init(int n_states);
 
-  void AddStates(int n_states);
+  void InitContexts();
+
+  void Clear();
 
   void AddTransition(unsigned from_id, unsigned to_id, unsigned event_id);
 
   void DelTransition(unsigned id);
 
   void DelState(unsigned id);
-
-  // First added state is start state.
-  State* GetStartState() const;
-
-  // Last added state.
-  State* GetEndState() const;
 
   State* GetState(int id) const;
 
@@ -63,6 +59,8 @@ class StateMachine {
 
   std::vector<State*> states_;
   std::vector<Transition*> transitions_;
+  std::vector<int>*** end_contexts_;
+  std::vector<int>** start_contexts_;
 };
 
 #endif  // INCLUDE_STATE_MACHINE_H_

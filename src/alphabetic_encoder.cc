@@ -32,7 +32,7 @@ AlphabeticEncoder::AlphabeticEncoder(const std::string& config_file) {
 
   int number_states;
   file >> number_states;
-  state_machine_.AddStates(number_states);
+  state_machine_.Init(number_states);
 
   int number_transitions;
   file >> number_transitions;

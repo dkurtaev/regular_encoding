@@ -5,13 +5,66 @@
 #include <iostream>
 
 StateMachine::StateMachine(int n_states) {
+  end_contexts_ = 0;
+  start_contexts_ = 0;
   if (n_states != 0) {
-    AddStates(n_states);
+    Init(n_states);
   }
 }
 
 StateMachine::~StateMachine() {
   Clear();
+}
+
+void StateMachine::Init(int n_states) {
+  if (!states_.empty()) {
+    Clear();
+  }
+
+  // Add states.
+  states_.resize(n_states);
+  for (int i = 0; i < n_states; ++i) {
+    states_[i] = new State(i);
+  }
+}
+
+void StateMachine::InitContexts() {
+  const int n_states = states_.size();
+  if (n_states > 1) {
+    // Collect contexts.
+    end_contexts_ = new std::vector<int>**[n_states - 1];
+    start_contexts_ = new std::vector<int>*[n_states - 1];
+    for (int i = 0; i < n_states - 1; ++i) {
+      // Start context.
+      start_contexts_[i] = new std::vector<int>();
+      FindAnyPath(0, i + 1, *start_contexts_[i]);
+
+      // End context.
+      const int n_contexts = n_states - i;
+      end_contexts_[i] = new std::vector<int>*[n_contexts];
+
+      // Pair (i, i). Find way to end state.
+      end_contexts_[i][0] = new std::vector<int>();
+      bool found = FindAnyPath(i,  // State from.
+                               n_states - 1,  // State to, end state.
+                               *end_contexts_[i][0]);
+      if (!found) {
+        delete end_contexts_[i][0];
+        end_contexts_[i][0] = 0;
+      }
+
+      // Pairs (i, j).
+      for (int j = 1; j < n_contexts; ++j) {
+        end_contexts_[i][j] = new std::vector<int>();
+        found = FindEndOfContext(states_[i], states_[i + j],
+                                 *end_contexts_[i][j]);
+        if (!found) {
+          delete end_contexts_[i][j];
+          end_contexts_[i][j] = 0;
+        }
+      }
+    }
+  }
 }
 
 void StateMachine::Clear() {
@@ -26,12 +79,20 @@ void StateMachine::Clear() {
     delete transitions_[i];
   }
   transitions_.clear();
-}
 
-void StateMachine::AddStates(int n_states) {
-  int offset = states_.size();
-  for (int i = 0; i < n_states; ++i) {
-    states_.push_back(new State(i + offset));
+  if (start_contexts_ != 0 && end_contexts_ != 0) {
+    for (int i = 0; i < n_states - 1; ++i) {
+      delete start_contexts_[i];
+      const int n_contexts = n_states - i;
+      for (int j = 0; j < n_contexts; ++j) {
+        delete end_contexts_[i][j];
+      }
+      delete end_contexts_[i];
+    }
+    delete end_contexts_;
+    delete start_contexts_;
+    end_contexts_ = 0;
+    start_contexts_ = 0;
   }
 }
 
@@ -66,14 +127,6 @@ void StateMachine::DelState(unsigned id) {
   }
   delete state;
   states_[id] = 0;
-}
-
-State* StateMachine::GetStartState() const {
-  return states_[0];
-}
-
-State* StateMachine::GetEndState() const {
-  return states_.back();
 }
 
 State* StateMachine::GetState(int id) const {
@@ -167,9 +220,9 @@ bool StateMachine::FindSubwords(
 
 bool StateMachine::FindContext(std::vector<int>& first_substr,
                                std::vector<int>& second_substr) const {
-  // Track first subword.
+  const int n_states = states_.size();
   std::vector<StatesPair> first_traces(states_.size());
-  for (int i = 0; i < states_.size(); ++i) {
+  for (int i = 0; i < n_states; ++i) {
     first_traces[i] = StatesPair(states_[i], states_[i]);
   }
   bool found = FindSubwords(first_substr, first_traces);
@@ -188,34 +241,31 @@ bool StateMachine::FindContext(std::vector<int>& first_substr,
 
   // Find intersections by first state.
   int idx = 0;
-  std::vector<int> context;
   for (int i = 0; i < second_traces.size(); ++i) {
     for (int j = idx; j < first_traces.size(); ++j) {
-      if (first_traces[i].first->id == second_traces[i].first->id) {
-        bool found = false;
-
-        // Find ways with similar characters from .second states to end state.
-        if (first_traces[i].second->id == second_traces[i].second->id) {
-          if (first_traces[i].second->id != states_.back()->id) {
-            found = FindAnyPath(first_traces[i].second->id, states_.back()->id,
-                                context);
-          } else {
-            found = true;
-          }
-        } else {
-          found = FindEndOfContext(first_traces[i].second, 
-                                   second_traces[i].second, context);
+      const int first_id = first_traces[i].first->id;
+      const int second_id = second_traces[i].first->id;
+      if (first_id == second_id) {
+        int min_id = first_traces[i].second->id;
+        int max_id = second_traces[i].second->id;
+        if (min_id > max_id) {
+          std::swap(min_id, max_id);
         }
 
-
-        // Find way from start state to .first
-        if (found) {
-          InsertBack(first_substr, context);
-          InsertBack(second_substr, context);
-          if (first_traces[i].first->id != 0) {
-            FindAnyPath(0, first_traces[i].first->id, context);
-            InsertFront(context, first_substr);
-            InsertFront(context, second_substr);
+        if (min_id != n_states - 1) {
+          if (end_contexts_[min_id][max_id - min_id] != 0) {
+            InsertBack(first_substr, *end_contexts_[min_id][max_id - min_id]);
+            InsertBack(second_substr, *end_contexts_[min_id][max_id - min_id]);
+            if (first_id != 0) {
+              InsertFront(*start_contexts_[first_id - 1], first_substr);
+              InsertFront(*start_contexts_[first_id - 1], second_substr);
+            }
+            return true;
+          }
+        } else {
+          if (first_id != 0) {
+            InsertFront(*start_contexts_[first_id - 1], first_substr);
+            InsertFront(*start_contexts_[first_id - 1], second_substr);
           }
           return true;
         }
