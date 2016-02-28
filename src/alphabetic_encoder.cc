@@ -77,3 +77,18 @@ void AlphabeticEncoder::WriteDeficitsStateMachine(
     const std::string& file_path) {
   bijective_checker.WriteDeficitsStateMachine(file_path);
 }
+
+void AlphabeticEncoder::WriteConfigFile(const std::string& file_path,
+                                        const std::vector<std::string>& code,
+                                        const StateMachine& state_machine) {
+  std::ofstream file(file_path.c_str());
+
+  const int n_elem_codes = code.size();
+  file << n_elem_codes << std::endl;
+  for (int i = 0; i < n_elem_codes; ++i) {
+    file << code[i] << std::endl;
+  }
+
+  state_machine.WriteConfig(file);
+  file.close();
+}

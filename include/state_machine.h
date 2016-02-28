@@ -5,6 +5,7 @@
 #include <string>
 
 #include "include/structures.h"
+#include "include/contexts_factory.h"
 
 class StateMachine {
  public:
@@ -39,28 +40,12 @@ class StateMachine {
                 const std::vector<std::string>& states_names,
                 const std::vector<std::string>& events_names) const;
 
+  void WriteConfig(std::ofstream& s) const;
+
  private:
-  typedef std::pair<State*, State*> StatesPair;
-
-  bool FindSubwords(const std::vector<int>& word,
-                    std::vector<StatesPair>& pairs) const;
-
-  bool FindAnyPath(int from, int to, std::vector<int>& word) const;
-
-  // Find set of characters which achieves end state for both input states.
-  bool FindEndOfContext(State* first_state, State* second_state,
-                        std::vector<int>& end_context) const;
-
-  inline void InsertBack(std::vector<int>& dst,
-                         const std::vector<int>& src) const;
-
-  inline void InsertFront(const std::vector<int>& src,
-                          std::vector<int>& dst) const;
-
   std::vector<State*> states_;
   std::vector<Transition*> transitions_;
-  std::vector<int>*** end_contexts_;
-  std::vector<int>** start_contexts_;
+  ContextsFactory* contexts_factory_;
 };
 
 #endif  // INCLUDE_STATE_MACHINE_H_

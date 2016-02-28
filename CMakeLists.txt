@@ -12,6 +12,7 @@ set(sources
   src/code_generator.cc
   src/code_tree.cc
   src/code_tree_node.cc
+  src/contexts_factory.cc
   src/simple_suffix_tree.cc
   src/state_machine.cc
   src/structures.cc
@@ -23,6 +24,7 @@ set(headers
   include/code_generator.h
   include/code_tree.h
   include/code_tree_node.h
+  include/contexts_factory.h
   include/simple_suffix_tree.h
   include/state_machine.h
   include/structures.h

@@ -21,6 +21,10 @@ class AlphabeticEncoder {
                                     const std::vector<std::string>& code,
                                     const StateMachine& state_machine);
 
+  static void WriteConfigFile(const std::string& file_path,
+                              const std::vector<std::string>& code,
+                              const StateMachine& state_machine);
+
  private:
   BijectiveChecker bijective_checker;
   StateMachine state_machine_;

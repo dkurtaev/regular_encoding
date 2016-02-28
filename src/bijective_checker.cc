@@ -34,7 +34,6 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   RemoveBottlenecks();
 
   code_state_machine.InitContexts();
-
   return !FindTargetLoop(code_state_machine, first_bad_word, second_bad_word);
 }
 
