@@ -106,7 +106,8 @@ void ContextsFactory::InsertFront(const std::vector<int>& src,
 void ContextsFactory::FindContextKernels(const std::vector<int>& word,
                                          std::vector<StatesPair>& pairs) const {
   for (int i = 0; i < word.size() && !pairs.empty(); ++i) {
-    for (int j = 0; j < pairs.size(); ++j) {
+    const int n_pairs = pairs.size();  // Used for erasing.
+    for (int j = 0; j < n_pairs; ++j) {
       StatesPair pair = pairs.front();
       pairs.erase(pairs.begin());
 
