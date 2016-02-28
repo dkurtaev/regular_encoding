@@ -10,5 +10,5 @@ script:
   - cd build
   - cmake .. && make
   - ./bin/code_generator_test
-#  - ./bin/bijective_checker_test
+  - ./bin/bijective_checker_test
   

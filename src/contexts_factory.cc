@@ -140,16 +140,24 @@ bool ContextsFactory::FindEndContext(State* first_state,
   end_contexts_[min_id][max_id - min_id] = new std::vector<int>();
 
   std::queue<std::vector<int>* > contexts;
-  std::queue<std::vector<bool>* > used_transitions;
+  std::queue<bool*> visited_states[2];
   std::queue<StatesPair> states;
 
   states.push(StatesPair(first_state, second_state));
   contexts.push(new std::vector<int>());
-  used_transitions.push(new std::vector<bool>(n_transitions_, false));
+
+  const int n_states = states_.size();
+  for (int i = 0; i < 2; ++i) {
+    bool* mem = new bool[n_states];
+    memset(mem, false, n_states);
+    mem[(i ? second_state->id : first_state->id)] = true;
+    visited_states[i].push(mem);
+  }
 
   do {
     std::vector<int>* context = contexts.front();
-    std::vector<bool>* transitions = used_transitions.front();
+    bool* first_visited_states = visited_states[0].front();
+    bool* second_visited_states = visited_states[1].front();
     first_state = states.front().first;
     second_state = states.front().second;
 
@@ -158,14 +166,23 @@ bool ContextsFactory::FindEndContext(State* first_state,
         Transition* first_trans = first_state->transitions_from[i];
         const int event_id = first_trans->event_id;
         Transition* second_trans = second_state->GetTransition(event_id);
-        if (second_trans != 0 && (!transitions->operator[](first_trans->id) ||
-                                  !transitions->operator[](second_trans->id))) {
-          std::vector<bool>* new_trans = new std::vector<bool>(*transitions);
-          new_trans->operator[](first_trans->id) = true;
-          new_trans->operator[](second_trans->id) = true;
-          used_transitions.push(new_trans);
 
-          states.push(StatesPair(first_trans->to, second_trans->to));
+        if (!second_trans) continue;
+
+        State* first_to = first_trans->to;
+        State* second_to = second_trans->to;
+
+        if (!first_visited_states[first_to->id] ||
+            !second_visited_states[second_to->id]) {
+          for (int i = 0; i < 2; ++i) {
+            bool* mem = new bool[n_states];
+            memcpy(mem, (i ? second_visited_states : first_visited_states),
+                   n_states);
+            mem[(i ? second_to->id : first_to->id)] = true;
+            visited_states[i].push(mem);
+          }
+
+          states.push(StatesPair(first_to, second_to));
 
           std::vector<int>* new_context = new std::vector<int>(*context);
           new_context->push_back(event_id);
@@ -173,29 +190,27 @@ bool ContextsFactory::FindEndContext(State* first_state,
         }
       }
     } else {
-      bool found = false;
-      if (first_state->id != states_.back()->id) {
-        found = FindAnyPath(first_state->id, states_.back()->id, end_context);
-        InsertFront(end_context, *end_contexts_[min_id][max_id - min_id]);
-      } else {
-        found = true;
-      }
+      bool found = FindAnyPath(first_state->id, n_states - 1, end_context);
       if (found) {
         InsertFront(*context, end_context);
         InsertFront(end_context, *end_contexts_[min_id][max_id - min_id]);
         while (!contexts.empty()) {
           delete contexts.front();
           contexts.pop();
-          delete used_transitions.front();
-          used_transitions.pop();
+          for (int i = 0; i < 2; ++i) {
+            delete visited_states[i].front();
+            visited_states[i].pop();
+          }
         }
         return true;
       }
     }
     delete context;
-    delete transitions;
     contexts.pop();
-    used_transitions.pop();
+    for (int i = 0; i < 2; ++i) {
+      delete visited_states[i].front();
+      visited_states[i].pop();
+    }
     states.pop();
   } while(!states.empty());
   
