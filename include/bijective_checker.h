@@ -37,6 +37,7 @@ class BijectiveChecker {
 
   bool ProcessNextPath(const StateMachine& code_state_machine,
                        std::queue<std::vector<Transition*>* >& paths,
+                       std::queue<bool*>& visited_states,
                        std::vector<int>* first_bad_word,
                        std::vector<int>* second_bad_word);
 

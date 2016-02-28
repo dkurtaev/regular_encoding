@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <iostream>
 #include <algorithm>
@@ -238,20 +239,30 @@ bool BijectiveChecker::FindTargetLoop(const StateMachine& code_state_machine,
                                       std::vector<int>* second_bad_word) {
   State* identity_deficit = deficits_state_machine_
                               ->GetState(UnsignedDeficitId(0));
+  const int n_states = deficits_state_machine_->GetNumberStates();
 
   std::queue<std::vector<Transition*>* > paths;
+  std::queue<bool*> visited_states;
   for (int i = 0; i < identity_deficit->transitions_from.size(); ++i) {
     std::vector<Transition*>* new_path = new std::vector<Transition*>();
     new_path->push_back(identity_deficit->transitions_from[i]);
     paths.push(new_path);
+
+    bool* mem = new bool[n_states];
+    memset(mem, false, n_states);
+    visited_states.push(mem);
   }
+
   while (!paths.empty()) {
     bool target_loop_found = ProcessNextPath(code_state_machine, paths,
+                                             visited_states,
                                              first_bad_word, second_bad_word);
     if (target_loop_found) {
       while (!paths.empty()) {
         delete paths.front();
+        delete visited_states.front();
         paths.pop();
+        visited_states.pop();
       }
       return true;
     }
@@ -262,10 +273,15 @@ bool BijectiveChecker::FindTargetLoop(const StateMachine& code_state_machine,
 bool BijectiveChecker::ProcessNextPath(
                                 const StateMachine& code_state_machine,
                                 std::queue<std::vector<Transition*>* >& paths,
+                                std::queue<bool*>& visited_states,
                                 std::vector<int>* first_bad_word,
                                 std::vector<int>* second_bad_word) {
+  const int n_states = deficits_state_machine_->GetNumberStates();
+
   std::vector<Transition*>* path = paths.front();
   paths.pop();
+  bool* visits = visited_states.front();
+  visited_states.pop();
 
   const int identity_deficit_id = UnsignedDeficitId(0);
   State* deficit = path->back()->to;
@@ -273,7 +289,7 @@ bool BijectiveChecker::ProcessNextPath(
   for (int i = 0; i < deficit->transitions_from.size(); ++i) {
     Transition* trans = deficit->transitions_from[i];
     State* to = trans->to;
-    if (std::find(path->begin(), path->end(), trans) == path->end()) {
+    if (!visits[to->id]) {
       if (to->id != identity_deficit_id || path->size() > 1) {
         std::vector<Transition*>* new_path 
             = new std::vector<Transition*>(*path);
@@ -295,6 +311,11 @@ bool BijectiveChecker::ProcessNextPath(
             return true;
           } else {
             paths.push(new_path);
+
+            bool* new_visits = new bool[n_states];
+            memcpy(new_visits, visits, n_states);
+            new_visits[to->id] = true;
+            visited_states.push(new_visits);
           }
         } else {
           delete new_path;
@@ -303,6 +324,7 @@ bool BijectiveChecker::ProcessNextPath(
     }
   }
   delete path;
+  delete visits;
   return false;
 }
 
