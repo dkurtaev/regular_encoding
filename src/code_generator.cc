@@ -19,7 +19,7 @@ void CodeGenerator::GenCode(int code_length, int max_elem_code_length,
   std::vector<int> bin_elem_codes;
   for (int i = 0; i < max_elem_code_length; ++i) {
     if (code_lengths[i] != 0) {
-      GenUniqueUnnegatives(pow(2, i + 1) - 1, code_lengths[i], &bin_elem_codes);
+      GenUniqueUnnegatives(pow(2, i + 1) - 1, code_lengths[i], bin_elem_codes);
       for (int j = 0; j < code_lengths[i]; ++j) {
         code.push_back(CodeFromBinary(bin_elem_codes[j], i + 1));
       }
@@ -158,33 +158,6 @@ int CodeGenerator::MaxCodeLength(int max_elem_code_length, int n_elem_codes) {
 
 int CodeGenerator::MaxNumberElemCodes(int max_elem_code_length) {
   return pow(2, max_elem_code_length + 1) - 2;
-}
-
-void CodeGenerator::GenUniqueUnnegatives(int upper_value, int number,
-                                         std::vector<int>* values) {
-  if (number < upper_value / 2) {
-    std::vector<int> available_values(upper_value + 1);
-    for (int i = 0; i <= upper_value; ++i) {
-      available_values[i] = i;
-    }
-    values->resize(number);
-    int idx;
-    for (int i = 0; i < number; ++i) {
-      idx = rand() % (upper_value + 1 - i);
-      (*values)[i] = available_values[idx];
-      available_values.erase(available_values.begin() + idx);
-    }
-  } else {
-    values->resize(upper_value + 1);
-    for (int i = 0; i <= upper_value; ++i) {
-      (*values)[i] = i;
-    }
-    int idx;
-    for (int i = 0; i < upper_value + 1 - number; ++i) {
-      idx = rand() % (upper_value + 1 - i);
-      values->erase(values->begin() + idx);
-    }
-  }
 }
 
 void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,

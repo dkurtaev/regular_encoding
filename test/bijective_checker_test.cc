@@ -1,10 +1,13 @@
 #include <vector>
 #include <sstream>
+#include <string>
 
 #include <gtest/gtest.h>
 
 #include "include/bijective_checker.h"
 #include "include/code_generator.h"
+#include "include/structures.h"
+#include "include/unbijective_code_generator.h"
 #include "test/macros.h"
 
 static const unsigned kNumberGenerations = 25;
@@ -176,5 +179,16 @@ TEST(BijectiveChecker, checker_output) {
         }
       }
     }
+  }
+}
+
+// Testing that method can find not bijective codes.
+TEST(BijectiveChecker, not_bijective_codes) {
+  std::vector<std::string> code;
+  StateMachine state_machine;
+  BijectiveChecker checker;
+  for (int i = 0; i < kNumberGenerations; ++i) {
+    UnbijectiveCodeGenerator::Generate(code, state_machine);
+    ASSERT_FALSE(checker.IsBijective(code, state_machine));
   }
 }

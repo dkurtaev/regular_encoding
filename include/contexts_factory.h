@@ -18,10 +18,6 @@ class ContextsFactory {
  private:
   bool FindAnyPath(int from, int to, std::vector<int>& any_path) const;
 
-  void InsertBack(std::vector<int>& dst, const std::vector<int>& src) const;
-
-  void InsertFront(const std::vector<int>& src, std::vector<int>& dst) const;
-
   typedef std::pair<State*, State*> StatesPair;
   void FindContextKernels(const std::vector<int>& word,
                           std::vector<StatesPair>& pairs) const;

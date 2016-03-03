@@ -54,4 +54,11 @@ inline int rand(int a, int b) {
   return rand() % (b - a + 1) + a;
 }
 
+void GenUniqueUnnegatives(int upper_value, int number,
+                          std::vector<int>& values);
+
+void InsertBack(std::vector<int>& dst, const std::vector<int>& src);
+
+void InsertFront(const std::vector<int>& src, std::vector<int>& dst);
+
 #endif  // INCLUDE_STRUCTURES_H_

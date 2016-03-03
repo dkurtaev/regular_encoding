@@ -87,22 +87,6 @@ bool ContextsFactory::FindAnyPath(int from, int to,
   return false;
 }
 
-void ContextsFactory::InsertBack(std::vector<int>& dst,
-                                 const std::vector<int>& src) const {
-  if (src.size() != 0) {
-    dst.reserve(dst.size() + src.size());
-    dst.insert(dst.end(), src.begin(), src.end());
-  }
-}
-
-void ContextsFactory::InsertFront(const std::vector<int>& src,
-                                  std::vector<int>& dst) const {
-  if (src.size() != 0) {
-    dst.reserve(dst.size() + src.size());
-    dst.insert(dst.begin(), src.begin(), src.end());
-  }
-}
-
 void ContextsFactory::FindContextKernels(const std::vector<int>& word,
                                          std::vector<StatesPair>& pairs) const {
   for (int i = 0; i < word.size() && !pairs.empty(); ++i) {

@@ -61,3 +61,44 @@ bool State::DelTransitionTo(int id) {
   }
   return false;
 }
+
+void GenUniqueUnnegatives(int upper_value, int number,
+                          std::vector<int>& values) {
+  if (number < upper_value / 2) {
+    std::vector<int> available_values(upper_value + 1);
+    for (int i = 0; i <= upper_value; ++i) {
+      available_values[i] = i;
+    }
+    values.resize(number);
+    int idx;
+    for (int i = 0; i < number; ++i) {
+      idx = rand() % (upper_value + 1 - i);
+      values[i] = available_values[idx];
+      available_values.erase(available_values.begin() + idx);
+    }
+  } else {
+    values.resize(upper_value + 1);
+    for (int i = 0; i <= upper_value; ++i) {
+      values[i] = i;
+    }
+    int idx;
+    for (int i = 0; i < upper_value + 1 - number; ++i) {
+      idx = rand() % (upper_value + 1 - i);
+      values.erase(values.begin() + idx);
+    }
+  }
+}
+
+void InsertBack(std::vector<int>& dst, const std::vector<int>& src) {
+  if (src.size() != 0) {
+    dst.reserve(dst.size() + src.size());
+    dst.insert(dst.end(), src.begin(), src.end());
+  }
+}
+
+void InsertFront(const std::vector<int>& src, std::vector<int>& dst) {
+  if (src.size() != 0) {
+    dst.reserve(dst.size() + src.size());
+    dst.insert(dst.begin(), src.begin(), src.end());
+  }
+}
