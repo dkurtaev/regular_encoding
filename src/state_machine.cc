@@ -165,6 +165,8 @@ void StateMachine::WriteConfig(std::ofstream& s) const {
 }
 
 bool StateMachine::FindContext(std::vector<int>& first_substr,
-                               std::vector<int>& second_substr) const {
-  return contexts_factory_->FindContext(first_substr, second_substr);
+                               std::vector<int>& second_substr,
+                               bool& has_kernels) const {
+  return contexts_factory_->FindContext(first_substr, second_substr,
+                                        has_kernels);
 }

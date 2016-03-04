@@ -298,8 +298,10 @@ bool BijectiveChecker::ProcessNextPath(
           std::vector<int> first_word;
           std::vector<int> second_word;
           CollectWords(*new_path, first_word, second_word);
+          bool has_kernels = false;
           bool context_found = code_state_machine.FindContext(first_word,
-                                                              second_word);
+                                                              second_word,
+                                                              has_kernels);
           if (context_found) {
             delete new_path;
 
@@ -309,7 +311,15 @@ bool BijectiveChecker::ProcessNextPath(
             delete path;
             return true;
           } else {
-            delete new_path;
+            if (has_kernels) {
+              paths.push(new_path);
+
+              bool* new_visits = new bool[n_states];
+              memset(new_visits, false, n_states);
+              visited_states.push(new_visits);
+            } else {
+              delete new_path;
+            }
           }
         } else {
           paths.push(new_path);

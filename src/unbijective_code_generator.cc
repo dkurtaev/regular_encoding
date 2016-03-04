@@ -79,14 +79,6 @@ void UnbijectiveCodeGenerator::ExtractElemCodes(
                                      std::vector<std::string>& elem_codes) {
   elem_codes.clear();
 
-//   std::cout << seed << std::endl;
-//   for (int j = 0; j < 2; ++j) {
-//   for (int i = 0; i < delimeters[j].size(); ++i) {
-// std::cout << delimeters[j][i] << ' ';
-//   }
-//   std::cout << std::endl;
-// }
-
   std::vector<std::pair<int, int> > nodes(1, std::pair<int, int>(-1, -1));
   std::vector<int> elem_codes_ids(1, -1);
 

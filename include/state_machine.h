@@ -34,7 +34,7 @@ class StateMachine {
   bool IsRecognized(const std::vector<int>& word) const;
 
   bool FindContext(std::vector<int>& first_substr,
-                   std::vector<int>& second_substr) const;
+                   std::vector<int>& second_substr, bool& has_kernels) const;
 
   void WriteDot(const std::string& file_path,
                 const std::vector<std::string>& states_names,

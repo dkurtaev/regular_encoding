@@ -13,7 +13,7 @@ class ContextsFactory {
   ~ContextsFactory();
 
   bool FindContext(std::vector<int>& first_substr,
-                   std::vector<int>& second_substr) const;
+                   std::vector<int>& second_substr, bool& has_kernels) const;
 
  private:
   bool FindAnyPath(int from, int to, std::vector<int>& any_path) const;

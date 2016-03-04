@@ -184,6 +184,8 @@ TEST(BijectiveChecker, checker_output) {
 
 // Testing that method can find not bijective codes.
 TEST(BijectiveChecker, not_bijective_codes) {
+  static const int kNumberGenerations = 100;
+
   std::vector<std::string> code;
   StateMachine state_machine;
   BijectiveChecker checker;

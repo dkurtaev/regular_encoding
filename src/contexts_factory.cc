@@ -219,7 +219,9 @@ void ContextsFactory::FindStartContext(State* state,
 }
 
 bool ContextsFactory::FindContext(std::vector<int>& first_substr,
-                                  std::vector<int>& second_substr) const {
+                                  std::vector<int>& second_substr,
+                                  bool& has_kernels) const {
+  has_kernels = false;
   const int n_states = states_.size();
   std::vector<StatesPair> first_traces(n_states);
   for (int i = 0; i < n_states; ++i) {
@@ -239,6 +241,8 @@ bool ContextsFactory::FindContext(std::vector<int>& first_substr,
   FindContextKernels(second_substr, second_traces);
 
   if (second_traces.empty()) return false;
+
+  has_kernels = true;
 
   // Find intersections by first state.
   int idx = 0;
