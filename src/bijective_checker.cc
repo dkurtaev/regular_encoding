@@ -294,14 +294,13 @@ bool BijectiveChecker::ProcessNextPath(
         std::vector<Transition*>* new_path 
             = new std::vector<Transition*>(*path);
         new_path->push_back(trans);
-
-        std::vector<int> first_word;
-        std::vector<int> second_word;
-        CollectWords(*new_path, first_word, second_word);
-        bool context_found = code_state_machine.FindContext(first_word, second_word);
-
-        if (context_found) {
-          if (to->id == identity_deficit_id) {
+        if (to->id == identity_deficit_id) {
+          std::vector<int> first_word;
+          std::vector<int> second_word;
+          CollectWords(*new_path, first_word, second_word);
+          bool context_found = code_state_machine.FindContext(first_word,
+                                                              second_word);
+          if (context_found) {
             delete new_path;
 
             if (first_bad_word) *first_bad_word = first_word;
@@ -310,15 +309,15 @@ bool BijectiveChecker::ProcessNextPath(
             delete path;
             return true;
           } else {
-            paths.push(new_path);
-
-            bool* new_visits = new bool[n_states];
-            memcpy(new_visits, visits, n_states);
-            new_visits[to->id] = true;
-            visited_states.push(new_visits);
+            delete new_path;
           }
         } else {
-          delete new_path;
+          paths.push(new_path);
+
+          bool* new_visits = new bool[n_states];
+          memcpy(new_visits, visits, n_states);
+          new_visits[to->id] = true;
+          visited_states.push(new_visits);
         }
       }
     }

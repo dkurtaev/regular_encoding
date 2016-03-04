@@ -126,11 +126,6 @@ void UnbijectiveCodeGenerator::ExtractElemCodes(
       from = to + 1;
     }
   }
-  std::cout << "---" << std::endl;
-  std::cout << "seed=" << seed << std::endl;
-  for (int i = 0; i < elem_codes.size(); ++i) {
-    std::cout << elem_codes[i] << std::endl;
-  }
 }
 
 void UnbijectiveCodeGenerator::GenStateMachine(
