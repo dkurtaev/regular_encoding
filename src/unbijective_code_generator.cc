@@ -41,7 +41,7 @@ void UnbijectiveCodeGenerator::GenDelimeters(
         unselected_delims[idx++] = j;
       }
     }
-    for (int i = delimeters[0][n_delims - 1]; i < max_n_delims; ++i) {
+    for (int i = delimeters[0][n_delims - 1] + 1; i < max_n_delims; ++i) {
       unselected_delims[idx++] = i;
     }
 
@@ -53,18 +53,18 @@ void UnbijectiveCodeGenerator::GenDelimeters(
     std::vector<int> buf;
 
     // 0 <= L <= delim
-    // 0 <= N - L <= max_n - delim - 1
+    // 0 <= N - 1 - L <= max_n - delim - 1
 
     // 0 <= L <= delim
-    // N + 1 + delim - max_n <= L <= N
+    // N + delim - max_n <= L <= N - 1
     const int n_left_delims = rand(
-                               std::max(0, n_delims + 1 + delim - max_n_delims),
-                               std::min(delim, n_delims));
+                               std::max(0, n_delims + delim - max_n_delims),
+                               std::min(delim, n_delims - 1));
     if (n_left_delims > 0) {
       GenUniqueUnnegatives(delim - 1, n_left_delims, buf);
       InsertFront(buf, delimeters[1]);
     }
-    const int n_right_delims = n_delims - n_left_delims;
+    const int n_right_delims = n_delims - 1 - n_left_delims;
     if (n_right_delims > 0) {
       GenUniqueUnnegatives(max_n_delims - delim - 1, n_right_delims, buf);
       InsertBack(delimeters[1], buf);
@@ -148,7 +148,21 @@ void UnbijectiveCodeGenerator::Generate(std::vector<std::string>& code,
 
   std::vector<std::vector<int> > delimeters(2);
   std::vector<std::vector<int> > elem_codes_ids(2);
+
+
+  std::cout << "---" << std::endl;
+std::cout << seed << std::endl;
   GenDelimeters(seed_length, delimeters);
+
+
+for (int i = 0; i < 2; ++i) {
+  for (int j = 0; j < delimeters[i].size(); ++j) {
+    std::cout << delimeters[i][j] << ' ';
+  }
+  std::cout << '|';
+}
+std::cout << std::endl;
+
   ExtractElemCodes(seed, delimeters, elem_codes_ids, code);
   GenStateMachine(code.size(), elem_codes_ids, state_machine);
 }

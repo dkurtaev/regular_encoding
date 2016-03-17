@@ -24,6 +24,7 @@ int main(int argc, char** argv) {
 
   AlphabeticEncoder encoder(input_file);
   bool is_bijective = encoder.CheckBijective();
+  std::cout << is_bijective << std::endl;
   if (outdir != "") {
     encoder.WriteCodeStateMachine(outdir + "code_state_machine.dot");
     encoder.WriteDeficitsStateMachine(outdir + "deficits_state_machine.dot");

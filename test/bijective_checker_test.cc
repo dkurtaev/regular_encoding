@@ -173,7 +173,7 @@ TEST(BijectiveChecker, checker_output) {
               std::ostringstream ss;
               ss << "BijectiveChecker.checker_output: Processed M="
                  << M << ", N=" << N << ", L=" << L;
-              Log(ss.str(), 300);
+              Log(ss.str(), 0);
             }
           }
         }

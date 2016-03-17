@@ -1,6 +1,7 @@
 #include "include/structures.h"
 
 #include <iostream>
+#include <algorithm>
 
 ElementaryCode::ElementaryCode(int id, const std::string& str)
   : id(id),
@@ -87,6 +88,7 @@ void GenUniqueUnnegatives(int upper_value, int number,
       values.erase(values.begin() + idx);
     }
   }
+  std::sort(values.begin(), values.end());
 }
 
 void InsertBack(std::vector<int>& dst, const std::vector<int>& src) {

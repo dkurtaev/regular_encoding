@@ -35,6 +35,8 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   RemoveBottlenecks();
 
   code_state_machine.InitContexts();
+    AlphabeticEncoder::WriteCodeStateMachine("/home/dmitry/sm.dot", code, code_state_machine);
+  WriteDeficitsStateMachine("/home/dmitry/dm.dot");
   return !FindTargetLoop(code_state_machine, first_bad_word, second_bad_word);
 }
 
@@ -294,6 +296,7 @@ bool BijectiveChecker::ProcessNextPath(
         std::vector<Transition*>* new_path 
             = new std::vector<Transition*>(*path);
         new_path->push_back(trans);
+
         if (to->id == identity_deficit_id) {
           std::vector<int> first_word;
           std::vector<int> second_word;
@@ -312,10 +315,12 @@ bool BijectiveChecker::ProcessNextPath(
             return true;
           } else {
             if (has_kernels) {
+              // std::cout << "1" << std::endl;
               paths.push(new_path);
 
               bool* new_visits = new bool[n_states];
-              memset(new_visits, false, n_states);
+              // memset(new_visits, false, n_states);
+              memcpy(new_visits, visits, n_states);
               visited_states.push(new_visits);
             } else {
               delete new_path;
