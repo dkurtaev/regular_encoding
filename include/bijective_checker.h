@@ -41,6 +41,15 @@ class BijectiveChecker {
                        std::vector<int>* first_bad_word,
                        std::vector<int>* second_bad_word);
 
+  struct SynonymyState {
+    State* deficit;
+    State* upper_state;
+    State* lower_state;
+    std::vector<int> words_pair;
+  };
+
+  void BuildSynonymyStateMachine(StateMachine& code_state_machine);
+
   void RemoveBottlenecks();
 
   void Reset();
