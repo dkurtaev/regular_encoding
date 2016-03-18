@@ -13,6 +13,8 @@ class BijectiveChecker {
  public:
   BijectiveChecker();
 
+  ~BijectiveChecker();
+
   bool IsBijective(const std::vector<std::string>& code,
                    StateMachine& code_state_machine,
                    std::vector<int>* first_bad_word = 0,
@@ -45,12 +47,17 @@ class BijectiveChecker {
     State* deficit;
     State* upper_state;
     State* lower_state;
+
+    unsigned Hash(unsigned code_sm_n_states);
+
+    static unsigned Hash(unsigned deficit_id, unsigned upper_state_id,
+                         unsigned lower_state_id, unsigned code_sm_n_states);
   };
 
   StateMachine* BuildSynonymyStateMachine(
       const StateMachine& code_state_machine);
 
-  bool FindSynonymyLoop(const StateMachine& synonymy_sm, int code_sm_n_states);
+  bool FindSynonymyLoop(const StateMachine& code_state_machine);
 
   void RemoveBottlenecks();
 
