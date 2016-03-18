@@ -19,7 +19,7 @@ class StateMachine {
 
   void Clear();
 
-  void AddTransition(unsigned from_id, unsigned to_id, unsigned event_id);
+  void AddTransition(unsigned from_id, unsigned to_id, int event_id);
 
   void DelTransition(unsigned id);
 

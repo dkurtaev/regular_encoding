@@ -53,7 +53,7 @@ void StateMachine::Clear() {
 }
 
 void StateMachine::AddTransition(unsigned from_id, unsigned to_id,
-                                 unsigned event_id) {
+                                 int event_id) {
   Transition* trans = new Transition(transitions_.size(),
                                      states_[from_id],
                                      states_[to_id],

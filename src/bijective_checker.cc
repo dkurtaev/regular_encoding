@@ -34,7 +34,8 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   BuildDeficitsStateMachine(code_tree);
   AlphabeticEncoder::WriteCodeStateMachine("/home/dmitry/sm.dot", code, code_state_machine);
   WriteDeficitsStateMachine("/home/dmitry/dm.dot");
-  BuildSynonymyStateMachine(code_state_machine);
+  StateMachine* syn_sm = BuildSynonymyStateMachine(code_state_machine);
+  return !FindSynonymyLoop(*syn_sm, code_state_machine.GetNumberStates());
 
   return false;
 
@@ -364,55 +365,48 @@ void BijectiveChecker::CollectWords(const std::vector<Transition*>& path,
   }
 }
 
-void BijectiveChecker::BuildSynonymyStateMachine(
-    StateMachine& code_state_machine) {
-  const int kIdentityDeficitId = UnsignedDeficitId(0);
-  const int n_states = code_state_machine.GetNumberStates();
-  const int size = deficits_state_machine_->GetNumberStates() * n_states *
-                   n_states;
-  bool visited_states[size];
-  memset(visited_states, false, size);
-  visited_states[kIdentityDeficitId * n_states * n_states] = true;
+StateMachine* BijectiveChecker::BuildSynonymyStateMachine(
+      const StateMachine& code_state_machine) {
+  const unsigned kNumCodeSmStates = code_state_machine.GetNumberStates();
+  const unsigned max_n_states = deficits_state_machine_->GetNumberStates() *
+                                kNumCodeSmStates * kNumCodeSmStates;
+  StateMachine* synonymy_sm = new StateMachine(max_n_states);
+  bool visited_states[max_n_states];
+  memset(visited_states, false, max_n_states);
 
-  std::queue<SynonymyState*> states;
-  SynonymyState* syn_state = new SynonymyState();
-  syn_state->deficit = deficits_state_machine_->GetState(kIdentityDeficitId);
-  syn_state->upper_state = code_state_machine.GetState(0);
-  syn_state->lower_state = syn_state->upper_state;
+  std::queue<SynonymyState> states;
+  SynonymyState syn_state;
+  syn_state.deficit = deficits_state_machine_->GetState(UnsignedDeficitId(0));
+  syn_state.upper_state = code_state_machine.GetState(0);
+  syn_state.lower_state = syn_state.upper_state;
   states.push(syn_state);
 
   do {
-    syn_state = states.front();
+    SynonymyState syn_state = states.front();
+    const int syn_state_idx = (syn_state.deficit->id * kNumCodeSmStates +
+                               syn_state.upper_state->id) * kNumCodeSmStates +
+                               syn_state.lower_state->id;
+    visited_states[syn_state_idx] = true;
+    states.pop();
 
-    State* deficit = syn_state->deficit;
+    State* deficit = syn_state.deficit;
+    SynonymyState next_syn_state;
     if (SignedDeficitId(deficit->id) >= 0) {  // event: empty/char
       for (int i = 0; i < deficit->transitions_from.size(); ++i) {
         Transition* def_trans = deficit->transitions_from[i];
         const int event = def_trans->event_id;
-        Transition* code_trans = syn_state->lower_state->GetTransition(event);
-        if ((def_trans->to->id != kIdentityDeficitId ||
-             syn_state->words_pair.size() > 1) && code_trans != 0) {
-          const int idx = (def_trans->to->id * n_states +
-                          syn_state->upper_state->id) * n_states +
-                          code_trans->to->id;
-          if (def_trans->to->id == kIdentityDeficitId &&
-              syn_state->upper_state->id == n_states - 1 &&
-              code_trans->to->id == n_states - 1 && syn_state->words_pair.size() > 1) {
-            for (int i = 0; i < syn_state->words_pair.size(); ++i) {
-              std::cout << syn_state->words_pair[i] << ' ';
-            }
-            std::cout << -event - 1 << ' ' << std::endl;
-            return;
-          }
-          if (!visited_states[idx]) {
-            SynonymyState* next_syn_state = new SynonymyState();
-            next_syn_state->deficit = def_trans->to;
-            next_syn_state->upper_state = syn_state->upper_state;
-            next_syn_state->lower_state = code_trans->to;
-            next_syn_state->words_pair = syn_state->words_pair;
-            next_syn_state->words_pair.push_back(-event - 1);
+        Transition* code_trans = syn_state.lower_state->GetTransition(event);
+        if (code_trans != 0) {
+          const int next_syn_state_idx = (def_trans->to->id * kNumCodeSmStates +
+                                          syn_state.upper_state->id) *
+                                          kNumCodeSmStates + code_trans->to->id;
+          synonymy_sm->AddTransition(syn_state_idx, next_syn_state_idx,
+                                     -event - 1);
+          if (!visited_states[next_syn_state_idx]) {
+            next_syn_state.deficit = def_trans->to;
+            next_syn_state.upper_state = syn_state.upper_state;
+            next_syn_state.lower_state = code_trans->to;
             states.push(next_syn_state);
-            visited_states[idx] = true;
           }
         }
       }
@@ -420,34 +414,195 @@ void BijectiveChecker::BuildSynonymyStateMachine(
       for (int i = 0; i < deficit->transitions_from.size(); ++i) {
         Transition* def_trans = deficit->transitions_from[i];
         const int event = def_trans->event_id;
-        Transition* code_trans = syn_state->upper_state->GetTransition(event);
-        if ((def_trans->to->id != kIdentityDeficitId ||
-             syn_state->words_pair.size() > 1) && code_trans != 0) {
-          const int idx = (def_trans->to->id * n_states + code_trans->to->id) *
-                          n_states + syn_state->lower_state->id;
-          if (def_trans->to->id == kIdentityDeficitId &&
-              syn_state->lower_state->id == n_states - 1 &&
-              code_trans->to->id == n_states - 1 && syn_state->words_pair.size() > 1) {
-            for (int i = 0; i < syn_state->words_pair.size(); ++i) {
-              std::cout << syn_state->words_pair[i] << ' ';
-            }
-            std::cout << event + 1 << ' ' << std::endl;
-            return;
-          }
-          if (!visited_states[idx]) {
-            SynonymyState* next_syn_state = new SynonymyState();
-            next_syn_state->deficit = def_trans->to;
-            next_syn_state->lower_state = syn_state->lower_state;
-            next_syn_state->upper_state = code_trans->to;
-            next_syn_state->words_pair = syn_state->words_pair;
-            next_syn_state->words_pair.push_back(event + 1);
+        Transition* code_trans = syn_state.upper_state->GetTransition(event);
+        if (code_trans != 0) {
+          const int next_syn_state_idx = (def_trans->to->id * kNumCodeSmStates +
+                                          code_trans->to->id) *
+                                          kNumCodeSmStates + 
+                                          syn_state.lower_state->id;
+          synonymy_sm->AddTransition(syn_state_idx, next_syn_state_idx,
+                                     event + 1);
+          if (!visited_states[next_syn_state_idx]) {
+            next_syn_state.deficit = def_trans->to;
+            next_syn_state.lower_state = syn_state.lower_state;
+            next_syn_state.upper_state = code_trans->to;
             states.push(next_syn_state);
-            visited_states[idx] = true;
           }
         }
       }
     }
-    delete syn_state;
-    states.pop();
   } while (!states.empty());
+  return synonymy_sm;
 }
+
+bool BijectiveChecker::FindSynonymyLoop(const StateMachine& synonymy_sm,
+                                        int code_sm_n_states) {
+  static const unsigned kNumSynStates = synonymy_sm.GetNumberStates();
+  static const unsigned kStartSynId = UnsignedDeficitId(0) * code_sm_n_states *
+                                      code_sm_n_states;
+  static const unsigned kEndSynId = (UnsignedDeficitId(0) * code_sm_n_states +
+                                    code_sm_n_states - 1) * code_sm_n_states +
+                                    code_sm_n_states - 1; 
+  std::queue<bool*> visited_states;
+  std::queue<std::vector<int>* > sequences;
+  std::queue<State*> states;
+
+  bool* visits = new bool[kNumSynStates];
+  memset(visits, false, kNumSynStates);
+  visited_states.push(visits);
+  sequences.push(new std::vector<int>());
+  states.push(synonymy_sm.GetState(kStartSynId));
+
+  do {
+    State* state = states.front();
+    std::vector<int>* sequence = sequences.front();
+    visits = visited_states.front();
+    visits[state->id] = true;
+
+    for (int i = 0; i < state->transitions_from.size(); ++i) {
+      Transition* trans = state->transitions_from[i];
+      if (trans->to->id == kEndSynId) {
+        std::vector<int> seq_copy(*sequence);
+        seq_copy.push_back(trans->event_id);
+        // Check for non-trivials.
+        bool loop_is_non_trivial = false;
+        if (seq_copy.size() % 2 == 0) {
+          std::vector<int> positives;
+          std::vector<int> negatives;
+          for (int j = 0; j < seq_copy.size(); ++j) {
+            int event = seq_copy[j];
+            if (event > 0) positives.push_back(event);
+            else negatives.push_back(event);
+          }
+          if (positives.size() == negatives.size()) {
+            for (int j = 0; j < positives.size(); ++j) {
+              if (-positives[j] != negatives[j]) {
+                loop_is_non_trivial = true;
+                break;
+              }
+            }
+          } else {
+            loop_is_non_trivial = true;
+          }
+        } else {
+          loop_is_non_trivial = true;
+        }
+        if (loop_is_non_trivial) {
+          std::cout << "seq: ";
+          for (int j = 0; j < sequence->size(); ++j) {
+            std::cout << sequence->operator[](j) << ' ';
+          }
+          std::cout << trans->event_id << std::endl;
+          return true;
+        }
+      } else {
+        if (!visits[trans->to->id]) {
+          bool* new_visits = new bool[kNumSynStates];
+          memcpy(new_visits, visits, kNumSynStates);
+          std::vector<int>* new_sequence = new std::vector<int>(*sequence);
+          new_sequence->push_back(trans->event_id);
+
+          sequences.push(new_sequence);
+          visited_states.push(new_visits);
+          states.push(trans->to);
+        }
+      }
+    }
+
+    states.pop();
+    visited_states.pop();
+    sequences.pop();
+    delete sequence;
+    delete[] visits;
+  } while (!states.empty());
+  return false;
+}
+
+// bool BijectiveChecker::BuildSynonymyStateMachine(
+//     StateMachine& code_state_machine) {
+//   const int kIdentityDeficitId = UnsignedDeficitId(0);
+//   const int n_states = code_state_machine.GetNumberStates();
+//   const int size = deficits_state_machine_->GetNumberStates() * n_states *
+//                    n_states;
+//   bool visited_states[size];
+//   memset(visited_states, false, size);
+//   visited_states[kIdentityDeficitId * n_states * n_states] = true;
+
+//   std::queue<SynonymyState*> states;
+//   SynonymyState* syn_state = new SynonymyState();
+//   syn_state->deficit = deficits_state_machine_->GetState(kIdentityDeficitId);
+//   syn_state->upper_state = code_state_machine.GetState(0);
+//   syn_state->lower_state = syn_state->upper_state;
+//   states.push(syn_state);
+
+//   do {
+//     syn_state = states.front();
+
+//     State* deficit = syn_state->deficit;
+//     if (SignedDeficitId(deficit->id) >= 0) {  // event: empty/char
+//       for (int i = 0; i < deficit->transitions_from.size(); ++i) {
+//         Transition* def_trans = deficit->transitions_from[i];
+//         const int event = def_trans->event_id;
+//         Transition* code_trans = syn_state->lower_state->GetTransition(event);
+//         if ((def_trans->to->id != kIdentityDeficitId ||
+//              syn_state->words_pair.size() > 1) && code_trans != 0) {
+//           const int idx = (def_trans->to->id * n_states +
+//                           syn_state->upper_state->id) * n_states +
+//                           code_trans->to->id;
+//           if (def_trans->to->id == kIdentityDeficitId &&
+//               syn_state->upper_state->id == n_states - 1 &&
+//               code_trans->to->id == n_states - 1 && syn_state->words_pair.size() > 1) {
+//             for (int i = 0; i < syn_state->words_pair.size(); ++i) {
+//               std::cout << syn_state->words_pair[i] << ' ';
+//             }
+//             std::cout << -event - 1 << ' ' << std::endl;
+//             return false;
+//           }
+//           if (!visited_states[idx]) {
+//             SynonymyState* next_syn_state = new SynonymyState();
+//             next_syn_state->deficit = def_trans->to;
+//             next_syn_state->upper_state = syn_state->upper_state;
+//             next_syn_state->lower_state = code_trans->to;
+//             next_syn_state->words_pair = syn_state->words_pair;
+//             next_syn_state->words_pair.push_back(-event - 1);
+//             states.push(next_syn_state);
+//             visited_states[idx] = true;
+//           }
+//         }
+//       }
+//     } else {  // event: char/empty
+//       for (int i = 0; i < deficit->transitions_from.size(); ++i) {
+//         Transition* def_trans = deficit->transitions_from[i];
+//         const int event = def_trans->event_id;
+//         Transition* code_trans = syn_state->upper_state->GetTransition(event);
+//         if ((def_trans->to->id != kIdentityDeficitId ||
+//              syn_state->words_pair.size() > 1) && code_trans != 0) {
+//           const int idx = (def_trans->to->id * n_states + code_trans->to->id) *
+//                           n_states + syn_state->lower_state->id;
+//           if (def_trans->to->id == kIdentityDeficitId &&
+//               syn_state->lower_state->id == n_states - 1 &&
+//               code_trans->to->id == n_states - 1 && syn_state->words_pair.size() > 1) {
+//             for (int i = 0; i < syn_state->words_pair.size(); ++i) {
+//               std::cout << syn_state->words_pair[i] << ' ';
+//             }
+//             std::cout << event + 1 << ' ' << std::endl;
+//             return false;
+//           }
+//           if (!visited_states[idx]) {
+//             SynonymyState* next_syn_state = new SynonymyState();
+//             next_syn_state->deficit = def_trans->to;
+//             next_syn_state->lower_state = syn_state->lower_state;
+//             next_syn_state->upper_state = code_trans->to;
+//             next_syn_state->words_pair = syn_state->words_pair;
+//             next_syn_state->words_pair.push_back(event + 1);
+//             states.push(next_syn_state);
+//             visited_states[idx] = true;
+//           }
+//         }
+//       }
+//     }
+//     delete syn_state;
+//     states.pop();
+//   } while (!states.empty());
+//   return true;
+// }

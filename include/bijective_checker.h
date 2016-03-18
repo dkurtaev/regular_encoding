@@ -45,10 +45,12 @@ class BijectiveChecker {
     State* deficit;
     State* upper_state;
     State* lower_state;
-    std::vector<int> words_pair;
   };
 
-  void BuildSynonymyStateMachine(StateMachine& code_state_machine);
+  StateMachine* BuildSynonymyStateMachine(
+      const StateMachine& code_state_machine);
+
+  bool FindSynonymyLoop(const StateMachine& synonymy_sm, int code_sm_n_states);
 
   void RemoveBottlenecks();
 

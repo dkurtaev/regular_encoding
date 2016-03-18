@@ -47,7 +47,7 @@ struct Transition {
   State* to;
   int event_id;
 
-  Transition(unsigned id, State* from, State* to, unsigned event_id);
+  Transition(unsigned id, State* from, State* to, int event_id);
 };
 
 inline int rand(int a, int b) {
