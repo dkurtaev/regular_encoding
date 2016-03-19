@@ -161,7 +161,8 @@ for (int i = 0; i < 2; ++i) {
   }
   std::cout << '|';
 }
-std::cout << std::endl;
+std::cout << std::endl << "---" << std::endl;
+
 
   ExtractElemCodes(seed, delimeters, elem_codes_ids, code);
   GenStateMachine(code.size(), elem_codes_ids, state_machine);

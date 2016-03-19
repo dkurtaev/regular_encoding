@@ -246,7 +246,7 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
   const unsigned kEndSynHash = kNumCodeSmStates * kNumCodeSmStates *
                                (UnsignedDeficitId(0) + 1) - 1;
 
-  std::queue<std::vector<unsigned>* > visited_states;
+  std::queue<unsigned*> visited_states;
   std::queue<std::vector<int>* > sequences;
   std::queue<SynonymyState> syn_states;
 
@@ -255,16 +255,18 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
   syn_state.upper_state = code_state_machine.GetState(0);
   syn_state.lower_state = syn_state.upper_state;
   syn_states.push(syn_state);
-  visited_states.push(new std::vector<unsigned>());
+
+  unsigned* visits = new unsigned[1];
+  visits[0] = syn_state.Hash(kNumCodeSmStates);
+  visited_states.push(visits);
   sequences.push(new std::vector<int>());
 
   SynonymyState next_syn_state;
   do {
     std::cout << syn_states.size() << std::endl;
     syn_state = syn_states.front();
-    std::vector<unsigned>* visits = visited_states.front();
+    visits = visited_states.front();
     std::vector<int>* sequence = sequences.front();
-    visits->push_back(syn_state.Hash(kNumCodeSmStates));
 
     State* deficit = syn_state.deficit;
     if (SignedDeficitId(deficit->id) >= 0) {  // event: empty/char
@@ -290,7 +292,7 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
               second_bad_word->push_back(event);
             }
             while (!sequences.empty()) {
-              delete visited_states.front();
+              delete[] visited_states.front();
               delete sequences.front();
               visited_states.pop();
               sequences.pop();
@@ -298,12 +300,14 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
             return true;
           }
 
-          if (hash != kEndSynHash && std::find(visits->begin(), visits->end(), hash) ==
-              visits->end()) {
+          if (!OrderedFind(visits, sequence->size() + 1, hash)) {
             std::vector<int>* new_sequence = new std::vector<int>(*sequence);
             new_sequence->push_back(-event - 1);
             sequences.push(new_sequence);
-            visited_states.push(new std::vector<unsigned>(*visits));
+
+            unsigned* new_visits = OrderedInsert(visits, sequence->size() + 1,
+                                                 hash);
+            visited_states.push(new_visits);
             syn_states.push(next_syn_state);
           }
         }
@@ -331,7 +335,7 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
               first_bad_word->push_back(event);
             }
             while (!sequences.empty()) {
-              delete visited_states.front();
+              delete[] visited_states.front();
               delete sequences.front();
               visited_states.pop();
               sequences.pop();
@@ -339,12 +343,13 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
             return true;
           }
 
-          if (hash != kEndSynHash && std::find(visits->begin(), visits->end(), hash) ==
-              visits->end()) {
+          if (!OrderedFind(visits, sequence->size() + 1, hash)) {
             std::vector<int>* new_sequence = new std::vector<int>(*sequence);
             new_sequence->push_back(event + 1);
             sequences.push(new_sequence);
-            visited_states.push(new std::vector<unsigned>(*visits));
+            unsigned* new_visits = OrderedInsert(visits, sequence->size() + 1,
+                                                 hash);
+            visited_states.push(new_visits);
             syn_states.push(next_syn_state);
           }
         }
@@ -353,7 +358,7 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
     syn_states.pop();
     visited_states.pop();
     sequences.pop();
-    delete visits;
+    delete[] visits;
     delete sequence;
   } while (!syn_states.empty());
 

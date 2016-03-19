@@ -1,5 +1,8 @@
 #include "include/structures.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 #include <iostream>
 #include <algorithm>
 
@@ -103,4 +106,37 @@ void InsertFront(const std::vector<int>& src, std::vector<int>& dst) {
     dst.reserve(dst.size() + src.size());
     dst.insert(dst.begin(), src.begin(), src.end());
   }
+}
+
+unsigned* OrderedInsert(unsigned* data, unsigned size, unsigned value) {
+  unsigned* res = new unsigned[size + 1];
+
+  if (value <= data[0]) {
+    res[0] = value;
+    memcpy(res + 1, data, sizeof(unsigned) * size);
+    return res;
+  }
+  if (value >= data[size - 1]) {
+    res[size] = value;
+    memcpy(res, data, sizeof(unsigned) * size);
+    return res;
+  }
+
+  for (unsigned i = 1; i < size; ++i) {
+    if (value <= data[i]) {
+      memcpy(res, data, sizeof(unsigned) * i);
+      res[i] = value;
+      memcpy(res + i + 1, data + i, sizeof(unsigned) * (size - i));
+      return res;
+    }
+  }
+}
+
+bool OrderedFind(unsigned* data, unsigned size, unsigned value) {
+  for (unsigned i = 0; i < size; ++i) {
+    if (value <= data[i]) {
+      return value == data[i];
+    }
+  }
+  return false;
 }

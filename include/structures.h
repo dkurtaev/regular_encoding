@@ -61,4 +61,8 @@ void InsertBack(std::vector<int>& dst, const std::vector<int>& src);
 
 void InsertFront(const std::vector<int>& src, std::vector<int>& dst);
 
+unsigned* OrderedInsert(unsigned* data, unsigned size, unsigned value);
+
+bool OrderedFind(unsigned* data, unsigned size, unsigned value);
+
 #endif  // INCLUDE_STRUCTURES_H_
