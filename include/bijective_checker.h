@@ -33,16 +33,6 @@ class BijectiveChecker {
                              const CodeTree& code_tree,
                              std::queue<int>& deficits_up_to_build);
 
-  bool FindTargetLoop(const StateMachine& code_state_machine,
-                      std::vector<int>* first_bad_word,
-                      std::vector<int>* second_bad_word);
-
-  bool ProcessNextPath(const StateMachine& code_state_machine,
-                       std::queue<std::vector<Transition*>* >& paths,
-                       std::queue<bool*>& visited_states,
-                       std::vector<int>* first_bad_word,
-                       std::vector<int>* second_bad_word);
-
   struct SynonymyState {
     State* deficit;
     State* upper_state;
@@ -50,23 +40,16 @@ class BijectiveChecker {
 
     unsigned Hash(unsigned code_sm_n_states);
 
-    static bool IsTrivial(const std::vector<int>& sequence);
+    static bool IsTrivial(const std::vector<int>& sequence, int next_char);
   };
 
-  bool SynonymyIsTarget(const std::vector<int>& sequence);
-
-  StateMachine* BuildSynonymyStateMachine(
-      const StateMachine& code_state_machine);
-
-  bool FindSynonymyLoop(const StateMachine& code_state_machine);
+  bool FindSynonymyLoop(const StateMachine& code_state_machine,
+                        std::vector<int>* first_bad_word,
+                        std::vector<int>* second_bad_word);
 
   void RemoveBottlenecks();
 
   void Reset();
-
-  void CollectWords(const std::vector<Transition*>& path,
-                    std::vector<int>& first_word,
-                    std::vector<int>& second_word);
 
   // From (-3 -2 -1 0 1 2 3)
   // To (0 1 2 3 4 5 6 7)
