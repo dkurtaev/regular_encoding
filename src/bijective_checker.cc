@@ -435,11 +435,11 @@ StateMachine* BijectiveChecker::BuildSynonymyStateMachine(
 }
 
 bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine) {
-  static const unsigned kNumCodeSmStates = code_state_machine.GetNumberStates();
-  static const unsigned kEndSynHash = SynonymyState::Hash(UnsignedDeficitId(0),
-                                                          kNumCodeSmStates - 1,
-                                                          kNumCodeSmStates - 1,
-                                                          kNumCodeSmStates);
+  // TODO: Process trivial loops: 3 -1 -3 1 for example.
+  const unsigned kNumCodeSmStates = code_state_machine.GetNumberStates();
+  const unsigned kEndSynHash = kNumCodeSmStates * kNumCodeSmStates *
+                               (UnsignedDeficitId(0) + 1) - 1;
+
   std::queue<std::vector<unsigned>* > visited_states;
   std::queue<std::vector<int>* > sequences;
   std::queue<SynonymyState> syn_states;
@@ -465,8 +465,6 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine) 
         Transition* def_trans = deficit->transitions_from[i];
         const int event = def_trans->event_id;
 
-        if (sequence->size() == 1 && sequence->back() == event + 1) continue;
-
         Transition* code_trans = syn_state.lower_state->GetTransition(event);
         if (code_trans != 0) {
           next_syn_state.deficit = def_trans->to;
@@ -474,12 +472,14 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine) 
           next_syn_state.lower_state = code_trans->to;
           const unsigned hash = next_syn_state.Hash(kNumCodeSmStates);
 
-          if (hash == kEndSynHash && sequence->size() > 2) {
+          std::vector<int> copy(*sequence);
+          copy.push_back(-event - 1);
+          if (hash == kEndSynHash && !SynonymyState::IsTrivial(copy)) {
             std::cout << "seq: ";
-            for (int j = 0; j < sequence->size(); ++j) {
-              std::cout << sequence->operator[](j) << ' ';
+            for (int j = 0; j < copy.size(); ++j) {
+              std::cout << copy[j] << ' ';
             }
-            std::cout << -event-1 << std::endl;
+            std::cout << std::endl;
             return true;
           }
 
@@ -498,8 +498,6 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine) 
         Transition* def_trans = deficit->transitions_from[i];
         const int event = def_trans->event_id;
 
-        if (sequence->size() == 1 && sequence->back() == -event - 1) continue;
-
         Transition* code_trans = syn_state.upper_state->GetTransition(event);
         if (code_trans != 0) {
           next_syn_state.deficit = def_trans->to;
@@ -507,15 +505,16 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine) 
           next_syn_state.lower_state = syn_state.lower_state;
           const unsigned hash = next_syn_state.Hash(kNumCodeSmStates);
 
-          if (hash == kEndSynHash && sequence->size() > 2) {
+                    std::vector<int> copy(*sequence);
+          copy.push_back(event + 1);
+          if (hash == kEndSynHash && !SynonymyState::IsTrivial(copy)) {
             std::cout << "seq: ";
-            for (int j = 0; j < sequence->size(); ++j) {
-              std::cout << sequence->operator[](j) << ' ';
+            for (int j = 0; j < copy.size(); ++j) {
+              std::cout << copy[j] << ' ';
             }
-            std::cout << event+1 << std::endl;
+            std::cout << std::endl;
             return true;
           }
-
 
           if (std::find(visits->begin(), visits->end(), hash) ==
               visits->end()) {
@@ -539,14 +538,19 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine) 
 }
 
 unsigned BijectiveChecker::SynonymyState::Hash(unsigned code_sm_n_states) {
-  return (upper_state->id * code_sm_n_states + lower_state->id) *
-         code_sm_n_states + deficit->id;
+  return (deficit->id * code_sm_n_states + upper_state->id) *
+         code_sm_n_states + lower_state->id;
 }
 
-unsigned BijectiveChecker::SynonymyState::Hash(unsigned deficit_id,
-                                               unsigned upper_state_id,
-                                               unsigned lower_state_id,
-                                               unsigned code_sm_n_states) {
-  return (upper_state_id * code_sm_n_states + lower_state_id) *
-         code_sm_n_states + deficit_id;
+bool BijectiveChecker::SynonymyState::IsTrivial(
+    const std::vector<int>& sequence) {
+  if (sequence.size() == 1) return true;
+  if (sequence.size() % 2) return false;
+
+  for (int i = 1; i < sequence.size(); i += 2) {
+    if (sequence[i] + sequence[i - 1] != 0) {
+      return false;
+    }
+  }
+  return true;
 }

@@ -50,9 +50,10 @@ class BijectiveChecker {
 
     unsigned Hash(unsigned code_sm_n_states);
 
-    static unsigned Hash(unsigned deficit_id, unsigned upper_state_id,
-                         unsigned lower_state_id, unsigned code_sm_n_states);
+    static bool IsTrivial(const std::vector<int>& sequence);
   };
+
+  bool SynonymyIsTarget(const std::vector<int>& sequence);
 
   StateMachine* BuildSynonymyStateMachine(
       const StateMachine& code_state_machine);
