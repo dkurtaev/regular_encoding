@@ -257,7 +257,6 @@ Verdict BijectiveChecker::FindSynonymyLoop(
     syn_state.upper_state = code_state_machine.GetState(i);
     syn_state.lower_state = syn_state.upper_state;
     syn_state.init_state = syn_state.upper_state;
-    syn_state.is_trivial = true;
     syn_states.push(syn_state);
 
     visits = new unsigned[1];
@@ -265,6 +264,8 @@ Verdict BijectiveChecker::FindSynonymyLoop(
     visited_states.push(visits);
     sequences.push(new std::vector<int>());
   }
+
+  const unsigned kStartSynHash = syn_states.front().Hash(kNumCodeSmStates);
 
   SynonymyState next_syn_state;
   do {
@@ -287,12 +288,7 @@ Verdict BijectiveChecker::FindSynonymyLoop(
         Transition* def_trans = deficit->transitions_from[i];
         const int event = def_trans->event_id;
 
-        if (syn_state.is_trivial) {
-          if (!sequence->empty()) {
-            if (sequence->back() == event + 1) continue;
-            else syn_state.is_trivial = false;
-          }
-        }
+        if (SynonymyState::IsTrivial(*sequence, -event - 1)) continue;
 
         Transition* code_trans = syn_state.lower_state->GetTransition(event);
         if (code_trans != 0) {
@@ -302,8 +298,7 @@ Verdict BijectiveChecker::FindSynonymyLoop(
           next_syn_state.init_state = syn_state.init_state;
           const unsigned hash = next_syn_state.Hash(kNumCodeSmStates);
 
-          if (hash == kEndSynHash &&
-              !SynonymyState::IsTrivial(*sequence, -event - 1)) {
+          if (hash == kEndSynHash) {
             if (first_bad_word != 0 && second_bad_word != 0) {
               for (int j = 0; j < sequence->size(); ++j) {
                 int symbol = sequence->operator[](j);
@@ -327,7 +322,8 @@ Verdict BijectiveChecker::FindSynonymyLoop(
             return NOT_BIJECTIVE;
           }
 
-          if (!OrderedFind(visits, sequence->size() + 1, hash)) {
+          if (!OrderedFind(visits, sequence->size() + 1, hash) ||
+              hash == kStartSynHash) {
             std::vector<int>* new_sequence = new std::vector<int>(*sequence);
             new_sequence->push_back(-event - 1);
             sequences.push(new_sequence);
@@ -344,12 +340,7 @@ Verdict BijectiveChecker::FindSynonymyLoop(
         Transition* def_trans = deficit->transitions_from[i];
         const int event = def_trans->event_id;
 
-        if (syn_state.is_trivial) {
-          if (!sequence->empty()) {
-            if (sequence->back() == -event - 1) continue;
-            else syn_state.is_trivial = false;
-          }
-        }
+        if (SynonymyState::IsTrivial(*sequence, event + 1)) continue;
 
         Transition* code_trans = syn_state.upper_state->GetTransition(event);
         if (code_trans != 0) {
@@ -359,8 +350,7 @@ Verdict BijectiveChecker::FindSynonymyLoop(
           next_syn_state.init_state = syn_state.init_state;
           const unsigned hash = next_syn_state.Hash(kNumCodeSmStates);
 
-          if (hash == kEndSynHash &&
-              !SynonymyState::IsTrivial(*sequence, event + 1)) {
+          if (hash == kEndSynHash) {
             if (first_bad_word != 0 && second_bad_word != 0) {
               for (int j = 0; j < sequence->size(); ++j) {
                 int symbol = sequence->operator[](j);
@@ -384,10 +374,12 @@ Verdict BijectiveChecker::FindSynonymyLoop(
             return NOT_BIJECTIVE;
           }
 
-          if (!OrderedFind(visits, sequence->size() + 1, hash)) {
+          if (!OrderedFind(visits, sequence->size() + 1, hash) ||
+              hash == kStartSynHash) {
             std::vector<int>* new_sequence = new std::vector<int>(*sequence);
             new_sequence->push_back(event + 1);
             sequences.push(new_sequence);
+
             unsigned* new_visits = OrderedInsert(visits, sequence->size() + 1,
                                                  hash);
             visited_states.push(new_visits);
@@ -413,13 +405,30 @@ unsigned BijectiveChecker::SynonymyState::Hash(unsigned code_sm_n_states) {
 
 bool BijectiveChecker::SynonymyState::IsTrivial(
     const std::vector<int>& sequence, int next_char) {
-  if (sequence.size() == 0) return true;
   if (sequence.size() % 2 == 0) return false;
 
-  for (int i = 1; i < sequence.size(); i += 2) {
-    if (sequence[i] + sequence[i - 1] != 0) {
-      return false;
+  std::queue<int> positives;
+  std::queue<int> negatives;
+  for (int i = 0; i < sequence.size(); ++i) {
+    if (sequence[i] > 0) {
+      if (!negatives.empty()) {
+        if (negatives.front() + sequence[i] != 0) return false;
+        negatives.pop();
+      } else {
+        positives.push(sequence[i]);
+      }
+    } else {
+      if (!positives.empty()) {
+        if (positives.front() + sequence[i] != 0) return false;
+        positives.pop();
+      } else {
+        negatives.push(sequence[i]);
+      }
     }
   }
-  return (next_char + sequence.back() == 0);
+
+  if (next_char > 0) return(negatives.size() == 1 && positives.size() == 0 &&
+                            next_char + negatives.front() == 0);
+  else return(negatives.size() == 0 && positives.size() == 1 &&
+              next_char + positives.front() == 0);
 }

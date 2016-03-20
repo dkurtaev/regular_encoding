@@ -42,7 +42,6 @@ class BijectiveChecker {
     State* upper_state;
     State* lower_state;
     State* init_state;
-    bool is_trivial;
 
     unsigned Hash(unsigned code_sm_n_states);
 
