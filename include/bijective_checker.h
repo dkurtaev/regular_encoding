@@ -4,10 +4,13 @@
 #include <vector>
 #include <queue>
 #include <string>
+#include <climits>
 
 #include "include/state_machine.h"
 #include "include/structures.h"
 #include "include/code_tree.h"
+
+enum Verdict { IS_BIJECTIVE, NOT_BIJECTIVE, WIDTH_OUT };
 
 class BijectiveChecker {
  public:
@@ -15,10 +18,11 @@ class BijectiveChecker {
 
   ~BijectiveChecker();
 
-  bool IsBijective(const std::vector<std::string>& code,
-                   StateMachine& code_state_machine,
-                   std::vector<int>* first_bad_word = 0,
-                   std::vector<int>* second_bad_word = 0);
+  Verdict IsBijective(const std::vector<std::string>& code,
+                      StateMachine& code_state_machine,
+                      std::vector<int>* first_bad_word = 0,
+                      std::vector<int>* second_bad_word = 0,
+                      int loop_finder_width_limit = 100000);
 
   void WriteDeficitsStateMachine(const std::string& file_path);
 
@@ -45,9 +49,10 @@ class BijectiveChecker {
     static bool IsTrivial(const std::vector<int>& sequence, int next_char);
   };
 
-  bool FindSynonymyLoop(const StateMachine& code_state_machine,
-                        std::vector<int>* first_bad_word,
-                        std::vector<int>* second_bad_word);
+  Verdict FindSynonymyLoop(const StateMachine& code_state_machine,
+                           std::vector<int>* first_bad_word = 0,
+                           std::vector<int>* second_bad_word = 0,
+                           int loop_finder_width_limit = INT_MAX);
 
   void RemoveBottlenecks();
 

@@ -23,6 +23,7 @@ void StateMachineOfAllWords(int n_words, StateMachine& state_machine) {
 // (LN set - set of parameters L and N where code garanted does not satisfy
 // McMillan's condition).
 TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
+  int n_width_outs = 0;
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
@@ -37,7 +38,11 @@ TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
       for (unsigned L = L_min; L < L_max; ++L) {
         for (unsigned gen = 0; gen < kNumberGenerations; ++gen) {
           CodeGenerator::GenCode(L, M, N, code);
-          ASSERT_FALSE(checker.IsBijective(code, state_machine));
+
+          Verdict verdict = checker.IsBijective(code, state_machine);
+          if (verdict != WIDTH_OUT) {
+            ASSERT_EQ(verdict, NOT_BIJECTIVE);
+          } else ++n_width_outs;
 
           std::ostringstream ss;
           ss << "BijectiveChecker.all_words_codes_outside_LN_set: Processed M="
@@ -47,11 +52,14 @@ TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
       }
     }
   }
+  std::cout << "BijectiveChecker.all_words_codes_outside_LN_set: Width outs: "
+            << n_width_outs << std::endl;
 }
 
 // This test for generating all words code, check bijectivity and if
 // it is bijective, check McMillan's condition.
 TEST(BijectiveChecker, all_words_codes_mcmillan) {
+  int n_width_outs = 0;
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
@@ -65,7 +73,9 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
       for (unsigned L = L_min; L <= L_max; ++L) {
         for (unsigned gen = 0; gen < kNumberGenerations; ++gen) {
           CodeGenerator::GenCode(L, M, N, code);
-          if (checker.IsBijective(code, state_machine)) {
+
+          Verdict verdict = checker.IsBijective(code, state_machine);
+          if (verdict == IS_BIJECTIVE) {
             unsigned sum = 0;
             for (unsigned i = 0; i < N; ++i) {
               unsigned len = code[i].length();
@@ -73,6 +83,8 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
               sum += 1 << (M - len);
             }
             ASSERT_LE(sum, 1 << M);
+          } else {
+            if (verdict == WIDTH_OUT) ++n_width_outs;
           }
           std::ostringstream ss;
           ss << "BijectiveChecker.all_words_codes_mcmillan: Processed M="
@@ -82,6 +94,8 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
       }
     }
   }
+  std::cout << "BijectiveChecker.all_words_codes_mcmillan: Width outs: "
+            << n_width_outs << std::endl;
 }
 
 // Generating prefix codes and random state machine. Check that are bijective.
@@ -90,6 +104,7 @@ TEST(BijectiveChecker, prefix_codes) {
   static const unsigned kMaxNumberStates = 5;
   static const unsigned kNumberMachineGens = 3;
 
+  int n_width_outs = 0;
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
@@ -101,8 +116,12 @@ TEST(BijectiveChecker, prefix_codes) {
         for (unsigned n_states = 1; n_states <= kMaxNumberStates; ++n_states) {
           for (unsigned j = 0; j < kNumberMachineGens; ++j) {
             CodeGenerator::GenStateMachine(N, n_states, &state_machine);
-            ASSERT_TRUE(checker.IsBijective(code, state_machine));
 
+            Verdict verdict = checker.IsBijective(code, state_machine);
+            if (verdict != WIDTH_OUT) {
+              ASSERT_EQ(verdict, IS_BIJECTIVE);
+            } else ++n_width_outs;
+            
             std::ostringstream ss;
             ss << "BijectiveChecker.prefix_codes: Processed M="
                << M << ", N=" << N;
@@ -112,6 +131,8 @@ TEST(BijectiveChecker, prefix_codes) {
       }
     }
   }
+  std::cout << "BijectiveChecker.prefix_codes: Width outs: "
+            << n_width_outs << std::endl;
 }
 
 TEST(BijectiveChecker, checker_output) {
@@ -119,6 +140,7 @@ TEST(BijectiveChecker, checker_output) {
   static const unsigned kMaxNumberStates = 5;
   static const unsigned kNumberMachineGens = 3;
 
+  int n_width_outs = 0;
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
@@ -135,10 +157,10 @@ TEST(BijectiveChecker, checker_output) {
           for (int n_states = 1; n_states <= kMaxNumberStates; ++n_states) {
             for (unsigned j = 0; j < kNumberMachineGens; ++j) {
               CodeGenerator::GenStateMachine(N, n_states, &state_machine);
-              bool is_bijective = checker.IsBijective(code, state_machine,
-                                                      &first_bad_word,
-                                                      &second_bad_word);
-              if (!is_bijective) {
+              Verdict verdict = checker.IsBijective(code, state_machine,
+                                                    &first_bad_word,
+                                                    &second_bad_word);
+              if (verdict == NOT_BIJECTIVE) {
                 ASSERT_NE(first_bad_word.size(), 0);
                 ASSERT_NE(second_bad_word.size(), 0);
 
@@ -166,31 +188,45 @@ TEST(BijectiveChecker, checker_output) {
                 }
                 ASSERT_EQ(first_word, second_word);
               } else {
-                ASSERT_EQ(first_bad_word.size(), 0);
-                ASSERT_EQ(second_bad_word.size(), 0);
+                if (verdict == IS_BIJECTIVE) {
+                  ASSERT_EQ(first_bad_word.size(), 0);
+                  ASSERT_EQ(second_bad_word.size(), 0);
+                } else {
+                  ++n_width_outs;
+                }
               }
 
               std::ostringstream ss;
               ss << "BijectiveChecker.checker_output: Processed M="
                  << M << ", N=" << N << ", L=" << L;
-              Log(ss.str(), 0);
+              Log(ss.str(), 300);
             }
           }
         }
       }
     }
   }
+  std::cout << "BijectiveChecker.checker_output: Width outs: "
+            << n_width_outs << std::endl;
 }
 
 // Testing that method can find not bijective codes.
 TEST(BijectiveChecker, not_bijective_codes) {
   static const int kNumberGenerations = 100;
 
+  int n_width_outs = 0;
   std::vector<std::string> code;
   StateMachine state_machine;
   BijectiveChecker checker;
   for (int i = 0; i < kNumberGenerations; ++i) {
     UnbijectiveCodeGenerator::Generate(code, state_machine);
-    ASSERT_FALSE(checker.IsBijective(code, state_machine));
+    Verdict verdict = checker.IsBijective(code, state_machine);
+    if (verdict != WIDTH_OUT) {
+      ASSERT_EQ(verdict, NOT_BIJECTIVE);
+    } else {
+      ++n_width_outs;
+    }
   }
+  std::cout << "BijectiveChecker.not_bijective_codes: Width outs: "
+            << n_width_outs << std::endl;
 }

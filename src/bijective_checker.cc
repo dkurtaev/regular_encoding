@@ -10,10 +10,11 @@
 #include "include/simple_suffix_tree.h"
 #include "include/alphabetic_encoder.h"
 
-bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
-                                   StateMachine& code_state_machine,
-                                   std::vector<int>* first_bad_word,
-                                   std::vector<int>* second_bad_word) {
+Verdict BijectiveChecker::IsBijective(const std::vector<std::string>& code,
+                                      StateMachine& code_state_machine,
+                                      std::vector<int>* first_bad_word,
+                                      std::vector<int>* second_bad_word,
+                                      int loop_finder_width_limit) {
   Reset();
   if (first_bad_word) first_bad_word->clear();
   if (second_bad_word) second_bad_word->clear();
@@ -32,11 +33,8 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   CodeTree code_tree(code_);
 
   BuildDeficitsStateMachine(code_tree);
-  AlphabeticEncoder::WriteConfigFile("/home/dmitry/config_2.txt", code, code_state_machine);
-  AlphabeticEncoder::WriteCodeStateMachine("/home/dmitry/sm.dot", code, code_state_machine);
-  WriteDeficitsStateMachine("/home/dmitry/dm.dot");
-
-  return !FindSynonymyLoop(code_state_machine, first_bad_word, second_bad_word);
+  return FindSynonymyLoop(code_state_machine, first_bad_word, second_bad_word,
+                          loop_finder_width_limit);
 }
 
 BijectiveChecker::~BijectiveChecker() {
@@ -239,9 +237,11 @@ void BijectiveChecker::RemoveBottlenecks() {
   }
 }
 
-bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
-                                        std::vector<int>* first_bad_word,
-                                        std::vector<int>* second_bad_word) {
+Verdict BijectiveChecker::FindSynonymyLoop(
+                                         const StateMachine& code_state_machine,
+                                         std::vector<int>* first_bad_word,
+                                         std::vector<int>* second_bad_word,
+                                         int loop_finder_width_limit) {
   const unsigned kNumCodeSmStates = code_state_machine.GetNumberStates();
   const unsigned kEndSynHash = kNumCodeSmStates * kNumCodeSmStates *
                                (UnsignedDeficitId(0) + 1) - 1;
@@ -268,7 +268,15 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
 
   SynonymyState next_syn_state;
   do {
-    std::cout << syn_states.size() << std::endl;
+    if (syn_states.size() > loop_finder_width_limit) {
+      while (!sequences.empty()) {
+        delete[] visited_states.front();
+        delete sequences.front();
+        visited_states.pop();
+        sequences.pop();
+      }
+      return WIDTH_OUT;
+    }
     syn_state = syn_states.front();
     visits = visited_states.front();
     std::vector<int>* sequence = sequences.front();
@@ -316,7 +324,7 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
               visited_states.pop();
               sequences.pop();
             }
-            return true;
+            return NOT_BIJECTIVE;
           }
 
           if (!OrderedFind(visits, sequence->size() + 1, hash)) {
@@ -373,7 +381,7 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
               visited_states.pop();
               sequences.pop();
             }
-            return true;
+            return NOT_BIJECTIVE;
           }
 
           if (!OrderedFind(visits, sequence->size() + 1, hash)) {
@@ -395,7 +403,7 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
     delete sequence;
   } while (!syn_states.empty());
 
-  return false;
+  return IS_BIJECTIVE;
 }
 
 unsigned BijectiveChecker::SynonymyState::Hash(unsigned code_sm_n_states) {
