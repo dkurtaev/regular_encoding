@@ -148,6 +148,7 @@ void UnbijectiveCodeGenerator::Generate(std::vector<std::string>& code,
 
   std::vector<std::vector<int> > delimeters(2);
   std::vector<std::vector<int> > elem_codes_ids(2);
+  GenDelimeters(seed_length, delimeters);
   ExtractElemCodes(seed, delimeters, elem_codes_ids, code);
   GenStateMachine(code.size(), elem_codes_ids, state_machine);
 }

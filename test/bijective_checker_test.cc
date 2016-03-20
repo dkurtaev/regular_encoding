@@ -24,6 +24,7 @@ void StateMachineOfAllWords(int n_words, StateMachine& state_machine) {
 // McMillan's condition).
 TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
   int n_width_outs = 0;
+  int processed_codes = 0;
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
@@ -48,18 +49,20 @@ TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
           ss << "BijectiveChecker.all_words_codes_outside_LN_set: Processed M="
              << M << ", N=" << N << ", L=" << L;
           Log(ss.str(), 300);
+          ++processed_codes;
         }
       }
     }
   }
   std::cout << "BijectiveChecker.all_words_codes_outside_LN_set: Width outs: "
-            << n_width_outs << std::endl;
+            << n_width_outs << "(" << processed_codes << " total)" << std::endl;
 }
 
 // This test for generating all words code, check bijectivity and if
 // it is bijective, check McMillan's condition.
 TEST(BijectiveChecker, all_words_codes_mcmillan) {
   int n_width_outs = 0;
+  int processed_codes = 0;
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
@@ -90,12 +93,13 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
           ss << "BijectiveChecker.all_words_codes_mcmillan: Processed M="
              << M << ", N=" << N << ", L=" << L;
           Log(ss.str(), 300);
+          ++processed_codes;
         }
       }
     }
   }
   std::cout << "BijectiveChecker.all_words_codes_mcmillan: Width outs: "
-            << n_width_outs << std::endl;
+            << n_width_outs << "(" << processed_codes << " total)" << std::endl;
 }
 
 // Generating prefix codes and random state machine. Check that are bijective.
@@ -141,6 +145,7 @@ TEST(BijectiveChecker, checker_output) {
   static const unsigned kNumberMachineGens = 3;
 
   int n_width_outs = 0;
+  int processed_codes = 0;
   std::vector<std::string> code;
   BijectiveChecker checker;
   StateMachine state_machine;
@@ -200,6 +205,7 @@ TEST(BijectiveChecker, checker_output) {
               ss << "BijectiveChecker.checker_output: Processed M="
                  << M << ", N=" << N << ", L=" << L;
               Log(ss.str(), 300);
+              ++processed_codes;
             }
           }
         }
@@ -207,7 +213,7 @@ TEST(BijectiveChecker, checker_output) {
     }
   }
   std::cout << "BijectiveChecker.checker_output: Width outs: "
-            << n_width_outs << std::endl;
+            << n_width_outs << "(" << processed_codes << " total)"<< std::endl;
 }
 
 // Testing that method can find not bijective codes.
@@ -228,5 +234,6 @@ TEST(BijectiveChecker, not_bijective_codes) {
     }
   }
   std::cout << "BijectiveChecker.not_bijective_codes: Width outs: "
-            << n_width_outs << std::endl;
+            << n_width_outs << "(" <<  kNumberGenerations << " total)"
+            << std::endl;
 }
