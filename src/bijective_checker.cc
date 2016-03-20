@@ -252,14 +252,19 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
 
   SynonymyState syn_state;
   syn_state.deficit = deficits_state_machine_->GetState(UnsignedDeficitId(0));
-  syn_state.upper_state = code_state_machine.GetState(0);
-  syn_state.lower_state = syn_state.upper_state;
-  syn_states.push(syn_state);
+  unsigned* visits = 0;
+  for (int i = 0; i < kNumCodeSmStates; ++i) {
+    syn_state.upper_state = code_state_machine.GetState(i);
+    syn_state.lower_state = syn_state.upper_state;
+    syn_state.init_state = syn_state.upper_state;
+    syn_state.is_trivial = true;
+    syn_states.push(syn_state);
 
-  unsigned* visits = new unsigned[1];
-  visits[0] = syn_state.Hash(kNumCodeSmStates);
-  visited_states.push(visits);
-  sequences.push(new std::vector<int>());
+    visits = new unsigned[1];
+    visits[0] = syn_state.Hash(kNumCodeSmStates);
+    visited_states.push(visits);
+    sequences.push(new std::vector<int>());
+  }
 
   SynonymyState next_syn_state;
   do {
@@ -274,11 +279,19 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
         Transition* def_trans = deficit->transitions_from[i];
         const int event = def_trans->event_id;
 
+        if (syn_state.is_trivial) {
+          if (!sequence->empty()) {
+            if (sequence->back() == event + 1) continue;
+            else syn_state.is_trivial = false;
+          }
+        }
+
         Transition* code_trans = syn_state.lower_state->GetTransition(event);
         if (code_trans != 0) {
           next_syn_state.deficit = def_trans->to;
           next_syn_state.upper_state = syn_state.upper_state;
           next_syn_state.lower_state = code_trans->to;
+          next_syn_state.init_state = syn_state.init_state;
           const unsigned hash = next_syn_state.Hash(kNumCodeSmStates);
 
           if (hash == kEndSynHash &&
@@ -290,6 +303,12 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
                 else second_bad_word->push_back(-symbol - 1);
               }
               second_bad_word->push_back(event);
+
+              std::vector<int> init_context;
+              code_state_machine.FindAnyPath(0, next_syn_state.init_state->id,
+                                             init_context);
+              InsertFront(init_context, *first_bad_word);
+              InsertFront(init_context, *second_bad_word);
             }
             while (!sequences.empty()) {
               delete[] visited_states.front();
@@ -317,11 +336,19 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
         Transition* def_trans = deficit->transitions_from[i];
         const int event = def_trans->event_id;
 
+        if (syn_state.is_trivial) {
+          if (!sequence->empty()) {
+            if (sequence->back() == -event - 1) continue;
+            else syn_state.is_trivial = false;
+          }
+        }
+
         Transition* code_trans = syn_state.upper_state->GetTransition(event);
         if (code_trans != 0) {
           next_syn_state.deficit = def_trans->to;
           next_syn_state.upper_state = code_trans->to;
           next_syn_state.lower_state = syn_state.lower_state;
+          next_syn_state.init_state = syn_state.init_state;
           const unsigned hash = next_syn_state.Hash(kNumCodeSmStates);
 
           if (hash == kEndSynHash &&
@@ -333,6 +360,12 @@ bool BijectiveChecker::FindSynonymyLoop(const StateMachine& code_state_machine,
                 else second_bad_word->push_back(-symbol - 1);
               }
               first_bad_word->push_back(event);
+
+              std::vector<int> init_context;
+              code_state_machine.FindAnyPath(0, next_syn_state.init_state->id,
+                                             init_context);
+              InsertFront(init_context, *first_bad_word);
+              InsertFront(init_context, *second_bad_word);
             }
             while (!sequences.empty()) {
               delete[] visited_states.front();

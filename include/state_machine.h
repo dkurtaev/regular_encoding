@@ -42,6 +42,8 @@ class StateMachine {
 
   void WriteConfig(std::ofstream& s) const;
 
+  bool FindAnyPath(int from, int to, std::vector<int>& any_path) const;
+
  private:
   std::vector<State*> states_;
   std::vector<Transition*> transitions_;

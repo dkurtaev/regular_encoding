@@ -170,3 +170,48 @@ bool StateMachine::FindContext(std::vector<int>& first_substr,
   return contexts_factory_->FindContext(first_substr, second_substr,
                                         has_kernels);
 }
+
+bool StateMachine::FindAnyPath(int from, int to,
+                               std::vector<int>& any_path) const {
+  any_path.clear();
+  std::vector<bool> visited_states(states_.size(), false);
+  visited_states[from] = true;
+
+  std::queue<std::vector<int>* > paths;
+  std::queue<State*> states;
+  paths.push(new std::vector<int>());
+  states.push(states_[from]);
+
+  do {
+    std::vector<int>* path = paths.front();
+    State* state = states.front();
+
+    if (state->id == to) {
+      any_path.resize(path->size());
+      std::copy(path->begin(), path->end(), any_path.begin());
+
+      while (!paths.empty()) {
+        delete paths.front();
+        paths.pop();
+      }
+      return true;
+    }
+
+    for (int i = 0; i < state->transitions_from.size(); ++i) {
+      Transition* trans = state->transitions_from[i];
+      State* trans_to = trans->to;
+      if (!visited_states[trans_to->id]) {
+        visited_states[trans_to->id] = true;
+        states.push(trans_to);
+        std::vector<int>* new_path = new std::vector<int>(*path);
+        new_path->push_back(trans->event_id);
+        paths.push(new_path);
+      }
+    }
+
+    delete path;
+    paths.pop();
+    states.pop();
+  } while (!paths.empty());
+  return false;
+}
