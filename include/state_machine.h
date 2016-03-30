@@ -6,7 +6,6 @@
 #include <map>
 
 #include "include/structures.h"
-#include "include/contexts_factory.h"
 
 class StateMachine {
  public:
@@ -15,8 +14,6 @@ class StateMachine {
   ~StateMachine();
 
   void Init(int n_states);
-
-  void InitContexts();
 
   void Clear();
 
@@ -34,21 +31,15 @@ class StateMachine {
 
   bool IsRecognized(const std::vector<int>& word) const;
 
-  bool FindContext(std::vector<int>& first_substr,
-                   std::vector<int>& second_substr, bool& has_kernels) const;
-
   void WriteDot(const std::string& file_path,
                 const std::vector<std::string>& states_names,
                 std::map<int, std::string>& events_names) const;
 
   void WriteConfig(std::ofstream& s) const;
 
-  bool FindAnyPath(int from, int to, std::vector<int>& any_path) const;
-
  private:
   std::vector<State*> states_;
   std::vector<Transition*> transitions_;
-  ContextsFactory* contexts_factory_;
 };
 
 #endif  // INCLUDE_STATE_MACHINE_H_
