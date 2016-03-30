@@ -273,7 +273,7 @@ void BijectiveChecker::BuildSynonymyStateMachine() {
   const unsigned kNumDefsSmStates = deficits_state_machine_->GetNumberStates();
   const unsigned kNumSynonymyStates = kNumCodeSmStates * kNumCodeSmStates *
                                       kNumDefsSmStates;
-                                      
+
   synonymy_state_machine_ = new StateMachine(kNumSynonymyStates);
 
   bool state_is_processed[kNumSynonymyStates];
@@ -343,7 +343,7 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
   // Trivial paths collects same words. Corresponding sequence is
   // (a)(-a)(b)(-b)...(c)(-c)
   // If new symbol breaks this structure, path in not trivial.
-  // 
+  //
   // Trivial loops need to be simple (without self intersections by states).
   // Not trivial loops tracks by shared states visiting log (use only unvisited
   // states).
@@ -411,7 +411,9 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
             if (suqence_length % 2 == 1 && last_char + trans->event_id != 0) {
               new_sequence_is_trivial = false;
             }
-          } else continue;  // Skip this transition.
+          } else {
+            continue;  // Skip this transition.
+          }
         }
 
         const int to_id = trans->to->id;
@@ -434,12 +436,16 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
             int symbol;
             for (unsigned k = 0; k < suqence_length; ++k) {
               symbol = path[k]->event_id;
-              if (symbol > 0) first_bad_word->push_back(symbol - 1);
-              else second_bad_word->push_back(-symbol - 1);
+              if (symbol > 0)
+                first_bad_word->push_back(symbol - 1);
+              else
+                second_bad_word->push_back(-symbol - 1);
             }
             symbol = trans->event_id;
-            if (symbol > 0) first_bad_word->push_back(symbol - 1);
-            else second_bad_word->push_back(-symbol - 1);
+            if (symbol > 0)
+              first_bad_word->push_back(symbol - 1);
+            else
+              second_bad_word->push_back(-symbol - 1);
           }
           while (!paths.empty()) {
             delete[] paths.front();

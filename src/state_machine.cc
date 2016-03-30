@@ -75,10 +75,10 @@ void StateMachine::WriteDot(const std::string& file_path,
                  << n_states << ")." << std::endl;
     return;
   }
-  
+
   std::ofstream file(file_path.c_str());
   file << "strict digraph state_machine {\n";
-  
+
   std::string edges[n_states][n_states];
   for (int i = 0; i < n_states; ++i) {
     for (int j = 0; j < n_states; ++j) {

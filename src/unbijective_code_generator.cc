@@ -88,7 +88,7 @@ void UnbijectiveCodeGenerator::ExtractElemCodes(
     int from = 0;
     codes[i].clear();
     delimeters[i].push_back(seed.length() - 1);
-    
+
     for (int j = 0; j < delimeters[i].size(); ++j) {
       to = delimeters[i][j];
       node_id = 0;
@@ -100,8 +100,10 @@ void UnbijectiveCodeGenerator::ExtractElemCodes(
         if (child_id == -1) {
           child_id = nodes.size();
 
-          if (seed[k] == '0') nodes[node_id].first = child_id;
-          else nodes[node_id].second = child_id;
+          if (seed[k] == '0')
+            nodes[node_id].first = child_id;
+          else
+            nodes[node_id].second = child_id;
 
           nodes.push_back(std::pair<int, int>(-1, -1));
           elem_codes_ids.push_back(-1);
@@ -129,8 +131,8 @@ void UnbijectiveCodeGenerator::GenStateMachine(int n_elem_codes,
 
   do {
     CodeGenerator::GenStateMachine(n_elem_codes, n_states, state_machine);
-  } while(!state_machine->IsRecognized(codes[0]) ||
-          !state_machine->IsRecognized(codes[1]));
+  } while (!state_machine->IsRecognized(codes[0]) ||
+           !state_machine->IsRecognized(codes[1]));
 }
 
 void UnbijectiveCodeGenerator::Generate(std::vector<std::string>* code,
