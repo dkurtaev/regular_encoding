@@ -28,6 +28,7 @@ int main(int argc, char** argv) {
   if (outdir != "") {
     encoder.WriteCodeStateMachine(outdir + "code_state_machine.dot");
     encoder.WriteDeficitsStateMachine(outdir + "deficits_state_machine.dot");
+    encoder.WriteSynonymyStateMachine(outdir + "synonymy_state_machine.dot");
   }
 }
 

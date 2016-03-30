@@ -62,20 +62,27 @@ void AlphabeticEncoder::WriteCodeStateMachine(
   const StateMachine& state_machine) {
   // Set states names.
   std::vector<std::string> states_names;
-  states_names.push_back("start");
   int n_states = state_machine.GetNumberStates();
-  for (int i = 2; i < n_states; ++i) {
+  for (int i = 0; i < n_states; ++i) {
     std::ostringstream ss;
     ss << i;
     states_names.push_back(ss.str());
   }
-  states_names.push_back("end");
-  state_machine.WriteDot(file_path, states_names, code);
+
+  std::map<int, std::string> events;
+  const int n_codes = code.size();
+  for (int i = 0; i < n_codes; ++i) {
+    events[i] = code[i];
+  }
+  state_machine.WriteDot(file_path, states_names, events);
 }
 
-void AlphabeticEncoder::WriteDeficitsStateMachine(
-    const std::string& file_path) {
-  bijective_checker.WriteDeficitsStateMachine(file_path);
+void AlphabeticEncoder::WriteDeficitsStateMachine(const std::string& path) {
+  bijective_checker.WriteDeficitsStateMachine(path);
+}
+
+void AlphabeticEncoder::WriteSynonymyStateMachine(const std::string& path) {
+  bijective_checker.WriteSynonymyStateMachine(path);
 }
 
 void AlphabeticEncoder::WriteConfigFile(const std::string& file_path,

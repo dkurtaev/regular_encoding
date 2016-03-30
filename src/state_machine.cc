@@ -98,12 +98,20 @@ int StateMachine::GetNumberTransitions() const {
 }
 
 void StateMachine::WriteDot(const std::string& file_path,
-                           const std::vector<std::string>& states_names,
-                           const std::vector<std::string>& events_names) const {
+                            const std::vector<std::string>& states_names,
+                            std::map<int, std::string>& events) const {
+  const int n_states = states_.size();
+
+  if (states_names.size() != n_states) {
+    std::cout << "[StateMachine::WriteDot] Number of names must be same as "
+                 "number of states. (" << states_names.size() << " vs. "
+                 << n_states << ")." << std::endl;
+    return;
+  }
+  
   std::ofstream file(file_path.c_str());
   file << "strict digraph state_machine {\n";
-
-  const int n_states = states_.size();
+  
   std::string edges[n_states][n_states];
   for (int i = 0; i < n_states; ++i) {
     for (int j = 0; j < n_states; ++j) {
@@ -121,7 +129,7 @@ void StateMachine::WriteDot(const std::string& file_path,
         Transition* trans = state->transitions_from[j];
         const int state_to_id = trans->to->id;
         std::string state_to_name = states_names[state_to_id];
-        std::string event_name = events_names[trans->event_id];
+        std::string event_name = events[trans->event_id];
 
         if (edges[i][state_to_id] != "") {
           edges[i][state_to_id] += ", " + event_name;

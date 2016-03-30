@@ -26,6 +26,8 @@ class BijectiveChecker {
 
   void WriteDeficitsStateMachine(const std::string& file_path);
 
+  void WriteSynonymyStateMachine(const std::string& file_path);
+
  private:
   void BuildDeficitsStateMachine(const CodeTree& code_tree);
 
@@ -37,6 +39,8 @@ class BijectiveChecker {
                              const CodeTree& code_tree,
                              std::queue<int>& deficits_up_to_build);
 
+  void BuildSynonymyStateMachine();
+
   struct SynonymyState {
     State* deficit;
     State* upper_state;
@@ -44,12 +48,9 @@ class BijectiveChecker {
     State* init_state;
 
     unsigned Hash(unsigned code_sm_n_states);
-
-    static bool IsTrivial(const std::vector<int>& sequence, int next_char);
   };
 
-  Verdict FindSynonymyLoop(const StateMachine& code_state_machine,
-                           std::vector<int>* first_bad_word = 0,
+  Verdict FindSynonymyLoop(std::vector<int>* first_bad_word = 0,
                            std::vector<int>* second_bad_word = 0,
                            int loop_finder_width_limit = INT_MAX);
 
@@ -68,6 +69,8 @@ class BijectiveChecker {
   std::vector<ElementaryCode*> code_;
   std::vector<Suffix*> code_suffixes_;
   StateMachine* deficits_state_machine_;
+  StateMachine* synonymy_state_machine_;
+  StateMachine* code_state_machine_;  // Just reference for private methods.
 };
 
 #endif  // INCLUDE_BIJECTIVE_CHECKER_H_

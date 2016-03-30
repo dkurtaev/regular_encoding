@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 
 #include "include/structures.h"
 #include "include/contexts_factory.h"
@@ -38,7 +39,7 @@ class StateMachine {
 
   void WriteDot(const std::string& file_path,
                 const std::vector<std::string>& states_names,
-                const std::vector<std::string>& events_names) const;
+                std::map<int, std::string>& events_names) const;
 
   void WriteConfig(std::ofstream& s) const;
 

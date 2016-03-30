@@ -17,6 +17,8 @@ class AlphabeticEncoder {
 
   void WriteDeficitsStateMachine(const std::string& file_path);
 
+  void WriteSynonymyStateMachine(const std::string& file_path);
+
   static void WriteCodeStateMachine(const std::string& file_path,
                                     const std::vector<std::string>& code,
                                     const StateMachine& state_machine);

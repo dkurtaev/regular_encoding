@@ -123,7 +123,7 @@ TEST(BijectiveChecker, prefix_codes) {
 
             Verdict verdict = checker.IsBijective(code, state_machine);
             if (verdict != WIDTH_OUT) {
-              ASSERT_EQ(verdict, IS_BIJECTIVE);
+              ASSERT_EQ(IS_BIJECTIVE, verdict);
             } else ++n_width_outs;
             
             std::ostringstream ss;
@@ -228,7 +228,7 @@ TEST(BijectiveChecker, not_bijective_codes) {
     UnbijectiveCodeGenerator::Generate(code, state_machine);
     Verdict verdict = checker.IsBijective(code, state_machine);
     if (verdict != WIDTH_OUT) {
-      ASSERT_EQ(verdict, NOT_BIJECTIVE);
+      ASSERT_EQ(NOT_BIJECTIVE, verdict);
     } else {
       ++n_width_outs;
     }
