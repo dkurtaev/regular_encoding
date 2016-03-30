@@ -12,7 +12,7 @@
 #include "include/alphabetic_encoder.h"
 
 bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
-                                   StateMachine& code_state_machine,
+                                   const StateMachine& code_state_machine,
                                    std::vector<int>* first_bad_word,
                                    std::vector<int>* second_bad_word) {
   Reset();
@@ -91,8 +91,8 @@ void BijectiveChecker::BuildDeficitsStateMachine(const CodeTree& code_tree) {
     const unsigned u_deficit_id = UnsignedDeficitId(deficit_id);
     deficits_up_to_build.pop();
     if (!processed_deficits[u_deficit_id]) {
-      AddAntitropicDeficits(deficit_id, code_tree, deficits_up_to_build);
-      AddIsotropicDeficits(deficit_id, code_tree, deficits_up_to_build);
+      AddAntitropicDeficits(deficit_id, code_tree, &deficits_up_to_build);
+      AddIsotropicDeficits(deficit_id, code_tree, &deficits_up_to_build);
       processed_deficits[u_deficit_id] = true;
     }
   }
@@ -101,7 +101,7 @@ void BijectiveChecker::BuildDeficitsStateMachine(const CodeTree& code_tree) {
 void BijectiveChecker::AddIsotropicDeficits(
   int deficit_id,
   const CodeTree& code_tree,
-  std::queue<int>& deficits_up_to_build) {
+  std::queue<int>* deficits_up_to_build) {
   // Alpha = elem_code + beta.
   // Find all elementary codes which are preffixes of alpha.
   Suffix* alpha_suffix = code_suffixes_[abs(deficit_id)];
@@ -132,14 +132,14 @@ void BijectiveChecker::AddIsotropicDeficits(
     deficits_state_machine_->AddTransition(UnsignedDeficitId(deficit_id),
                                            UnsignedDeficitId(state_id),
                                            found_elem_codes[i]->id);
-    deficits_up_to_build.push(state_id);
+    deficits_up_to_build->push(state_id);
   }
 }
 
 void BijectiveChecker::AddAntitropicDeficits(
     int deficit_id,
     const CodeTree& code_tree,
-    std::queue<int>& deficits_up_to_build) {
+    std::queue<int>* deficits_up_to_build) {
   // Elem_code = alpha + beta.
   // Find all elementary codes with prefix [alpha].
   Suffix* alpha_suffix = code_suffixes_[abs(deficit_id)];
@@ -170,7 +170,7 @@ void BijectiveChecker::AddAntitropicDeficits(
       deficits_state_machine_->AddTransition(UnsignedDeficitId(deficit_id),
                                              UnsignedDeficitId(state_id),
                                              found_elem_codes[i]->id);
-      deficits_up_to_build.push(state_id);
+      deficits_up_to_build->push(state_id);
     }
   }
 }
@@ -401,7 +401,7 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
           bool use_new_path = true;
           for (unsigned k = 0; use_new_path && k < suqence_length; ++k) {
             State* state_from = path[k]->from;
-            if (state_from == trans->to /*|| state_is_visited[state_from->id]*/) {
+            if (state_from == trans->to) {
               use_new_path = false;
             }
           }
@@ -410,20 +410,16 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
             // Check triviality of new path.
             if (suqence_length % 2 == 1 && last_char + trans->event_id != 0) {
               new_sequence_is_trivial = false;
-
-              // Mark all visited states.
-              // for (unsigned k = 0; k < suqence_length; ++k) {
-              //   state_is_visited[path[k]->from->id] = true;
-              // }
             }
           } else continue;  // Skip this transition.
         }
 
-        if (trans->to->id != kEndSynHash || new_sequence_is_trivial) {
-          if (new_sequence_is_trivial || trans->to->id == kEndSynHash ||
-              !state_is_visited[trans->to->id] || trans->to->id == kStartSynHash) {
+        const int to_id = trans->to->id;
+        if (to_id != kEndSynHash || new_sequence_is_trivial) {
+          if (new_sequence_is_trivial || !state_is_visited[to_id] ||
+              to_id == kStartSynHash) {
             if (!new_sequence_is_trivial) {
-              state_is_visited[trans->to->id] = true;
+              state_is_visited[to_id] = true;
             }
             Transition** new_path = new Transition*[suqence_length + 1];
             memcpy(new_path, path, sizeof(Transition*) * suqence_length);

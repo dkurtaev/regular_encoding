@@ -15,7 +15,7 @@ class CodeGenerator {
   static int MaxNumberElemCodes(int max_elem_code_length);
 
   static void GenCode(int code_length, int max_elem_code_length,
-                      int n_elem_codes, std::vector<std::string>& code);
+                      int n_elem_codes, std::vector<std::string>* code);
 
   static void GenStateMachine(int n_elem_codes, int n_states,
                               StateMachine* state_machine);
@@ -26,16 +26,15 @@ class CodeGenerator {
   static std::string CodeFromBinary(unsigned data, unsigned length);
 
   static void GenPrefixCode(int max_elem_code_length, int n_elem_codes,
-                            std::vector<std::string>& code);
+                            std::vector<std::string>* code);
 
  private:
   static void GenCodeLengths(int code_length, int max_elem_code_length,
-                             int n_elem_codes, std::vector<int>& lengths);
+                             int n_elem_codes, std::vector<int>* lengths);
 
   // Part of prefix code generation.
   static void GenLeafs(const std::string& node_code, int n_leafs,
-                       int max_depth, std::vector<std::string>& codes);
-
+                       int max_depth, std::vector<std::string>* codes);
 };
 
 #endif  // INCLUDE_CODE_GENERATOR_H_

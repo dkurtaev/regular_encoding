@@ -16,7 +16,7 @@ class BijectiveChecker {
   ~BijectiveChecker();
 
   bool IsBijective(const std::vector<std::string>& code,
-                   StateMachine& code_state_machine,
+                   const StateMachine& code_state_machine,
                    std::vector<int>* first_bad_word = 0,
                    std::vector<int>* second_bad_word = 0);
 
@@ -29,11 +29,11 @@ class BijectiveChecker {
 
   void AddIsotropicDeficits(int deficit_id,
                             const CodeTree& code_tree,
-                            std::queue<int>& deficits_up_to_build);
+                            std::queue<int>* deficits_up_to_build);
 
   void AddAntitropicDeficits(int deficit_id,
                              const CodeTree& code_tree,
-                             std::queue<int>& deficits_up_to_build);
+                             std::queue<int>* deficits_up_to_build);
 
   void BuildSynonymyStateMachine();
 
@@ -62,7 +62,8 @@ class BijectiveChecker {
   std::vector<Suffix*> code_suffixes_;
   StateMachine* deficits_state_machine_;
   StateMachine* synonymy_state_machine_;
-  StateMachine* code_state_machine_;  // Just reference for private methods.
+  // Just reference for private methods.
+  const StateMachine* code_state_machine_;
 };
 
 #endif  // INCLUDE_BIJECTIVE_CHECKER_H_

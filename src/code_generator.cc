@@ -11,17 +11,19 @@
 #include "include/structures.h"
 
 void CodeGenerator::GenCode(int code_length, int max_elem_code_length,
-                            int n_elem_codes, std::vector<std::string>& code) {
+                            int n_elem_codes, std::vector<std::string>* code) {
   std::vector<int> code_lengths;
-  GenCodeLengths(code_length, max_elem_code_length, n_elem_codes, code_lengths);
+  GenCodeLengths(code_length, max_elem_code_length, n_elem_codes,
+                 &code_lengths);
 
-  code.clear();
+  code->resize(n_elem_codes);
   std::vector<int> bin_elem_codes;
+  unsigned idx = 0;
   for (int i = 0; i < max_elem_code_length; ++i) {
     if (code_lengths[i] != 0) {
-      GenUniqueUnnegatives(pow(2, i + 1) - 1, code_lengths[i], bin_elem_codes);
+      GenUniqueUnnegatives(pow(2, i + 1) - 1, code_lengths[i], &bin_elem_codes);
       for (int j = 0; j < code_lengths[i]; ++j) {
-        code.push_back(CodeFromBinary(bin_elem_codes[j], i + 1));
+        code->operator[](idx++) = CodeFromBinary(bin_elem_codes[j], i + 1);
       }
     }
   }
@@ -29,16 +31,16 @@ void CodeGenerator::GenCode(int code_length, int max_elem_code_length,
 
 void CodeGenerator::GenCodeLengths(int code_length, int max_elem_code_length,
                                    int n_elem_codes,
-                                   std::vector<int>& lengths) {
+                                   std::vector<int>* lengths) {
   std::vector<int> not_full(max_elem_code_length);
 
   // Initialization.
-  lengths.resize(max_elem_code_length);
+  lengths->resize(max_elem_code_length);
   for (int i = 0; i < max_elem_code_length - 1; ++i) {
-    lengths[i] = 0;
+    lengths->operator[](i) = 0;
     not_full[i] = i + 1;
   }
-  lengths[max_elem_code_length - 1] = 1;
+  lengths->operator[](max_elem_code_length - 1) = 1;
   not_full[max_elem_code_length - 1] = max_elem_code_length;
 
   // Initial distribution.
@@ -46,8 +48,8 @@ void CodeGenerator::GenCodeLengths(int code_length, int max_elem_code_length,
   for (int i = 1; i < n_elem_codes; ++i) {
     int id = rand() % not_full.size();
     int length = not_full[id];
-    ++lengths[length - 1];
-    if (lengths[length - 1] == pow(2, length)) {
+    ++lengths->operator[](length - 1);
+    if (lengths->operator[](length - 1) == pow(2, length)) {
       not_full.erase(not_full.begin() + id);
     }
     current_code_length += length;
@@ -70,9 +72,9 @@ void CodeGenerator::GenCodeLengths(int code_length, int max_elem_code_length,
     // Select decremented length.
     do {
       decremented_length = rand(min_decremented_length, max_decremented_length);
-    } while (lengths[decremented_length - 1] == 0 ||
+    } while (lengths->operator[](decremented_length - 1) == 0 ||
              decremented_length == max_elem_code_length &&
-             lengths[max_elem_code_length - 1] == 1);
+             lengths->operator[](max_elem_code_length - 1) == 1);
 
     // Find decremented length position at list of not full lengths.
     // Insert if not exists.
@@ -99,9 +101,10 @@ void CodeGenerator::GenCodeLengths(int code_length, int max_elem_code_length,
     }
     incremented_length = not_full[inc_length_id];
 
-    --lengths[decremented_length - 1];
-    ++lengths[incremented_length - 1];
-    if (lengths[incremented_length - 1] == pow(2, incremented_length)) {
+    --lengths->operator[](decremented_length - 1);
+    ++lengths->operator[](incremented_length - 1);
+    if (lengths->operator[](incremented_length - 1) ==
+        pow(2, incremented_length)) {
       not_full.erase(not_full.begin() + inc_length_id);
     }
     current_code_length += incremented_length - decremented_length;
@@ -250,8 +253,8 @@ unsigned CodeGenerator::GetLNSetLimit(unsigned max_elem_code_length,
 }
 
 void CodeGenerator::GenPrefixCode(int max_elem_code_length, int n_elem_codes,
-                                  std::vector<std::string>& code) {
-  code.clear();
+                                  std::vector<std::string>* code) {
+  code->clear();
   GenLeafs("", n_elem_codes, max_elem_code_length, code);
 }
 
@@ -264,9 +267,9 @@ std::string CodeGenerator::CodeFromBinary(unsigned data, unsigned length) {
 }
 
 void CodeGenerator::GenLeafs(const std::string& node_code, int n_leafs,
-                             int max_depth, std::vector<std::string>& codes) {
+                             int max_depth, std::vector<std::string>* codes) {
   if (max_depth == 0 || n_leafs == 1 && (rand() % 2)) {
-    codes.push_back(node_code);
+    codes->push_back(node_code);
     return;
   }
 
@@ -283,6 +286,6 @@ void CodeGenerator::GenLeafs(const std::string& node_code, int n_leafs,
   }
 
   if (n_left_leafs == 0 && n_right_leafs == 0) {
-    codes.push_back(node_code);
+    codes->push_back(node_code);
   }
 }

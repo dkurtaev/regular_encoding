@@ -96,6 +96,6 @@ void AlphabeticEncoder::WriteConfigFile(const std::string& file_path,
     file << code[i] << std::endl;
   }
 
-  state_machine.WriteConfig(file);
+  state_machine.WriteConfig(&file);
   file.close();
 }

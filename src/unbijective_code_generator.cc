@@ -7,14 +7,13 @@
 #include "include/code_generator.h"
 
 // Generates different decompositions of same sequence.
-void UnbijectiveCodeGenerator::GenDelimeters(
-                                   int seed_length,
-                                   std::vector<std::vector<int> >& delimeters) {
+void UnbijectiveCodeGenerator::GenDelimeters(int seed_length,
+                                             std::vector<int>* delimeters) {
   int n_delimiters[2];
   const int max_n_delims = seed_length - 1;
 
   n_delimiters[0] = rand(0, max_n_delims);
-  GenUniqueUnnegatives(max_n_delims - 1, n_delimiters[0], delimeters[0]);
+  GenUniqueUnnegatives(max_n_delims - 1, n_delimiters[0], &delimeters[0]);
 
   if (n_delimiters[0] == 0) {
     n_delimiters[1] = rand(1, max_n_delims);
@@ -26,7 +25,7 @@ void UnbijectiveCodeGenerator::GenDelimeters(
 
   const int n_delims = n_delimiters[0];
   if (n_delimiters[0] != n_delimiters[1]) {
-    GenUniqueUnnegatives(max_n_delims - 1, n_delimiters[1], delimeters[1]);
+    GenUniqueUnnegatives(max_n_delims - 1, n_delimiters[1], &delimeters[1]);
   } else {
     // Collect unselected delimeters position.
     int unselected_delims[max_n_delims - n_delims];
@@ -61,23 +60,23 @@ void UnbijectiveCodeGenerator::GenDelimeters(
                                std::max(0, n_delims + delim - max_n_delims),
                                std::min(delim, n_delims - 1));
     if (n_left_delims > 0) {
-      GenUniqueUnnegatives(delim - 1, n_left_delims, buf);
-      InsertFront(buf, delimeters[1]);
+      GenUniqueUnnegatives(delim - 1, n_left_delims, &buf);
+      InsertFront(buf, &delimeters[1]);
     }
     const int n_right_delims = n_delims - 1 - n_left_delims;
     if (n_right_delims > 0) {
-      GenUniqueUnnegatives(max_n_delims - delim - 1, n_right_delims, buf);
-      InsertBack(delimeters[1], buf);
+      GenUniqueUnnegatives(max_n_delims - delim - 1, n_right_delims, &buf);
+      InsertBack(&delimeters[1], buf);
     }
   }
 }
 
 void UnbijectiveCodeGenerator::ExtractElemCodes(
-                                     const std::string& seed,
-                                     std::vector<std::vector<int> >& delimeters,
-                                     std::vector<std::vector<int> >& codes,
-                                     std::vector<std::string>& elem_codes) {
-  elem_codes.clear();
+                                         const std::string& seed,
+                                         std::vector<int>* delimeters,
+                                         std::vector<int>* codes,
+                                         std::vector<std::string>* elem_codes) {
+  elem_codes->clear();
 
   std::vector<std::pair<int, int> > nodes(1, std::pair<int, int>(-1, -1));
   std::vector<int> elem_codes_ids(1, -1);
@@ -112,7 +111,7 @@ void UnbijectiveCodeGenerator::ExtractElemCodes(
       if (elem_codes_ids[node_id] == -1) {
         elem_codes_ids[node_id] = available_elem_code_id;
         available_elem_code_id += 1;
-        elem_codes.push_back(elem_code);
+        elem_codes->push_back(elem_code);
       }
       codes[i].push_back(elem_codes_ids[node_id]);
       from = to + 1;
@@ -120,23 +119,22 @@ void UnbijectiveCodeGenerator::ExtractElemCodes(
   }
 }
 
-void UnbijectiveCodeGenerator::GenStateMachine(
-                                          const int& n_elem_codes,
-                                          std::vector<std::vector<int> >& codes,
-                                          StateMachine& state_machine) {
+void UnbijectiveCodeGenerator::GenStateMachine(int n_elem_codes,
+                                               const std::vector<int>* codes,
+                                               StateMachine* state_machine) {
   static const int kMinNumberStates = 1;
   static const int kMaxNumberStates = 5;
 
   const int n_states = rand(kMinNumberStates, kMaxNumberStates);
 
   do {
-    CodeGenerator::GenStateMachine(n_elem_codes, n_states, &state_machine);
-  } while(!state_machine.IsRecognized(codes[0]) ||
-          !state_machine.IsRecognized(codes[1]));
+    CodeGenerator::GenStateMachine(n_elem_codes, n_states, state_machine);
+  } while(!state_machine->IsRecognized(codes[0]) ||
+          !state_machine->IsRecognized(codes[1]));
 }
 
-void UnbijectiveCodeGenerator::Generate(std::vector<std::string>& code,
-                                        StateMachine& state_machine) {
+void UnbijectiveCodeGenerator::Generate(std::vector<std::string>* code,
+                                        StateMachine* state_machine) {
   static const int kSeedMinLength = 2;
   static const int kSeedMaxLength = 10;
   // Generate seed.
@@ -146,9 +144,9 @@ void UnbijectiveCodeGenerator::Generate(std::vector<std::string>& code,
     seed += rand() % 2 + '0';
   }
 
-  std::vector<std::vector<int> > delimeters(2);
-  std::vector<std::vector<int> > elem_codes_ids(2);
+  std::vector<int> delimeters[2];
+  std::vector<int> elem_codes_ids[2];
   GenDelimeters(seed_length, delimeters);
   ExtractElemCodes(seed, delimeters, elem_codes_ids, code);
-  GenStateMachine(code.size(), elem_codes_ids, state_machine);
+  GenStateMachine(code->size(), elem_codes_ids, state_machine);
 }

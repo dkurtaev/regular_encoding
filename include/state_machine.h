@@ -9,7 +9,7 @@
 
 class StateMachine {
  public:
-  StateMachine(int n_states = 0);
+  explicit StateMachine(int n_states = 0);
 
   ~StateMachine();
 
@@ -29,9 +29,9 @@ class StateMachine {
 
   void WriteDot(const std::string& file_path,
                 const std::vector<std::string>& states_names,
-                std::map<int, std::string>& events_names) const;
+                const std::map<int, std::string>& events_names) const;
 
-  void WriteConfig(std::ofstream& s) const;
+  void WriteConfig(std::ofstream* s) const;
 
  private:
   std::vector<State*> states_;

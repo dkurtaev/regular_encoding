@@ -36,7 +36,7 @@ TEST(BijectiveChecker, all_words_codes_outside_LN_set) {
       unsigned L_max = CodeGenerator::GetLNSetLimit(M, N);
       for (unsigned L = L_min; L < L_max; ++L) {
         for (unsigned gen = 0; gen < kNumberGenerations; ++gen) {
-          CodeGenerator::GenCode(L, M, N, code);
+          CodeGenerator::GenCode(L, M, N, &code);
           ASSERT_FALSE(checker.IsBijective(code, state_machine));
 
           std::ostringstream ss;
@@ -64,7 +64,7 @@ TEST(BijectiveChecker, all_words_codes_mcmillan) {
       unsigned L_max = CodeGenerator::MaxCodeLength(M, N);
       for (unsigned L = L_min; L <= L_max; ++L) {
         for (unsigned gen = 0; gen < kNumberGenerations; ++gen) {
-          CodeGenerator::GenCode(L, M, N, code);
+          CodeGenerator::GenCode(L, M, N, &code);
 
           if (checker.IsBijective(code, state_machine)) {
             unsigned sum = 0;
@@ -99,7 +99,7 @@ TEST(BijectiveChecker, prefix_codes) {
     unsigned N_max = 1 << M;
     for (unsigned N = 2; N <= N_max; ++N) {
       for (unsigned i = 0; i < kNumberCodeGens; ++i) {
-        CodeGenerator::GenPrefixCode(M, N, code);
+        CodeGenerator::GenPrefixCode(M, N, &code);
         for (unsigned n_states = 1; n_states <= kMaxNumberStates; ++n_states) {
           for (unsigned j = 0; j < kNumberMachineGens; ++j) {
             CodeGenerator::GenStateMachine(N, n_states, &state_machine);
@@ -133,7 +133,7 @@ TEST(BijectiveChecker, checker_output) {
       unsigned L_max = CodeGenerator::MaxCodeLength(M, N);
       for (unsigned L = L_min; L <= L_max; ++L) {
         for (unsigned i = 0; i < kNumberCodeGens; ++i) {
-          CodeGenerator::GenCode(L, M, N, code);
+          CodeGenerator::GenCode(L, M, N, &code);
           for (int n_states = 1; n_states <= kMaxNumberStates; ++n_states) {
             for (unsigned j = 0; j < kNumberMachineGens; ++j) {
               CodeGenerator::GenStateMachine(N, n_states, &state_machine);
@@ -192,7 +192,7 @@ TEST(BijectiveChecker, not_bijective_codes) {
   StateMachine state_machine;
   BijectiveChecker checker;
   for (int i = 0; i < kNumberGenerations; ++i) {
-    UnbijectiveCodeGenerator::Generate(code, state_machine);
+    UnbijectiveCodeGenerator::Generate(&code, &state_machine);
     ASSERT_FALSE(checker.IsBijective(code, state_machine));
   }
 }

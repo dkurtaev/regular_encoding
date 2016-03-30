@@ -66,7 +66,7 @@ int StateMachine::GetNumberTransitions() const {
 
 void StateMachine::WriteDot(const std::string& file_path,
                             const std::vector<std::string>& states_names,
-                            std::map<int, std::string>& events) const {
+                            const std::map<int, std::string>& events) const {
   const int n_states = states_.size();
 
   if (states_names.size() != n_states) {
@@ -96,7 +96,7 @@ void StateMachine::WriteDot(const std::string& file_path,
         Transition* trans = state->transitions[j];
         const int state_to_id = trans->to->id;
         std::string state_to_name = states_names[state_to_id];
-        std::string event_name = events[trans->event_id];
+        std::string event_name = events.at(trans->event_id);
 
         if (edges[i][state_to_id] != "") {
           edges[i][state_to_id] += ", " + event_name;
@@ -127,14 +127,14 @@ bool StateMachine::IsRecognized(const std::vector<int>& word) const {
   return state == states_.back();
 }
 
-void StateMachine::WriteConfig(std::ofstream& s) const {
-  s << states_.size() << std::endl;
+void StateMachine::WriteConfig(std::ofstream* s) const {
+  *s << states_.size() << std::endl;
 
   const int n_trans = transitions_.size();
-  s << n_trans << std::endl;
+  *s << n_trans << std::endl;
   for (int i = 0; i < n_trans; ++i) {
-    s << transitions_[i]->from->id << ' '
-      << transitions_[i]->to->id << ' '
-      << transitions_[i]->event_id << std::endl;
+    *s << transitions_[i]->from->id << ' '
+       << transitions_[i]->to->id << ' '
+       << transitions_[i]->event_id << std::endl;
   }
 }
