@@ -1,16 +1,32 @@
 #include "include/state_machine.h"
 
+#include <stdio.h>
+#include <string.h>
+
 #include <fstream>
+#include <queue>
 #include <iostream>
 
 StateMachine::StateMachine(int n_states) {
   if (n_states != 0) {
-    AddStates(n_states);
+    Init(n_states);
   }
 }
 
 StateMachine::~StateMachine() {
   Clear();
+}
+
+void StateMachine::Init(int n_states) {
+  if (!states_.empty()) {
+    Clear();
+  }
+
+  // Add states.
+  states_.resize(n_states);
+  for (int i = 0; i < n_states; ++i) {
+    states_[i] = new State(i);
+  }
 }
 
 void StateMachine::Clear() {
@@ -27,52 +43,13 @@ void StateMachine::Clear() {
   transitions_.clear();
 }
 
-void StateMachine::AddStates(int n_states) {
-  int offset = states_.size();
-  for (int i = 0; i < n_states; ++i) {
-    states_.push_back(new State(i + offset));
-  }
-}
-
 void StateMachine::AddTransition(unsigned from_id, unsigned to_id,
-                                 unsigned event_id) {
+                                 int event_id) {
   Transition* trans = new Transition(transitions_.size(),
                                      states_[from_id],
                                      states_[to_id],
                                      event_id);
   transitions_.push_back(trans);
-}
-
-void StateMachine::DelTransition(unsigned id) {
-  Transition* trans = transitions_[id];
-  trans->from->DelTransitionFrom(id);
-  trans->to->DelTransitionTo(id);
-  delete trans;
-  transitions_[id] = 0;
-}
-
-void StateMachine::DelState(unsigned id) {
-  State* state = states_[id];
-  std::vector<int> ids;
-  for (int i = 0; i < state->transitions_from.size(); ++i) {
-    ids.push_back(state->transitions_from[i]->id);
-  }
-  for (int i = 0; i < state->transitions_to.size(); ++i) {
-    ids.push_back(state->transitions_to[i]->id);
-  }
-  for (int i = 0; i < ids.size(); ++i) {
-    DelTransition(ids[i]);
-  }
-  delete state;
-  states_[id] = 0;
-}
-
-State* StateMachine::GetStartState() const {
-  return states_[0];
-}
-
-State* StateMachine::GetEndState() const {
-  return states_.back();
 }
 
 State* StateMachine::GetState(int id) const {
@@ -88,12 +65,20 @@ int StateMachine::GetNumberTransitions() const {
 }
 
 void StateMachine::WriteDot(const std::string& file_path,
-                           const std::vector<std::string>& states_names,
-                           const std::vector<std::string>& events_names) const {
+                            const std::vector<std::string>& states_names,
+                            const std::map<int, std::string>& events) const {
+  const int n_states = states_.size();
+
+  if (states_names.size() != n_states) {
+    std::cout << "[StateMachine::WriteDot] Number of names must be same as "
+                 "number of states. (" << states_names.size() << " vs. "
+                 << n_states << ")." << std::endl;
+    return;
+  }
+
   std::ofstream file(file_path.c_str());
   file << "strict digraph state_machine {\n";
 
-  const int n_states = states_.size();
   std::string edges[n_states][n_states];
   for (int i = 0; i < n_states; ++i) {
     for (int j = 0; j < n_states; ++j) {
@@ -106,12 +91,12 @@ void StateMachine::WriteDot(const std::string& file_path,
     if (state != 0) {
       std::string state_from_name = states_names[i];
 
-      const int n_trans = state->transitions_from.size();
+      const int n_trans = state->transitions.size();
       for (int j = 0; j < n_trans; ++j) {
-        Transition* trans = state->transitions_from[j];
+        Transition* trans = state->transitions[j];
         const int state_to_id = trans->to->id;
         std::string state_to_name = states_names[state_to_id];
-        std::string event_name = events_names[trans->event_id];
+        std::string event_name = events.at(trans->event_id);
 
         if (edges[i][state_to_id] != "") {
           edges[i][state_to_id] += ", " + event_name;
@@ -127,4 +112,29 @@ void StateMachine::WriteDot(const std::string& file_path,
 
   file << "}";
   file.close();
+}
+
+bool StateMachine::IsRecognized(const std::vector<int>& word) const {
+  State* state = states_[0];
+  for (int i = 0; i < word.size(); ++i) {
+    Transition* trans = state->GetTransition(word[i]);
+    if (trans != 0) {
+      state = trans->to;
+    } else {
+      return false;
+    }
+  }
+  return state == states_.back();
+}
+
+void StateMachine::WriteConfig(std::ofstream* s) const {
+  *s << states_.size() << std::endl;
+
+  const int n_trans = transitions_.size();
+  *s << n_trans << std::endl;
+  for (int i = 0; i < n_trans; ++i) {
+    *s << transitions_[i]->from->id << ' '
+       << transitions_[i]->to->id << ' '
+       << transitions_[i]->event_id << std::endl;
+  }
 }

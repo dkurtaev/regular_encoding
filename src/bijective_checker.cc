@@ -2,15 +2,24 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <iostream>
+#include <algorithm>
+#include <sstream>
 
 #include "include/simple_suffix_tree.h"
 #include "include/alphabetic_encoder.h"
 
 bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
-                                   const StateMachine& code_state_machine) {
+                                   const StateMachine& code_state_machine,
+                                   std::vector<int>* first_bad_word,
+                                   std::vector<int>* second_bad_word) {
   Reset();
+  code_state_machine_ = &code_state_machine;
+
+  if (first_bad_word) first_bad_word->clear();
+  if (second_bad_word) second_bad_word->clear();
 
   code_.resize(code.size());
   for (int i = 0; i < code.size(); ++i) {
@@ -26,15 +35,13 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   CodeTree code_tree(code_);
 
   BuildDeficitsStateMachine(code_tree);
-  RemoveDeadTransitions(code_state_machine);
-  RemoveBottlenecks();
+  BuildSynonymyStateMachine();
 
+  return !FindSynonymyLoop(first_bad_word, second_bad_word);
+}
 
-  if (DeficitsMachineIsTrivial()) {
-    return true;
-  } else {
-    return !FindTargetLoop(code_state_machine);
-  }
+BijectiveChecker::~BijectiveChecker() {
+  Reset();
 }
 
 unsigned BijectiveChecker::UnsignedDeficitId(int id) {
@@ -84,8 +91,8 @@ void BijectiveChecker::BuildDeficitsStateMachine(const CodeTree& code_tree) {
     const unsigned u_deficit_id = UnsignedDeficitId(deficit_id);
     deficits_up_to_build.pop();
     if (!processed_deficits[u_deficit_id]) {
-      AddAntitropicDeficits(deficit_id, code_tree, deficits_up_to_build);
-      AddIsotropicDeficits(deficit_id, code_tree, deficits_up_to_build);
+      AddAntitropicDeficits(deficit_id, code_tree, &deficits_up_to_build);
+      AddIsotropicDeficits(deficit_id, code_tree, &deficits_up_to_build);
       processed_deficits[u_deficit_id] = true;
     }
   }
@@ -94,7 +101,7 @@ void BijectiveChecker::BuildDeficitsStateMachine(const CodeTree& code_tree) {
 void BijectiveChecker::AddIsotropicDeficits(
   int deficit_id,
   const CodeTree& code_tree,
-  std::queue<int>& deficits_up_to_build) {
+  std::queue<int>* deficits_up_to_build) {
   // Alpha = elem_code + beta.
   // Find all elementary codes which are preffixes of alpha.
   Suffix* alpha_suffix = code_suffixes_[abs(deficit_id)];
@@ -125,14 +132,14 @@ void BijectiveChecker::AddIsotropicDeficits(
     deficits_state_machine_->AddTransition(UnsignedDeficitId(deficit_id),
                                            UnsignedDeficitId(state_id),
                                            found_elem_codes[i]->id);
-    deficits_up_to_build.push(state_id);
+    deficits_up_to_build->push(state_id);
   }
 }
 
 void BijectiveChecker::AddAntitropicDeficits(
     int deficit_id,
     const CodeTree& code_tree,
-    std::queue<int>& deficits_up_to_build) {
+    std::queue<int>* deficits_up_to_build) {
   // Elem_code = alpha + beta.
   // Find all elementary codes with prefix [alpha].
   Suffix* alpha_suffix = code_suffixes_[abs(deficit_id)];
@@ -163,172 +170,14 @@ void BijectiveChecker::AddAntitropicDeficits(
       deficits_state_machine_->AddTransition(UnsignedDeficitId(deficit_id),
                                              UnsignedDeficitId(state_id),
                                              found_elem_codes[i]->id);
-      deficits_up_to_build.push(state_id);
+      deficits_up_to_build->push(state_id);
     }
   }
-}
-
-bool BijectiveChecker::FindTargetLoop(const StateMachine& code_state_machine) {
-  const int n_code_sm_trans = code_state_machine.GetNumberTransitions();
-  State* code_sm_start = code_state_machine.GetStartState();
-  const int code_sm_end_id = code_state_machine.GetEndState()->id;
-  const int n_deficits_sm_trans = deficits_state_machine_
-                                    ->GetNumberTransitions();
-  State* identity_deficit = deficits_state_machine_
-                              ->GetState(UnsignedDeficitId(0));
-
-  std::queue<LoopState*> loop_states;
-
-  // Add initial loop state at identity deficit and empty words.
-  LoopState* loop_state = new LoopState();
-  loop_state->deficits_trace.resize(n_deficits_sm_trans);
-  std::fill(loop_state->deficits_trace.begin(),
-            loop_state->deficits_trace.end(), false);
-  for (int i = 0; i < 2; ++i) {
-    loop_state->words_trace[i].resize(n_code_sm_trans);
-    std::fill(loop_state->words_trace[i].begin(),
-              loop_state->words_trace[i].end(), false);
-    loop_state->words_states[i] = code_sm_start;
-  }
-  loop_state->deficit_state = identity_deficit;
-  loop_states.push(loop_state);
-
-  do {
-    loop_state = loop_states.front();
-    State* deficit_state = loop_state->deficit_state;
-    for (int i = 0; i < deficit_state->transitions_from.size(); ++i) {
-      bool target_loop_founded =
-          ProcessLoopTransition(loop_state,
-                                deficit_state->transitions_from[i],
-                                loop_states, code_sm_end_id);
-      if (target_loop_founded) {
-        while (!loop_states.empty()) {
-          delete loop_states.front();
-          loop_states.pop();
-        }
-        return true;
-      }
-    }
-    loop_states.pop();
-    delete loop_state;
-  } while (!loop_states.empty());
-
-  return false;
-}
-
-bool BijectiveChecker::ProcessLoopTransition(LoopState* state,
-                                             Transition* def_transition,
-                                             std::queue<LoopState*>& states,
-                                             unsigned end_state_id) {
-  int def_id = SignedDeficitId(def_transition->to->id);
-  int char_id = def_transition->event_id;
-  enum ProcessingResult {TRANSITION_NOT_EXISTS,
-                         TRANSITION_EXISTS,
-                         FOUND_LOOP};
-  ProcessingResult result = TRANSITION_NOT_EXISTS;
-
-  LoopState* transited_state = new LoopState();
-  for (int i = 0; i < 2; ++i) {
-    transited_state->words_trace[i] = state->words_trace[i];
-    transited_state->words[i] = state->words[i];
-    transited_state->words_states[i] = state->words_states[i];
-  }
-  transited_state->deficits_trace = state->deficits_trace;
-  transited_state->deficit_state = def_transition->to;
-
-  const int word_id = (SignedDeficitId(state->deficit_state->id) >= 0 ? LOWER :
-                                                                        UPPER);
-  Transition* word_transition = transited_state->words_states[word_id]
-                                               ->GetTransition(char_id);
-  if (word_transition != 0) {
-    if (!transited_state->words_trace[word_id][word_transition->id] ||
-        !transited_state->deficits_trace[def_transition->id]) {
-      transited_state->words_states[word_id] = word_transition->to;
-      transited_state->words[word_id].push_back(char_id);
-
-      for (int i = 0; i < word_transition->from->transitions_from.size(); ++i) {
-        Transition* trans = word_transition->from->transitions_from[i];
-        if (trans->to->id == word_transition->to->id) {
-          transited_state->words_trace[word_id][trans->id] = true;
-        }
-      }
-
-      transited_state->deficits_trace[def_transition->id] = true;
-      result = (def_id != 0 ? TRANSITION_EXISTS : FOUND_LOOP);
-    }
-  }
-
-  switch (result) {
-    case TRANSITION_NOT_EXISTS: {
-      delete transited_state;
-      break;
-    }
-    case FOUND_LOOP: {
-      bool nontrivial_loop_found = false;
-      if (transited_state->words_states[0]->id == end_state_id &&
-          transited_state->words_states[1]->id == end_state_id) {
-        if (transited_state->words[0].size() ==
-            transited_state->words[1].size()) {
-          for (int i = 0; i < transited_state->words[0].size(); ++i) {
-            if (transited_state->words[0][i] !=
-                transited_state->words[1][i]) {
-              nontrivial_loop_found = true;
-              break;
-            }
-          }
-        } else {
-          nontrivial_loop_found = true;
-        }
-      }
-
-      if (!nontrivial_loop_found) {
-        if (transited_state->words_states[0]->id != 0 ||
-            transited_state->words_states[1]->id != 0) {
-          states.push(transited_state);
-        } else {
-          delete transited_state;
-        }
-      } else {
-        states.push(transited_state);
-        return true;
-      }
-      break;
-    }
-    case TRANSITION_EXISTS: {
-      states.push(transited_state);
-      break;
-    }
-    default: break;
-  }
-  return false;
-}
-
-void BijectiveChecker::LogDeficitsBuilding(int state_id_from,
-                                           int state_id_to,
-                                           ElementaryCode* elem_code) {
-  std::string alpha_suffix = code_suffixes_[abs(state_id_from)]->str();
-  std::string beta_suffix = code_suffixes_[abs(state_id_to)]->str();
-  if (alpha_suffix == "") {
-    alpha_suffix = "E";
-  }
-  if (beta_suffix == "") {
-    beta_suffix = "E";
-  }
-  std::string log_str = "Added transition (";
-  log_str += (state_id_from < 0 ? "b[%d]/E, E/%s)=" : "E/b[%d], %s/E)=");
-  log_str += (state_id_to < 0 ? "E/%s, E/%s = " : "%s/E, %s/E = ");
-  printf(log_str.c_str(), elem_code->id, alpha_suffix.c_str(),
-         beta_suffix.c_str(), beta_suffix.c_str());
-  if (state_id_from < 0) {
-    printf("[%s/%s\n", elem_code->str.c_str(), alpha_suffix.c_str());
-  } else {
-    printf("[%s/%s\n", alpha_suffix.c_str(), elem_code->str.c_str());
-  }
-  fflush(stdout);
 }
 
 BijectiveChecker::BijectiveChecker()
-  : deficits_state_machine_(0) {
+  : deficits_state_machine_(0),
+    synonymy_state_machine_(0) {
 }
 
 void BijectiveChecker::Reset() {
@@ -344,104 +193,276 @@ void BijectiveChecker::Reset() {
 
   delete deficits_state_machine_;
   deficits_state_machine_ = 0;
+  delete synonymy_state_machine_;
+  synonymy_state_machine_ = 0;
+  code_state_machine_ = 0;
 }
 
 void BijectiveChecker::WriteDeficitsStateMachine(const std::string& file_path) {
   // Set states names.
-  const int n_states = code_suffixes_.size() * 2 - 1;
+  const int n_states = deficits_state_machine_->GetNumberStates();
   std::vector<std::string> states_names(n_states);
-  states_names[UnsignedDeficitId(0)] = "\"/\"";
+  states_names[UnsignedDeficitId(0)] = "\"\u03bb/\u03bb\"";
 
   // First suffix if empty suffix, starts from 1.
   for (int i = 1; i < code_suffixes_.size(); ++i) {
     std::string str = code_suffixes_[i]->str();
-    states_names[UnsignedDeficitId(i)] = "\"" + str + "/\"";
-    states_names[UnsignedDeficitId(-i)] = "\"/" + str + "\"";
+    states_names[UnsignedDeficitId(i)] = "\"" + str + "/\u03bb\"";
+    states_names[UnsignedDeficitId(-i)] = "\"\u03bb/" + str + "\"";
   }
 
   // Set transitions names.
-  std::vector<std::string> events_names(code_.size());
-  for (int i = 0; i < code_.size(); ++i) {
+  std::map<int, std::string> events_names;
+  const int n_codes = code_.size();
+  for (int i = 0; i < n_codes; ++i) {
     events_names[i] = code_[i]->str;
   }
-
   deficits_state_machine_->WriteDot(file_path, states_names, events_names);
 }
 
-void BijectiveChecker::RemoveDeadTransitions(
-  const StateMachine& code_state_machine) {
-  int n_transitions = deficits_state_machine_->GetNumberTransitions();
-  std::vector<bool> is_visited(n_transitions, false);
+void BijectiveChecker::WriteSynonymyStateMachine(const std::string& file_path) {
+  const unsigned kNumCodeSmStates = code_state_machine_->GetNumberStates();
+  const unsigned kNumDefsSmStates = deficits_state_machine_->GetNumberStates();
+  const unsigned kNumSuffixes = code_suffixes_.size();
 
-  std::queue<State*> deficit_states;
-  std::queue<State*> code_sm_states;
-  deficit_states.push(deficits_state_machine_->GetState(UnsignedDeficitId(0)));
-  code_sm_states.push(code_state_machine.GetStartState());
+  // Deficits names.
+  std::vector<std::string> deficits_names(kNumDefsSmStates);
+  deficits_names[UnsignedDeficitId(0)] = "\u03bb/\u03bb";
+  for (int i = 1; i < kNumSuffixes; ++i) {
+    std::string str = code_suffixes_[i]->str();
+    deficits_names[UnsignedDeficitId(i)] = str + "/\u03bb";
+    deficits_names[UnsignedDeficitId(-i)] = "\u03bb/" + str;
+  }
 
-  while(!deficit_states.empty()) {
-    State* deficit_state = deficit_states.front();
-    State* code_sm_state = code_sm_states.front();
-    deficit_states.pop();
-    code_sm_states.pop();
+  // Code state machine states names.
+  std::vector<std::string> code_sm_states_names(kNumCodeSmStates);
+  code_sm_states_names[0] = "st";
+  for (int i = 1; i < kNumCodeSmStates - 1; ++i) {
+    std::ostringstream ss;
+    ss << (i + 1);
+    code_sm_states_names[i] = ss.str();
+  }
+  code_sm_states_names[kNumCodeSmStates - 1] = "end";
 
-    for (int i = 0; i < deficit_state->transitions_from.size(); ++i) {
-      Transition* deficit_transition = deficit_state->transitions_from[i];
+  std::vector<std::string> states_names(kNumDefsSmStates * kNumCodeSmStates *
+                                        kNumCodeSmStates);
+  unsigned idx = 0;
+  for (unsigned i = 0; i < kNumDefsSmStates; ++i) {
+    for (unsigned j = 0; j < kNumCodeSmStates; ++j) {
+      for (unsigned k = 0; k < kNumCodeSmStates; ++k) {
+        states_names[idx++] = "\"(" + deficits_names[i] + ", " +
+                              code_sm_states_names[j] + "/" +
+                              code_sm_states_names[k] + ")\"";
+      }
+    }
+  }
 
-      // If transition not visited yet.
-      if (!is_visited[deficit_transition->id]) {
-        int event_id = deficit_transition->event_id;
-        Transition* code_sm_transition = code_sm_state->GetTransition(event_id);
+  // Set transitions names.
+  std::map<int, std::string> events_names;
+  const int n_codes = code_.size();
+  for (int i = 0; i < n_codes; ++i) {
+    events_names[i + 1] = code_[i]->str + "/\u03bb";
+    events_names[-i - 1] = "\u03bb/" + code_[i]->str;
+  }
 
-        // If exists corresponding transition at code state machine.
-        if (code_sm_transition != 0) {
-          deficit_states.push(deficit_transition->to);
-          code_sm_states.push(code_sm_transition->to);
-          is_visited[deficit_transition->id] = true;
+  synonymy_state_machine_->WriteDot(file_path, states_names, events_names);
+}
+
+void BijectiveChecker::BuildSynonymyStateMachine() {
+  const unsigned kNumCodeSmStates = code_state_machine_->GetNumberStates();
+  const unsigned kNumDefsSmStates = deficits_state_machine_->GetNumberStates();
+  const unsigned kNumSynonymyStates = kNumCodeSmStates * kNumCodeSmStates *
+                                      kNumDefsSmStates;
+
+  synonymy_state_machine_ = new StateMachine(kNumSynonymyStates);
+
+  bool state_is_processed[kNumSynonymyStates];
+  memset(state_is_processed, false, kNumSynonymyStates);
+
+  SynonymyState syn_state;
+  syn_state.deficit = deficits_state_machine_->GetState(UnsignedDeficitId(0));
+  syn_state.upper_state = code_state_machine_->GetState(0);
+  syn_state.lower_state = syn_state.upper_state;
+  state_is_processed[syn_state.Hash(kNumCodeSmStates)] = true;
+
+  std::queue<SynonymyState> syn_states;
+  syn_states.push(syn_state);
+
+  SynonymyState next_syn_state;
+  do {
+    syn_state = syn_states.front();
+    syn_states.pop();
+
+    const unsigned hash_from = syn_state.Hash(kNumCodeSmStates);
+
+    State* deficit = syn_state.deficit;
+    if (SignedDeficitId(deficit->id) >= 0) {  // event: empty/char
+      for (int i = 0; i < deficit->transitions.size(); ++i) {
+        Transition* def_trans = deficit->transitions[i];
+        const int event = def_trans->event_id;
+
+        Transition* code_trans = syn_state.lower_state->GetTransition(event);
+        if (code_trans != 0) {
+          next_syn_state.deficit = def_trans->to;
+          next_syn_state.upper_state = syn_state.upper_state;
+          next_syn_state.lower_state = code_trans->to;
+          const unsigned hash_to = next_syn_state.Hash(kNumCodeSmStates);
+          synonymy_state_machine_->AddTransition(hash_from, hash_to,
+                                                 -event - 1);
+          if (!state_is_processed[hash_to]) {
+            syn_states.push(next_syn_state);
+            state_is_processed[hash_to] = true;
+          }
+        }
+      }
+    } else {  // event: char/empty
+      for (int i = 0; i < deficit->transitions.size(); ++i) {
+        Transition* def_trans = deficit->transitions[i];
+        const int event = def_trans->event_id;
+
+        Transition* code_trans = syn_state.upper_state->GetTransition(event);
+        if (code_trans != 0) {
+          next_syn_state.deficit = def_trans->to;
+          next_syn_state.upper_state = code_trans->to;
+          next_syn_state.lower_state = syn_state.lower_state;
+          const unsigned hash_to = next_syn_state.Hash(kNumCodeSmStates);
+          synonymy_state_machine_->AddTransition(hash_from, hash_to, event + 1);
+          if (!state_is_processed[hash_to]) {
+            syn_states.push(next_syn_state);
+            state_is_processed[hash_to] = true;
+          }
         }
       }
     }
-  }
-
-  // Remove dead transitions (not visited due code state machine rules).
-  for (int i = 0; i < n_transitions; ++i) {
-    if (!is_visited[i]) {
-      deficits_state_machine_->DelTransition(i);
-    }
-  }
+  } while (!syn_states.empty());
 }
 
-void BijectiveChecker::RemoveBottlenecks() {
-  const int n_states = deficits_state_machine_->GetNumberStates();
-  std::queue<State*> states;
-  states.push(deficits_state_machine_->GetState(UnsignedDeficitId(0)));
+bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
+                                        std::vector<int>* second_bad_word) {
+  // Exists two types of paths: trivial and not-trivial.
+  // Trivial paths collects same words. Corresponding sequence is
+  // (a)(-a)(b)(-b)...(c)(-c)
+  // If new symbol breaks this structure, path in not trivial.
+  //
+  // Trivial loops need to be simple (without self intersections by states).
+  // Not trivial loops tracks by shared states visiting log (use only unvisited
+  // states).
+  const unsigned kNumSynonymyStates = synonymy_state_machine_
+                                      ->GetNumberStates();
+  const unsigned kNumCodeSmStates = code_state_machine_->GetNumberStates();
+  const unsigned kEndSynHash = kNumCodeSmStates * kNumCodeSmStates *
+                               (UnsignedDeficitId(0) + 1) - 1;
+  const unsigned kStartSynHash = UnsignedDeficitId(0) * kNumCodeSmStates *
+                                 kNumCodeSmStates;
 
-  std::vector<bool> achievable(n_states, false);
-  while (!states.empty()) {
-    State* state = states.front();
-    states.pop();
-    achievable[state->id] = true;
-    for (int i = 0; i < state->transitions_to.size(); ++i) {
-      State* state_from = state->transitions_to[i]->from;
-      if (!achievable[state_from->id]) {
-        states.push(state_from);
+  bool state_is_visited[kNumSynonymyStates];  // Used for non-trivial sequences.
+  memset(state_is_visited, false, kNumSynonymyStates);
+
+  std::queue<bool> flags_of_triviality;
+  std::queue<Transition**> paths;
+
+  // Starts from initial state.
+  State* state = synonymy_state_machine_->GetState(kStartSynHash);
+  Transition** path = 0;
+  unsigned n_trans = state->transitions.size();
+  for (unsigned i = 0; i < n_trans; ++i) {
+    path = new Transition*[1];
+    path[0] = state->transitions[i];
+    paths.push(path);
+    flags_of_triviality.push(true);
+  }
+
+  unsigned suqence_length = 1;
+  while (!paths.empty()) {
+    // Process all paths with current length.
+    const unsigned n_paths = paths.size();
+
+    for (unsigned i = 0; i < n_paths; ++i) {
+      path = paths.front();
+      const bool sequence_is_trivial = flags_of_triviality.front();
+      paths.pop();
+      flags_of_triviality.pop();
+
+      Transition* trans = path[suqence_length - 1];
+      int last_char = trans->event_id;
+      state = trans->to;
+      n_trans = state->transitions.size();
+
+      // Process each transition of current state.
+      for (unsigned j = 0; j < n_trans; ++j) {
+        trans = state->transitions[j];
+        bool new_sequence_is_trivial = sequence_is_trivial;
+
+        // Check next state to unvisiting.
+        if (sequence_is_trivial) {
+          // Skip new transition if next state already visited by trivial
+          // parent path or other untrivials paths.
+          // bool use_new_path = !state_is_visited[trans->to->id];
+          bool use_new_path = true;
+          for (unsigned k = 0; use_new_path && k < suqence_length; ++k) {
+            State* state_from = path[k]->from;
+            if (state_from == trans->to) {
+              use_new_path = false;
+            }
+          }
+
+          if (use_new_path) {
+            // Check triviality of new path.
+            if (suqence_length % 2 == 1 && last_char + trans->event_id != 0) {
+              new_sequence_is_trivial = false;
+            }
+          } else {
+            continue;  // Skip this transition.
+          }
+        }
+
+        const int to_id = trans->to->id;
+        if (to_id != kEndSynHash || new_sequence_is_trivial) {
+          if (new_sequence_is_trivial || !state_is_visited[to_id] ||
+              to_id == kStartSynHash) {
+            if (!new_sequence_is_trivial) {
+              state_is_visited[to_id] = true;
+            }
+            Transition** new_path = new Transition*[suqence_length + 1];
+            memcpy(new_path, path, sizeof(Transition*) * suqence_length);
+            new_path[suqence_length] = trans;
+
+            paths.push(new_path);
+            flags_of_triviality.push(new_sequence_is_trivial);
+          }
+        } else {
+          // Extract not bijective words.
+          if (first_bad_word != 0 && second_bad_word != 0) {
+            int symbol;
+            for (unsigned k = 0; k < suqence_length; ++k) {
+              symbol = path[k]->event_id;
+              if (symbol > 0)
+                first_bad_word->push_back(symbol - 1);
+              else
+                second_bad_word->push_back(-symbol - 1);
+            }
+            symbol = trans->event_id;
+            if (symbol > 0)
+              first_bad_word->push_back(symbol - 1);
+            else
+              second_bad_word->push_back(-symbol - 1);
+          }
+          while (!paths.empty()) {
+            delete[] paths.front();
+            paths.pop();
+          }
+          return true;
+        }
       }
+      delete[] path;
     }
+    ++suqence_length;
   }
-  for (int i = 0; i < n_states; ++i) {
-    if (!achievable[i]) {
-      deficits_state_machine_->DelState(i);
-    }
-  }
+
+  return false;
 }
 
-bool BijectiveChecker::DeficitsMachineIsTrivial() {
-  for (int i = 0; i < code_.size(); ++i) {
-    int deficit_id = UnsignedDeficitId(-code_[i]->suffixes[0]->id);
-    State* state = deficits_state_machine_->GetState(deficit_id);
-    if (state != 0 && (state->transitions_from.size() != 1 ||
-        state->transitions_from[0]->to->id != UnsignedDeficitId(0))) {
-      return false;
-    }
-  }
-  return true;
+unsigned BijectiveChecker::SynonymyState::Hash(unsigned code_sm_n_states) {
+  return (deficit->id * code_sm_n_states + upper_state->id) *
+         code_sm_n_states + lower_state->id;
 }

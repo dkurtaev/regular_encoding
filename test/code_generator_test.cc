@@ -20,7 +20,7 @@ for (int M = 2; M <= 6; ++M) { \
 TEST(CodeGenerator, gen_code_lengths) {
   std::vector<std::string> code;
   GEN_LOOP(M, N, L) {
-    CodeGenerator::GenCode(L, M, N, code);
+    CodeGenerator::GenCode(L, M, N, &code);
 
     ASSERT_EQ(code.size(), N);
     int max_length = 0;
@@ -41,7 +41,7 @@ TEST(CodeGenerator, gen_code_lengths) {
 TEST(CodeGenerator, elem_codes_uniqueness) {
   std::vector<std::string> code;
   GEN_LOOP(M, N, L) {
-    CodeGenerator::GenCode(L, M, N, code);
+    CodeGenerator::GenCode(L, M, N, &code);
     for (int i = 0; i < code.size(); ++i) {
       for (int j = i + 1; j < code.size(); ++j) {
         ASSERT_NE(code[i], code[j]);
@@ -62,7 +62,7 @@ TEST(CodeGenerator, LN_set_limit) {
       unsigned L_max = CodeGenerator::GetLNSetLimit(M, N);
       for (unsigned L = L_min; L < L_max; ++L) {
         for (unsigned gen = 0; gen < kNumberGenerations; ++gen) {
-          CodeGenerator::GenCode(L, M, N, code);
+          CodeGenerator::GenCode(L, M, N, &code);
           unsigned sum = 0;
           for (unsigned i = 0; i < N; ++i) {
             unsigned len = code[i].length();
@@ -82,7 +82,7 @@ TEST(CodeGenerator, prefix_codes_lengths) {
     unsigned N_max = 1 << M;
     for (unsigned N = 2; N <= N_max; ++N) {
       for (unsigned gen = 0; gen < kNumberGenerations; ++gen) {
-        CodeGenerator::GenPrefixCode(M, N, code);
+        CodeGenerator::GenPrefixCode(M, N, &code);
         ASSERT_EQ(code.size(), N);
         int max_length = 0;
         for (int i = 0; i < code.size(); ++i) {
@@ -103,7 +103,7 @@ TEST(CodeGenerator, prefix_codes_are_prefix) {
     unsigned N_max = 1 << M;
     for (unsigned N = 2; N <= N_max; ++N) {
       for (unsigned gen = 0; gen < kNumberGenerations; ++gen) {
-        CodeGenerator::GenPrefixCode(M, N, code);
+        CodeGenerator::GenPrefixCode(M, N, &code);
         for (int i = 0; i < N; ++i) {
           for (int j = i + 1; j < N; ++j) {
             ASSERT_NE(code[i].find(code[j]), 0);

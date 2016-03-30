@@ -13,51 +13,40 @@ class BijectiveChecker {
  public:
   BijectiveChecker();
 
+  ~BijectiveChecker();
+
   bool IsBijective(const std::vector<std::string>& code,
-                   const StateMachine& code_state_machine);
+                   const StateMachine& code_state_machine,
+                   std::vector<int>* first_bad_word = 0,
+                   std::vector<int>* second_bad_word = 0);
 
   void WriteDeficitsStateMachine(const std::string& file_path);
 
- private:
-  enum WordLocation { UPPER, LOWER };
-  struct LoopState {
-    // Visited transitions in deficits state machine.
-    std::vector<bool> deficits_trace;
-    // Visited transitions in code state machine for upper word.
-    std::vector<bool> words_trace[2];
-    // Visited transitions in code state machine for upper word.
-    std::vector<int> words[2];
-    State* words_states[2];
-    State* deficit_state;
-  };
+  void WriteSynonymyStateMachine(const std::string& file_path);
 
+ private:
   void BuildDeficitsStateMachine(const CodeTree& code_tree);
 
   void AddIsotropicDeficits(int deficit_id,
                             const CodeTree& code_tree,
-                            std::queue<int>& deficits_up_to_build);
+                            std::queue<int>* deficits_up_to_build);
 
   void AddAntitropicDeficits(int deficit_id,
                              const CodeTree& code_tree,
-                             std::queue<int>& deficits_up_to_build);
+                             std::queue<int>* deficits_up_to_build);
 
-  void LogDeficitsBuilding(int state_id_from,
-                           int state_id_to,
-                           ElementaryCode* elem_code);
+  void BuildSynonymyStateMachine();
 
-  bool FindTargetLoop(const StateMachine& code_state_machine);
+  struct SynonymyState {
+    State* deficit;
+    State* upper_state;
+    State* lower_state;
 
-  // Returns true if target loop founded.
-  bool ProcessLoopTransition(LoopState* state,
-                             Transition* def_transition,
-                             std::queue<LoopState*>& states,
-                             unsigned end_state_id);
+    unsigned Hash(unsigned code_sm_n_states);
+  };
 
-  void RemoveDeadTransitions(const StateMachine& code_state_machine);
-
-  void RemoveBottlenecks();
-
-  bool DeficitsMachineIsTrivial();
+  bool FindSynonymyLoop(std::vector<int>* first_bad_word = 0,
+                        std::vector<int>* second_bad_word = 0);
 
   void Reset();
 
@@ -72,6 +61,9 @@ class BijectiveChecker {
   std::vector<ElementaryCode*> code_;
   std::vector<Suffix*> code_suffixes_;
   StateMachine* deficits_state_machine_;
+  StateMachine* synonymy_state_machine_;
+  // Just reference for private methods.
+  const StateMachine* code_state_machine_;
 };
 
 #endif  // INCLUDE_BIJECTIVE_CHECKER_H_
