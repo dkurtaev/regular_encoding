@@ -11,11 +11,10 @@
 #include "include/simple_suffix_tree.h"
 #include "include/alphabetic_encoder.h"
 
-Verdict BijectiveChecker::IsBijective(const std::vector<std::string>& code,
-                                      StateMachine& code_state_machine,
-                                      std::vector<int>* first_bad_word,
-                                      std::vector<int>* second_bad_word,
-                                      int loop_finder_width_limit) {
+bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
+                                   StateMachine& code_state_machine,
+                                   std::vector<int>* first_bad_word,
+                                   std::vector<int>* second_bad_word) {
   Reset();
   code_state_machine_ = &code_state_machine;
 
@@ -38,8 +37,7 @@ Verdict BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   BuildDeficitsStateMachine(code_tree);
   BuildSynonymyStateMachine();
 
-  return FindSynonymyLoop(first_bad_word, second_bad_word,
-                          loop_finder_width_limit);
+  return !FindSynonymyLoop(first_bad_word, second_bad_word);
 }
 
 BijectiveChecker::~BijectiveChecker() {
@@ -270,30 +268,6 @@ void BijectiveChecker::WriteSynonymyStateMachine(const std::string& file_path) {
   synonymy_state_machine_->WriteDot(file_path, states_names, events_names);
 }
 
-void BijectiveChecker::RemoveBottlenecks() {
-  const int n_states = deficits_state_machine_->GetNumberStates();
-  std::queue<State*> states;
-  states.push(deficits_state_machine_->GetState(UnsignedDeficitId(0)));
-
-  std::vector<bool> achievable(n_states, false);
-  while (!states.empty()) {
-    State* state = states.front();
-    states.pop();
-    achievable[state->id] = true;
-    for (int i = 0; i < state->transitions_to.size(); ++i) {
-      State* state_from = state->transitions_to[i]->from;
-      if (!achievable[state_from->id]) {
-        states.push(state_from);
-      }
-    }
-  }
-  for (int i = 0; i < n_states; ++i) {
-    if (!achievable[i]) {
-      deficits_state_machine_->DelState(i);
-    }
-  }
-}
-
 void BijectiveChecker::BuildSynonymyStateMachine() {
   const unsigned kNumCodeSmStates = code_state_machine_->GetNumberStates();
   const unsigned kNumDefsSmStates = deficits_state_machine_->GetNumberStates();
@@ -363,9 +337,8 @@ void BijectiveChecker::BuildSynonymyStateMachine() {
   } while (!syn_states.empty());
 }
 
-Verdict BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
-                                           std::vector<int>* second_bad_word,
-                                           int loop_finder_width_limit) {
+bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
+                                        std::vector<int>* second_bad_word) {
   // Exists two types of paths: trivial and not-trivial.
   // Trivial paths collects same words. Corresponding sequence is
   // (a)(-a)(b)(-b)...(c)(-c)
@@ -476,7 +449,7 @@ Verdict BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
             delete[] paths.front();
             paths.pop();
           }
-          return NOT_BIJECTIVE;
+          return true;
         }
       }
       delete[] path;
@@ -484,7 +457,7 @@ Verdict BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
     ++suqence_length;
   }
 
-  return IS_BIJECTIVE;
+  return false;
 }
 
 unsigned BijectiveChecker::SynonymyState::Hash(unsigned code_sm_n_states) {
