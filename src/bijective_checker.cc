@@ -297,8 +297,8 @@ void BijectiveChecker::BuildSynonymyStateMachine() {
 
     State* deficit = syn_state.deficit;
     if (SignedDeficitId(deficit->id) >= 0) {  // event: empty/char
-      for (int i = 0; i < deficit->transitions_from.size(); ++i) {
-        Transition* def_trans = deficit->transitions_from[i];
+      for (int i = 0; i < deficit->transitions.size(); ++i) {
+        Transition* def_trans = deficit->transitions[i];
         const int event = def_trans->event_id;
 
         Transition* code_trans = syn_state.lower_state->GetTransition(event);
@@ -316,8 +316,8 @@ void BijectiveChecker::BuildSynonymyStateMachine() {
         }
       }
     } else {  // event: char/empty
-      for (int i = 0; i < deficit->transitions_from.size(); ++i) {
-        Transition* def_trans = deficit->transitions_from[i];
+      for (int i = 0; i < deficit->transitions.size(); ++i) {
+        Transition* def_trans = deficit->transitions[i];
         const int event = def_trans->event_id;
 
         Transition* code_trans = syn_state.upper_state->GetTransition(event);
@@ -364,10 +364,10 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
   // Starts from initial state.
   State* state = synonymy_state_machine_->GetState(kStartSynHash);
   Transition** path = 0;
-  unsigned n_trans = state->transitions_from.size();
+  unsigned n_trans = state->transitions.size();
   for (unsigned i = 0; i < n_trans; ++i) {
     path = new Transition*[1];
-    path[0] = state->transitions_from[i];
+    path[0] = state->transitions[i];
     paths.push(path);
     flags_of_triviality.push(true);
   }
@@ -386,11 +386,11 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
       Transition* trans = path[suqence_length - 1];
       int last_char = trans->event_id;
       state = trans->to;
-      n_trans = state->transitions_from.size();
+      n_trans = state->transitions.size();
 
       // Process each transition of current state.
       for (unsigned j = 0; j < n_trans; ++j) {
-        trans = state->transitions_from[j];
+        trans = state->transitions[j];
         bool new_sequence_is_trivial = sequence_is_trivial;
 
         // Check next state to unvisiting.

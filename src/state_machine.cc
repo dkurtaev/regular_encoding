@@ -52,30 +52,6 @@ void StateMachine::AddTransition(unsigned from_id, unsigned to_id,
   transitions_.push_back(trans);
 }
 
-void StateMachine::DelTransition(unsigned id) {
-  Transition* trans = transitions_[id];
-  trans->from->DelTransitionFrom(id);
-  trans->to->DelTransitionTo(id);
-  delete trans;
-  transitions_[id] = 0;
-}
-
-void StateMachine::DelState(unsigned id) {
-  State* state = states_[id];
-  std::vector<int> ids;
-  for (int i = 0; i < state->transitions_from.size(); ++i) {
-    ids.push_back(state->transitions_from[i]->id);
-  }
-  for (int i = 0; i < state->transitions_to.size(); ++i) {
-    ids.push_back(state->transitions_to[i]->id);
-  }
-  for (int i = 0; i < ids.size(); ++i) {
-    DelTransition(ids[i]);
-  }
-  delete state;
-  states_[id] = 0;
-}
-
 State* StateMachine::GetState(int id) const {
   return states_[id];
 }
@@ -115,9 +91,9 @@ void StateMachine::WriteDot(const std::string& file_path,
     if (state != 0) {
       std::string state_from_name = states_names[i];
 
-      const int n_trans = state->transitions_from.size();
+      const int n_trans = state->transitions.size();
       for (int j = 0; j < n_trans; ++j) {
-        Transition* trans = state->transitions_from[j];
+        Transition* trans = state->transitions[j];
         const int state_to_id = trans->to->id;
         std::string state_to_name = states_names[state_to_id];
         std::string event_name = events[trans->event_id];

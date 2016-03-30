@@ -20,8 +20,7 @@ struct Suffix {
   int length;
   std::vector<ElementaryCode*> owners;
 
-  Suffix(int id, int length,
-         ElementaryCode* first_owner = 0);
+  Suffix(int id, int length, ElementaryCode* first_owner = 0);
 
   std::string str();
 };
@@ -29,15 +28,11 @@ struct Suffix {
 struct Transition;
 struct State {
   unsigned id;
-  std::vector<Transition*> transitions_to;  // Transitions to this state.
-  std::vector<Transition*> transitions_from;  // Transitions from this state.
+  std::vector<Transition*> transitions;  // Transitions from this state.
 
   explicit State(unsigned id) : id(id) {}
 
   Transition* GetTransition(int event_id);
-
-  bool DelTransitionFrom(int id);
-  bool DelTransitionTo(int id);
 };
 
 
@@ -60,9 +55,5 @@ void GenUniqueUnnegatives(int upper_value, int number,
 void InsertBack(std::vector<int>& dst, const std::vector<int>& src);
 
 void InsertFront(const std::vector<int>& src, std::vector<int>& dst);
-
-unsigned* OrderedInsert(unsigned* data, unsigned size, unsigned value);
-
-bool OrderedFind(unsigned* data, unsigned size, unsigned value);
 
 #endif  // INCLUDE_STRUCTURES_H_

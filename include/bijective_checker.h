@@ -41,7 +41,6 @@ class BijectiveChecker {
     State* deficit;
     State* upper_state;
     State* lower_state;
-    State* init_state;
 
     unsigned Hash(unsigned code_sm_n_states);
   };

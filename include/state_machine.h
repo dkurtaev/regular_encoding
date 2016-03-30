@@ -19,10 +19,6 @@ class StateMachine {
 
   void AddTransition(unsigned from_id, unsigned to_id, int event_id);
 
-  void DelTransition(unsigned id);
-
-  void DelState(unsigned id);
-
   State* GetState(int id) const;
 
   int GetNumberStates() const;

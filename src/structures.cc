@@ -29,41 +29,16 @@ Transition::Transition(unsigned id, State* from, State *to, int event_id)
     to(to),
     event_id(event_id),
     id(id) {
-  from->transitions_from.push_back(this);
-  to->transitions_to.push_back(this);
+  from->transitions.push_back(this);
 }
 
 Transition* State::GetTransition(int event_id) {
-  for (int i = 0; i < transitions_from.size(); ++i) {
-    if (transitions_from[i]->event_id == event_id) {
-      return transitions_from[i];
+  for (int i = 0; i < transitions.size(); ++i) {
+    if (transitions[i]->event_id == event_id) {
+      return transitions[i];
     }
   }
   return 0;
-}
-
-bool State::DelTransitionFrom(int id) {
-  std::vector<Transition*>::iterator it;
-  for (it = transitions_from.begin(); it != transitions_from.end(); ++it) {
-    Transition* transition = *it;
-    if (transition->id == id) {
-      transitions_from.erase(it);
-      return true;
-    }
-  }
-  return false;
-}
-
-bool State::DelTransitionTo(int id) {
-  std::vector<Transition*>::iterator it;
-  for (it = transitions_to.begin(); it != transitions_to.end(); ++it) {
-    Transition* transition = *it;
-    if (transition->id == id) {
-      transitions_to.erase(it);
-      return true;
-    }
-  }
-  return false;
 }
 
 void GenUniqueUnnegatives(int upper_value, int number,
@@ -106,37 +81,4 @@ void InsertFront(const std::vector<int>& src, std::vector<int>& dst) {
     dst.reserve(dst.size() + src.size());
     dst.insert(dst.begin(), src.begin(), src.end());
   }
-}
-
-unsigned* OrderedInsert(unsigned* data, unsigned size, unsigned value) {
-  unsigned* res = new unsigned[size + 1];
-
-  if (value <= data[0]) {
-    res[0] = value;
-    memcpy(res + 1, data, sizeof(unsigned) * size);
-    return res;
-  }
-  if (value >= data[size - 1]) {
-    res[size] = value;
-    memcpy(res, data, sizeof(unsigned) * size);
-    return res;
-  }
-
-  for (unsigned i = 1; i < size; ++i) {
-    if (value <= data[i]) {
-      memcpy(res, data, sizeof(unsigned) * i);
-      res[i] = value;
-      memcpy(res + i + 1, data + i, sizeof(unsigned) * (size - i));
-      return res;
-    }
-  }
-}
-
-bool OrderedFind(unsigned* data, unsigned size, unsigned value) {
-  for (unsigned i = 0; i < size; ++i) {
-    if (value <= data[i]) {
-      return value == data[i];
-    }
-  }
-  return false;
 }
