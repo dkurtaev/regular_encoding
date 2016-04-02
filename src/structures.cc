@@ -68,17 +68,3 @@ void GenUniqueUnnegatives(int upper_value, int number,
   }
   std::sort(values->begin(), values->end());
 }
-
-void InsertBack(std::vector<int>* dst, const std::vector<int>& src) {
-  if (src.size() != 0) {
-    dst->reserve(dst->size() + src.size());
-    dst->insert(dst->end(), src.begin(), src.end());
-  }
-}
-
-void InsertFront(const std::vector<int>& src, std::vector<int>* dst) {
-  if (src.size() != 0) {
-    dst->reserve(dst->size() + src.size());
-    dst->insert(dst->begin(), src.begin(), src.end());
-  }
-}

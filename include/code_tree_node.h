@@ -1,32 +1,34 @@
 #ifndef INCLUDE_CODE_TREE_NODE_H_
 #define INCLUDE_CODE_TREE_NODE_H_
 
+#include <vector>
+
 #include "include/structures.h"
 
 class CodeTreeNode {
  public:
-  CodeTreeNode(CodeTreeNode* left = 0,
-               CodeTreeNode* right = 0,
-               ElementaryCode* elem_code = 0);
-
-  void SetLeft(CodeTreeNode* left);
-
-  void SetRight(CodeTreeNode* right);
+  CodeTreeNode(unsigned char id, CodeTreeNode* parent);
 
   void SetElemCode(ElementaryCode* elem_code);
 
-  CodeTreeNode* GetLeft() const;
+  CodeTreeNode* GetChild(unsigned char id) const;
 
-  CodeTreeNode* GetRight() const;
+  void GetUpperElemCodes(
+      std::vector<const ElementaryCode*>* upper_elem_codes) const;
 
-  ElementaryCode* GetElemCode() const;
+  void GetLowerElemCodes(
+      std::vector<const ElementaryCode*>* lower_elem_codes) const;
 
   ~CodeTreeNode();
 
  private:
-  ElementaryCode* elem_code_;
-  CodeTreeNode* left_;
-  CodeTreeNode* right_;
+  // Includes current elm.code.
+  std::vector<const ElementaryCode*> upper_elem_codes_;
+  // Includes current elm.code.
+  std::vector<const ElementaryCode*> lower_elem_codes_;
+  std::vector<CodeTreeNode*> upper_nodes_;
+  std::vector<CodeTreeNode*> lower_nodes_;
+  CodeTreeNode* childs_[2];
 };
 
 #endif  // INCLUDE_CODE_TREE_NODE_H_

@@ -1,33 +1,23 @@
 #include "include/code_tree.h"
 
 CodeTree::CodeTree() {
-  root_ = new CodeTreeNode();
+  root_ = new CodeTreeNode(0, 0);
 }
 
 CodeTree::CodeTree(const std::vector<ElementaryCode*>& code) {
-  root_ = new CodeTreeNode();
+  root_ = new CodeTreeNode(0, 0);
   Add(code);
 }
 
 void CodeTree::Add(ElementaryCode* elem_code) {
   CodeTreeNode* current_node = root_;
   for (int i = 0; i < elem_code->str.length(); ++i) {
-    if (elem_code->str[i] == '0') {
-      if (current_node->GetLeft() == 0) {
-        CodeTreeNode* new_node = new CodeTreeNode();
-        current_node->SetLeft(new_node);
-        current_node = new_node;
-      } else {
-        current_node = current_node->GetLeft();
-      }
+    const unsigned char child_id = elem_code->str[i] - '0';
+    CodeTreeNode* child = current_node->GetChild(child_id);
+    if (child) {
+      current_node = child;
     } else {
-      if (current_node->GetRight() == 0) {
-        CodeTreeNode* new_node = new CodeTreeNode();
-        current_node->SetRight(new_node);
-        current_node = new_node;
-      } else {
-        current_node = current_node->GetRight();
-      }
+      current_node = new CodeTreeNode(child_id, current_node);
     }
   }
   current_node->SetElemCode(elem_code);
@@ -39,28 +29,21 @@ void CodeTree::Add(const std::vector<ElementaryCode*>& code) {
   }
 }
 
-CodeTreeNode* CodeTree::Find(const std::string& code) const {
-  CodeTreeNode* current_node = root_;
-  for (int i = 0; i < code.length(); ++i) {
-    if (code[i] == '0') {
-      if (current_node->GetLeft() != 0) {
-        current_node = current_node->GetLeft();
-      } else {
-        return 0;
-      }
-    } else {
-      if (current_node->GetRight() != 0) {
-        current_node = current_node->GetRight();
-      } else {
-        return 0;
-      }
+bool CodeTree::Find(const std::string& code, CodeTreeNode*& last_node) const {
+  last_node = root_;
+  CodeTreeNode* child = 0;
+  const unsigned length = code.length();
+  for (unsigned i = 0; i < length; ++i) {
+    const unsigned char child_id = code[i] - '0';
+    child = last_node->GetChild(child_id);
+    if (child) {
+      last_node = child;
+    }
+    else {
+      return false;
     }
   }
-  return current_node;
-}
-
-CodeTreeNode* CodeTree::GetRoot() const {
-  return root_;
+  return true;
 }
 
 CodeTree::~CodeTree() {
