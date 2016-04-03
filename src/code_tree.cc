@@ -1,19 +1,15 @@
 #include "include/code_tree.h"
 
-CodeTree::CodeTree(const std::vector<ElementaryCode*>& code,
-                   std::vector<int>* permutation) {
+CodeTree::CodeTree(const std::vector<ElementaryCode*>& code) {
   root_ = new CodeTreeNode();
-  Add(code, permutation);
+  Add(code);
 }
 
-void CodeTree::Add(const std::vector<ElementaryCode*>& code,
-                   std::vector<int>* permutation) {
+void CodeTree::Add(const std::vector<ElementaryCode*>& code) {
   const unsigned size = code.size();
   for (unsigned i = 0; i < size; ++i) {
     CodeTreeNode::Add(root_, code[i]);
   }
-  permutation->resize(code.size());
-  CodeTreeNode::SetupLowerElemCodesBorders(root_, permutation);
 }
 
 CodeTreeNode* CodeTree::Find(

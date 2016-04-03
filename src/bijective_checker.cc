@@ -32,7 +32,7 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   sst.GetSuffixes(&code_suffixes_);  // Includes empty suffix.
 
   // Build code tree.
-  CodeTree code_tree(code_, &elem_codes_depth_order_);
+  CodeTree code_tree(code_);
 
   BuildDeficitsStateMachine(code_tree);
   BuildSynonymyStateMachine();
@@ -108,7 +108,8 @@ void BijectiveChecker::AddIsotropicDeficits(
   std::vector<ElementaryCode*> upper_elem_codes;
   code_tree.Find(alpha_suffix->str(), &upper_elem_codes);
 
-  for (int i = 0; i < upper_elem_codes.size(); ++i) {
+  const unsigned size = upper_elem_codes.size();
+  for (unsigned i = 0; i < size; ++i) {
     int beta_suffix_idx = alpha_suffix->owners[0]->str.length() -
                           alpha_suffix->length +
                           upper_elem_codes[i]->str.length();
@@ -130,22 +131,20 @@ void BijectiveChecker::AddAntitropicDeficits(
   Suffix* alpha_suffix = code_suffixes_[abs(deficit_id)];
   CodeTreeNode* alpha_suffix_node = code_tree.Find(alpha_suffix->str());
   if (alpha_suffix_node) {
-    int lower_elem_codes_from;
-    int lower_elem_codes_to;
-    alpha_suffix_node->GetLowerElemCodesRange(&lower_elem_codes_from,
-                                              &lower_elem_codes_to);
+    std::vector<ElementaryCode*> lower_elem_codes;
+    alpha_suffix_node->GetLowerElemCodes(&lower_elem_codes);
 
-    for (int i = lower_elem_codes_from; i <= lower_elem_codes_to; ++i) {
+    const unsigned size = lower_elem_codes.size();
+    for (int i = 0; i < size; ++i) {
       // Suffixes ordered from largest to minimal.
-      const int idx = elem_codes_depth_order_[i];
-      Suffix* beta_suffix = code_[idx]->suffixes[alpha_suffix->length];
+      Suffix* beta_suffix = lower_elem_codes[i]->suffixes[alpha_suffix->length];
 
       // Let identity deficit is an isotropic deficit.
       if (beta_suffix->id != 0) {
         int state_id = (deficit_id < 0 ? beta_suffix->id : -beta_suffix->id);
         deficits_state_machine_->AddTransition(UnsignedDeficitId(deficit_id),
                                                UnsignedDeficitId(state_id),
-                                               idx);
+                                               lower_elem_codes[i]->id);
         deficits_up_to_build->push(state_id);
       }
     }

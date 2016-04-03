@@ -8,9 +8,7 @@
 
 class CodeTree {
  public:
-  // Returns ids of elementary codes in depth bypass order.
-  CodeTree(const std::vector<ElementaryCode*>& code,
-           std::vector<int>* permutation);
+  CodeTree(const std::vector<ElementaryCode*>& code);
 
   ~CodeTree();
 
@@ -18,8 +16,7 @@ class CodeTree {
                      std::vector<ElementaryCode*>* upper_elem_codes = 0) const;
 
  private:
-  void Add(const std::vector<ElementaryCode*>& code,
-           std::vector<int>* permutation);
+  void Add(const std::vector<ElementaryCode*>& code);
 
   CodeTreeNode* root_;
 };
