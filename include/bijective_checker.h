@@ -59,6 +59,7 @@ class BijectiveChecker {
   inline int SignedDeficitId(unsigned id);
 
   std::vector<ElementaryCode*> code_;
+  std::vector<int> elem_codes_depth_order_;
   std::vector<Suffix*> code_suffixes_;
   StateMachine* deficits_state_machine_;
   StateMachine* synonymy_state_machine_;

@@ -32,8 +32,8 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   sst.GetSuffixes(&code_suffixes_);  // Includes empty suffix.
 
   // Build code tree.
-  CodeTree code_tree(code_);
-
+  CodeTree code_tree(code_, &elem_codes_depth_order_);
+  return false;
   BuildDeficitsStateMachine(code_tree);
   BuildSynonymyStateMachine();
 
@@ -109,7 +109,7 @@ void BijectiveChecker::AddIsotropicDeficits(
   code_tree.Find(alpha_suffix->str(), last_node);
 
   std::vector<const ElementaryCode*> elem_codes;
-  last_node->GetUpperElemCodes(&elem_codes);
+//  last_node->GetUpperElemCodes(&elem_codes);
 
   for (int i = 0; i < elem_codes.size(); ++i) {
     int beta_suffix_idx = alpha_suffix->owners[0]->str.length() -
@@ -135,7 +135,7 @@ void BijectiveChecker::AddAntitropicDeficits(
   bool found = code_tree.Find(alpha_suffix->str(), alpha_suffix_node);
   if (found) {
     std::vector<const ElementaryCode*> elem_codes;
-    alpha_suffix_node->GetLowerElemCodes(&elem_codes);
+//    alpha_suffix_node->GetLowerElemCodes(&elem_codes);
 
     for (int i = 0; i < elem_codes.size(); ++i) {
       // Suffixes ordered from largest to minimal.

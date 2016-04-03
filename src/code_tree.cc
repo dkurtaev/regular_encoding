@@ -1,32 +1,36 @@
 #include "include/code_tree.h"
 
-CodeTree::CodeTree() {
-  root_ = new CodeTreeNode(0, 0);
-}
-
-CodeTree::CodeTree(const std::vector<ElementaryCode*>& code) {
-  root_ = new CodeTreeNode(0, 0);
-  Add(code);
+CodeTree::CodeTree(const std::vector<ElementaryCode*>& code,
+                   std::vector<int>* permutation) {
+  root_ = new CodeTreeNode();
+  Add(code, permutation);
 }
 
 void CodeTree::Add(ElementaryCode* elem_code) {
   CodeTreeNode* current_node = root_;
-  for (int i = 0; i < elem_code->str.length(); ++i) {
+  const unsigned length = elem_code->str.length();
+  for (unsigned i = 0; i < length; ++i) {
     const unsigned char child_id = elem_code->str[i] - '0';
     CodeTreeNode* child = current_node->GetChild(child_id);
     if (child) {
       current_node = child;
     } else {
-      current_node = new CodeTreeNode(child_id, current_node);
+      child = new CodeTreeNode();
+      current_node->SetChild(child_id, child);
+      current_node = child;
     }
   }
   current_node->SetElemCode(elem_code);
 }
 
-void CodeTree::Add(const std::vector<ElementaryCode*>& code) {
+void CodeTree::Add(const std::vector<ElementaryCode*>& code,
+                   std::vector<int>* permutation) {
   for (int i = 0; i < code.size(); ++i) {
     Add(code[i]);
   }
+  permutation->resize(code.size());
+  root_->SetupLowerElemCodesBorders(permutation);
+  root_->Print();
 }
 
 bool CodeTree::Find(const std::string& code, CodeTreeNode*& last_node) const {
@@ -38,8 +42,7 @@ bool CodeTree::Find(const std::string& code, CodeTreeNode*& last_node) const {
     child = last_node->GetChild(child_id);
     if (child) {
       last_node = child;
-    }
-    else {
+    } else {
       return false;
     }
   }
