@@ -8,21 +8,16 @@
 
 class CodeTree {
  public:
-  CodeTree();
-
   explicit CodeTree(const std::vector<ElementaryCode*>& code);
 
   ~CodeTree();
 
-  void Add(ElementaryCode* elem_code);
-
-  void Add(const std::vector<ElementaryCode*>& code);
-
-  CodeTreeNode* Find(const std::string& code) const;
-
-  CodeTreeNode* GetRoot() const;
+  CodeTreeNode* Find(const std::string& code,
+                     std::vector<ElementaryCode*>* upper_elem_codes = 0) const;
 
  private:
+  void Add(const std::vector<ElementaryCode*>& code);
+
   CodeTreeNode* root_;
 };
 

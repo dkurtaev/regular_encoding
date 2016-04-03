@@ -52,8 +52,20 @@ inline int rand(int a, int b) {
 void GenUniqueUnnegatives(int upper_value, int number,
                           std::vector<int>* values);
 
-void InsertBack(std::vector<int>* dst, const std::vector<int>& src);
+template<typename T>
+void InsertBack(std::vector<T>* dst, const std::vector<T>& src) {
+  if (src.size() != 0) {
+    dst->reserve(dst->size() + src.size());
+    dst->insert(dst->end(), src.begin(), src.end());
+  }
+}
 
-void InsertFront(const std::vector<int>& src, std::vector<int>* dst);
+template<typename T>
+void InsertFront(const std::vector<T>& src, std::vector<T>* dst) {
+  if (src.size() != 0) {
+    dst->reserve(dst->size() + src.size());
+    dst->insert(dst->begin(), src.begin(), src.end());
+  }
+}
 
 #endif  // INCLUDE_STRUCTURES_H_

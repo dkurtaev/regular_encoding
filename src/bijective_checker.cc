@@ -105,33 +105,19 @@ void BijectiveChecker::AddIsotropicDeficits(
   // Alpha = elem_code + beta.
   // Find all elementary codes which are preffixes of alpha.
   Suffix* alpha_suffix = code_suffixes_[abs(deficit_id)];
-  std::string alpha_suffix_str = alpha_suffix->str();
-  int alpha_suffix_length = alpha_suffix->length;
-  const CodeTreeNode* code_tree_node = code_tree.GetRoot();
-  std::vector<ElementaryCode*> found_elem_codes;
-  for (int i = 0; i < alpha_suffix_length; ++i) {
-    if (alpha_suffix_str[i] == '0') {
-      code_tree_node = code_tree_node->GetLeft();
-    } else {
-      code_tree_node = code_tree_node->GetRight();
-    }
-    if (code_tree_node == 0) {
-      break;
-    }
-    if (code_tree_node->GetElemCode() != 0) {
-      found_elem_codes.push_back(code_tree_node->GetElemCode());
-    }
-  }
+  std::vector<ElementaryCode*> upper_elem_codes;
+  code_tree.Find(alpha_suffix->str(), &upper_elem_codes);
 
-  for (int i = 0; i < found_elem_codes.size(); ++i) {
+  const unsigned size = upper_elem_codes.size();
+  for (unsigned i = 0; i < size; ++i) {
     int beta_suffix_idx = alpha_suffix->owners[0]->str.length() -
                           alpha_suffix->length +
-                          found_elem_codes[i]->str.length();
+                          upper_elem_codes[i]->str.length();
     Suffix* beta_suffix = alpha_suffix->owners[0]->suffixes[beta_suffix_idx];
     int state_id = (deficit_id < 0 ? -beta_suffix->id : beta_suffix->id);
     deficits_state_machine_->AddTransition(UnsignedDeficitId(deficit_id),
                                            UnsignedDeficitId(state_id),
-                                           found_elem_codes[i]->id);
+                                           upper_elem_codes[i]->id);
     deficits_up_to_build->push(state_id);
   }
 }
@@ -144,33 +130,23 @@ void BijectiveChecker::AddAntitropicDeficits(
   // Find all elementary codes with prefix [alpha].
   Suffix* alpha_suffix = code_suffixes_[abs(deficit_id)];
   CodeTreeNode* alpha_suffix_node = code_tree.Find(alpha_suffix->str());
-  std::vector<ElementaryCode*> found_elem_codes;
-  if (alpha_suffix_node != 0) {
-    std::queue<CodeTreeNode*> nodes;
-    nodes.push(alpha_suffix_node);
-    while (!nodes.empty()) {
-      CodeTreeNode* node = nodes.front();
-      nodes.pop();
-      ElementaryCode* node_elem_code = node->GetElemCode();
-      CodeTreeNode* node_left = node->GetLeft();
-      CodeTreeNode* node_right = node->GetRight();
-      if (node_elem_code) found_elem_codes.push_back(node_elem_code);
-      if (node_left) nodes.push(node_left);
-      if (node_right) nodes.push(node_right);
-    }
-  }
+  if (alpha_suffix_node) {
+    std::vector<ElementaryCode*> lower_elem_codes;
+    alpha_suffix_node->GetLowerElemCodes(&lower_elem_codes);
 
-  for (int i = 0; i < found_elem_codes.size(); ++i) {
-    // Suffixes ordered from largest to minimal.
-    Suffix* beta_suffix = found_elem_codes[i]->suffixes[alpha_suffix->length];
+    const unsigned size = lower_elem_codes.size();
+    for (int i = 0; i < size; ++i) {
+      // Suffixes ordered from largest to minimal.
+      Suffix* beta_suffix = lower_elem_codes[i]->suffixes[alpha_suffix->length];
 
-    // Let identity deficit is an isotropic deficit.
-    if (beta_suffix->id != 0) {
-      int state_id = (deficit_id < 0 ? beta_suffix->id : -beta_suffix->id);
-      deficits_state_machine_->AddTransition(UnsignedDeficitId(deficit_id),
-                                             UnsignedDeficitId(state_id),
-                                             found_elem_codes[i]->id);
-      deficits_up_to_build->push(state_id);
+      // Let identity deficit is an isotropic deficit.
+      if (beta_suffix->id != 0) {
+        int state_id = (deficit_id < 0 ? beta_suffix->id : -beta_suffix->id);
+        deficits_state_machine_->AddTransition(UnsignedDeficitId(deficit_id),
+                                               UnsignedDeficitId(state_id),
+                                               lower_elem_codes[i]->id);
+        deficits_up_to_build->push(state_id);
+      }
     }
   }
 }

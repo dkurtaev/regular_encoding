@@ -1,14 +1,23 @@
 language: cpp
+
 notifications:
   email: false
+
 sudo: false
+
 compiler:
   - gcc
+
 os: linux
+
+branches:
+  only:
+    - master
+
 script:
   - mkdir build
   - cd build
   - cmake .. && make
   - ./bin/code_generator_test
   - ./bin/bijective_checker_test
-  
+
