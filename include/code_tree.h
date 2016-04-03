@@ -8,7 +8,7 @@
 
 class CodeTree {
  public:
-  CodeTree(const std::vector<ElementaryCode*>& code);
+  explicit CodeTree(const std::vector<ElementaryCode*>& code);
 
   ~CodeTree();
 
