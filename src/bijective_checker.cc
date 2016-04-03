@@ -33,7 +33,7 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
 
   // Build code tree.
   CodeTree code_tree(code_, &elem_codes_depth_order_);
-  return false;
+
   BuildDeficitsStateMachine(code_tree);
   BuildSynonymyStateMachine();
 
@@ -105,21 +105,18 @@ void BijectiveChecker::AddIsotropicDeficits(
   // Alpha = elem_code + beta.
   // Find all elementary codes which are preffixes of alpha.
   Suffix* alpha_suffix = code_suffixes_[abs(deficit_id)];
-  CodeTreeNode* last_node = 0;
-  code_tree.Find(alpha_suffix->str(), last_node);
+  std::vector<ElementaryCode*> upper_elem_codes;
+  code_tree.Find(alpha_suffix->str(), &upper_elem_codes);
 
-  std::vector<const ElementaryCode*> elem_codes;
-//  last_node->GetUpperElemCodes(&elem_codes);
-
-  for (int i = 0; i < elem_codes.size(); ++i) {
+  for (int i = 0; i < upper_elem_codes.size(); ++i) {
     int beta_suffix_idx = alpha_suffix->owners[0]->str.length() -
                           alpha_suffix->length +
-                          elem_codes[i]->str.length();
+                          upper_elem_codes[i]->str.length();
     Suffix* beta_suffix = alpha_suffix->owners[0]->suffixes[beta_suffix_idx];
     int state_id = (deficit_id < 0 ? -beta_suffix->id : beta_suffix->id);
     deficits_state_machine_->AddTransition(UnsignedDeficitId(deficit_id),
                                            UnsignedDeficitId(state_id),
-                                           elem_codes[i]->id);
+                                           upper_elem_codes[i]->id);
     deficits_up_to_build->push(state_id);
   }
 }
@@ -131,22 +128,24 @@ void BijectiveChecker::AddAntitropicDeficits(
   // Elem_code = alpha + beta.
   // Find all elementary codes with prefix [alpha].
   Suffix* alpha_suffix = code_suffixes_[abs(deficit_id)];
-  CodeTreeNode* alpha_suffix_node;
-  bool found = code_tree.Find(alpha_suffix->str(), alpha_suffix_node);
-  if (found) {
-    std::vector<const ElementaryCode*> elem_codes;
-//    alpha_suffix_node->GetLowerElemCodes(&elem_codes);
+  CodeTreeNode* alpha_suffix_node = code_tree.Find(alpha_suffix->str());
+  if (alpha_suffix_node) {
+    int lower_elem_codes_from;
+    int lower_elem_codes_to;
+    alpha_suffix_node->GetLowerElemCodesRange(&lower_elem_codes_from,
+                                              &lower_elem_codes_to);
 
-    for (int i = 0; i < elem_codes.size(); ++i) {
+    for (int i = lower_elem_codes_from; i <= lower_elem_codes_to; ++i) {
       // Suffixes ordered from largest to minimal.
-      Suffix* beta_suffix = elem_codes[i]->suffixes[alpha_suffix->length];
+      const int idx = elem_codes_depth_order_[i];
+      Suffix* beta_suffix = code_[idx]->suffixes[alpha_suffix->length];
 
       // Let identity deficit is an isotropic deficit.
       if (beta_suffix->id != 0) {
         int state_id = (deficit_id < 0 ? beta_suffix->id : -beta_suffix->id);
         deficits_state_machine_->AddTransition(UnsignedDeficitId(deficit_id),
                                                UnsignedDeficitId(state_id),
-                                               elem_codes[i]->id);
+                                               idx);
         deficits_up_to_build->push(state_id);
       }
     }

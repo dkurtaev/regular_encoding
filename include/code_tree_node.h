@@ -12,34 +12,24 @@ class CodeTreeNode {
 
   ~CodeTreeNode();
 
-  void SetElemCode(ElementaryCode* elem_code);
-
-  CodeTreeNode* GetChild(unsigned char id) const;
-
-  void SetChild(unsigned char id, CodeTreeNode* child);
-
-//  void GetUpperElemCodes(
-//      std::vector<const ElementaryCode*>* upper_elem_codes) const;
-
-//  void GetLowerElemCodes(
-//      std::vector<const ElementaryCode*>* lower_elem_codes) const;
-
-  void Print() {
-    if (childs_[0]) childs_[0]->Print();
-    if (childs_[1]) childs_[1]->Print();
-    std::cout << lower_elem_codes_from_ << ' ' << lower_elem_codes_to_ << std::endl;
-
-  }
-
   // Returns ids of elementary codes in depth bypass order.
   // Argument [permutation] must has size equals number of elementary codes.
-  void SetupLowerElemCodesBorders(std::vector<int>* permutation);
+  static void SetupLowerElemCodesBorders(CodeTreeNode* root,
+                                         std::vector<int>* permutation);
+
+  static void SetupUpperElemCodesBorders(ElementaryCode* root);
+
+  static void Add(CodeTreeNode* root, ElementaryCode* elem_code);
+
+  static CodeTreeNode* Find(CodeTreeNode* root,
+                            const std::string& code,
+                            std::vector<ElementaryCode*>* upper_elem_codes = 0);
+
+  void GetLowerElemCodesRange(int* from, int* to) const;
 
  private:
   int lower_elem_codes_from_;
   int lower_elem_codes_to_;
-  int upper_elem_codes_from_;
-  int upper_elem_codes_to_;
 
   ElementaryCode* elem_code_;
   CodeTreeNode* childs_[2];
