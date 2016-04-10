@@ -13,6 +13,7 @@ os: linux
 branches:
   only:
     - master
+    - trivial_paths_tracking_edition
 
 script:
   - mkdir build

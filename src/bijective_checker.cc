@@ -332,7 +332,10 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
                                  kNumCodeSmStates;
 
   bool state_is_visited[kNumSynonymyStates];  // Used for non-trivial sequences.
+  // Used for trivial sequences.
+  bool trivial_state_is_visited[kNumSynonymyStates];
   memset(state_is_visited, false, kNumSynonymyStates);
+  memset(trivial_state_is_visited, false, kNumSynonymyStates);
 
   std::queue<bool> flags_of_triviality;
   std::queue<Transition**> paths;
@@ -371,18 +374,8 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
 
         // Check next state to unvisiting.
         if (sequence_is_trivial) {
-          // Skip new transition if next state already visited by trivial
-          // parent path or other untrivials paths.
-          // bool use_new_path = !state_is_visited[trans->to->id];
-          bool use_new_path = true;
-          for (unsigned k = 0; use_new_path && k < suqence_length; ++k) {
-            State* state_from = path[k]->from;
-            if (state_from == trans->to) {
-              use_new_path = false;
-            }
-          }
-
-          if (use_new_path) {
+          if (!trivial_state_is_visited[trans->to->id]) {
+            trivial_state_is_visited[trans->to->id] = true;
             // Check triviality of new path.
             if (suqence_length % 2 == 1 && last_char + trans->event_id != 0) {
               new_sequence_is_trivial = false;
