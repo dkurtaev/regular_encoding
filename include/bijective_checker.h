@@ -41,12 +41,18 @@ class BijectiveChecker {
     State* deficit;
     State* upper_state;
     State* lower_state;
+    int* sequence;
+    bool is_tivial;
 
-    unsigned Hash(unsigned code_sm_n_states);
+    unsigned Hash(unsigned n_code_sm_states);
+
+    static unsigned Hash(unsigned deficit_id, unsigned upper_state_id,
+                         unsigned lower_state_id, unsigned n_code_sm_states);
   };
 
   bool FindSynonymyLoop(std::vector<int>* first_bad_word = 0,
                         std::vector<int>* second_bad_word = 0);
+
 
   void Reset();
 
