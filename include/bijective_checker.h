@@ -53,7 +53,6 @@ class BijectiveChecker {
   bool FindSynonymyLoop(std::vector<int>* first_bad_word = 0,
                         std::vector<int>* second_bad_word = 0);
 
-
   void Reset();
 
   // From (-3 -2 -1 0 1 2 3)

@@ -326,7 +326,7 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
                                     kNumCodeSmStates;
 
   // Three visiting states for each state:
-  enum VisitingState { FREE, FREE_FOR_TRIVIAL, FREE_FOR_NONTRIVIAL, BUSY };
+  enum VisitingState { FREE, FREE_FOR_NONTRIVIAL, BUSY };
   VisitingState states_visiting[kMaxNumSynStates];
   memset(states_visiting, FREE, sizeof(VisitingState) * kMaxNumSynStates);
 
@@ -388,9 +388,8 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
         const unsigned to_hash = next_syn_state.Hash(kNumCodeSmStates);
         VisitingState vis_state = states_visiting[to_hash];
         if (syn_state.is_tivial) {
-          if (vis_state == FREE || vis_state == FREE_FOR_TRIVIAL) {
-            states_visiting[to_hash] = (vis_state == FREE ?
-                                          FREE_FOR_NONTRIVIAL : BUSY);
+          if (vis_state == FREE) {
+            states_visiting[to_hash] = FREE_FOR_NONTRIVIAL;
 
             // Check triviality of new path.
             if (sequnce_length % 2 == 1 &&
@@ -407,8 +406,7 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
           if (next_syn_state.is_tivial || vis_state == FREE ||
               vis_state == FREE_FOR_NONTRIVIAL || to_hash == kStartSynHash) {
             if (!next_syn_state.is_tivial) {
-              states_visiting[to_hash] = (vis_state == FREE ?
-                                            FREE_FOR_TRIVIAL : BUSY);
+              states_visiting[to_hash] = BUSY;
             }
             int* new_sequence = new int[sequnce_length + 1];
             memcpy(new_sequence, next_syn_state.sequence,
