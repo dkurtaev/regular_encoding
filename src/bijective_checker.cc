@@ -404,7 +404,7 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
         if (to_hash != kEndSynHash || next_syn_state.is_tivial) {
           vis_state = states_visiting[to_hash];
           if (next_syn_state.is_tivial || vis_state == FREE ||
-              vis_state == FREE_FOR_NONTRIVIAL || to_hash == kStartSynHash) {
+              vis_state == FREE_FOR_NONTRIVIAL) {
             if (!next_syn_state.is_tivial) {
               states_visiting[to_hash] = BUSY;
             }
