@@ -327,7 +327,7 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
 
   // Three visiting states for each state:
   enum VisitingState { FREE, FREE_FOR_NONTRIVIAL, BUSY };
-  VisitingState states_visiting[kMaxNumSynStates];
+  VisitingState* states_visiting = new VisitingState[kMaxNumSynStates];
   memset(states_visiting, FREE, sizeof(VisitingState) * kMaxNumSynStates);
 
   SynonymyState syn_state;
@@ -403,8 +403,7 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
 
         if (to_hash != kEndSynHash || next_syn_state.is_tivial) {
           vis_state = states_visiting[to_hash];
-          if (next_syn_state.is_tivial || vis_state == FREE ||
-              vis_state == FREE_FOR_NONTRIVIAL) {
+          if (vis_state != BUSY) {
             if (!next_syn_state.is_tivial) {
               states_visiting[to_hash] = BUSY;
             }
@@ -440,6 +439,7 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
             delete[] states.front().sequence;
             states.pop();
           }
+          delete[] states_visiting;
           return true;
         }
       }
@@ -449,6 +449,7 @@ bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
     }
     ++sequnce_length;
   }
+  delete[] states_visiting;
   return false;
 }
 
