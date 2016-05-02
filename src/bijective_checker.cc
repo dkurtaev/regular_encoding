@@ -35,7 +35,6 @@ bool BijectiveChecker::IsBijective(const std::vector<std::string>& code,
   CodeTree code_tree(code_);
 
   BuildDeficitsStateMachine(code_tree);
-  BuildSynonymyStateMachine();
 
   return !FindSynonymyLoop(first_bad_word, second_bad_word);
 }
@@ -315,123 +314,153 @@ void BijectiveChecker::BuildSynonymyStateMachine() {
 
 bool BijectiveChecker::FindSynonymyLoop(std::vector<int>* first_bad_word,
                                         std::vector<int>* second_bad_word) {
-  // Exists two types of paths: trivial and not-trivial.
-  // Trivial paths collects same words. Corresponding sequence is
-  // (a)(-a)(b)(-b)...(c)(-c)
-  // If new symbol breaks this structure, path in not trivial.
-  //
-  // Trivial loops need to be simple (without self intersections by states).
-  // Not trivial loops tracks by shared states visiting log (use only unvisited
-  // states).
-  const unsigned kNumSynonymyStates = synonymy_state_machine_
-                                      ->GetNumberStates();
+  const unsigned kStartDefId = UnsignedDeficitId(0);
+  const unsigned kNumDefSmStates = deficits_state_machine_->GetNumberStates();
   const unsigned kNumCodeSmStates = code_state_machine_->GetNumberStates();
-  const unsigned kEndSynHash = kNumCodeSmStates * kNumCodeSmStates *
-                               (UnsignedDeficitId(0) + 1) - 1;
-  const unsigned kStartSynHash = UnsignedDeficitId(0) * kNumCodeSmStates *
-                                 kNumCodeSmStates;
+  const unsigned kStartSynHash =
+      SynonymyState::Hash(kStartDefId, 0, 0, kNumCodeSmStates);
+  const unsigned kEndSynHash =
+      SynonymyState::Hash(kStartDefId, kNumCodeSmStates - 1,
+                          kNumCodeSmStates - 1, kNumCodeSmStates);
+  const unsigned kMaxNumSynStates = kNumDefSmStates * kNumCodeSmStates *
+                                    kNumCodeSmStates;
 
-  bool state_is_visited[kNumSynonymyStates];  // Used for non-trivial sequences.
-  // Used for trivial sequences.
-  bool trivial_state_is_visited[kNumSynonymyStates];
-  memset(state_is_visited, false, kNumSynonymyStates);
-  memset(trivial_state_is_visited, false, kNumSynonymyStates);
+  // Three visiting states for each state:
+  enum VisitingState { FREE, FREE_FOR_NONTRIVIAL, BUSY };
+  VisitingState* states_visiting = new VisitingState[kMaxNumSynStates];
+  memset(states_visiting, FREE, sizeof(VisitingState) * kMaxNumSynStates);
 
-  std::queue<bool> flags_of_triviality;
-  std::queue<Transition**> paths;
+  SynonymyState syn_state;
+  SynonymyState next_syn_state;
+  std::queue<SynonymyState> states;
 
-  // Starts from initial state.
-  State* state = synonymy_state_machine_->GetState(kStartSynHash);
-  Transition** path = 0;
-  unsigned n_trans = state->transitions.size();
-  for (unsigned i = 0; i < n_trans; ++i) {
-    path = new Transition*[1];
-    path[0] = state->transitions[i];
-    paths.push(path);
-    flags_of_triviality.push(true);
+  // Fill single character sequences.
+  State* deficit  = deficits_state_machine_->GetState(kStartDefId);
+  syn_state.upper_state = code_state_machine_->GetState(0);
+  syn_state.is_tivial = true;
+  unsigned size = deficit->transitions.size();
+  for (unsigned i = 0; i < size; ++i) {
+    Transition* trans = deficit->transitions[i];
+    Transition* code_sm_trans = syn_state.upper_state
+                                ->GetTransition(trans->event_id);
+    if (code_sm_trans != 0) {
+      syn_state.deficit = trans->to;
+      syn_state.lower_state = code_sm_trans->to;
+      syn_state.sequence = new int[1];
+      syn_state.sequence[0] = -trans->event_id - 1;
+      states.push(syn_state);
+    }
   }
 
-  unsigned suqence_length = 1;
-  while (!paths.empty()) {
-    // Process all paths with current length.
-    const unsigned n_paths = paths.size();
+  unsigned sequnce_length = 1;
+  while (!states.empty()) {
+    size = states.size();
+    for (unsigned i = 0; i < size; ++i) {
+      syn_state = states.front();
+      deficit = syn_state.deficit;
+      const unsigned n_trans = deficit->transitions.size();
+      for (int j = 0; j < n_trans; ++j) {
+        Transition* trans = deficit->transitions[j];
+        const int event = trans->event_id;
 
-    for (unsigned i = 0; i < n_paths; ++i) {
-      path = paths.front();
-      const bool sequence_is_trivial = flags_of_triviality.front();
-      paths.pop();
-      flags_of_triviality.pop();
+        // Check next state to existing.
+        next_syn_state = syn_state;
+        next_syn_state.deficit = trans->to;
+        trans = (SignedDeficitId(deficit->id) >= 0 ?
+                   syn_state.lower_state->GetTransition(event) :
+                   syn_state.upper_state->GetTransition(event));
+        int new_char;
 
-      Transition* trans = path[suqence_length - 1];
-      int last_char = trans->event_id;
-      state = trans->to;
-      n_trans = state->transitions.size();
-
-      // Process each transition of current state.
-      for (unsigned j = 0; j < n_trans; ++j) {
-        trans = state->transitions[j];
-        bool new_sequence_is_trivial = sequence_is_trivial;
+        if (trans != 0) {
+          if (SignedDeficitId(deficit->id) >= 0) {
+            next_syn_state.lower_state = trans->to;
+            new_char = -event - 1;
+          } else {
+            next_syn_state.upper_state = trans->to;
+            new_char = event + 1;
+          }
+        }
+        else {
+          continue;  // Transition not exists.
+        }
 
         // Check next state to unvisiting.
-        if (sequence_is_trivial) {
-          if (!trivial_state_is_visited[trans->to->id]) {
-            trivial_state_is_visited[trans->to->id] = true;
+        const unsigned to_hash = next_syn_state.Hash(kNumCodeSmStates);
+        VisitingState vis_state = states_visiting[to_hash];
+        if (syn_state.is_tivial) {
+          if (vis_state == FREE) {
+            states_visiting[to_hash] = FREE_FOR_NONTRIVIAL;
+
             // Check triviality of new path.
-            if (suqence_length % 2 == 1 && last_char + trans->event_id != 0) {
-              new_sequence_is_trivial = false;
+            if (sequnce_length % 2 == 1 &&
+                syn_state.sequence[sequnce_length - 1] + new_char != 0) {
+              next_syn_state.is_tivial = false;
             }
           } else {
             continue;  // Skip this transition.
           }
         }
 
-        const int to_id = trans->to->id;
-        if (to_id != kEndSynHash || new_sequence_is_trivial) {
-          if (new_sequence_is_trivial || !state_is_visited[to_id] ||
-              to_id == kStartSynHash) {
-            if (!new_sequence_is_trivial) {
-              state_is_visited[to_id] = true;
+        if (to_hash != kEndSynHash || next_syn_state.is_tivial) {
+          vis_state = states_visiting[to_hash];
+          if (vis_state != BUSY) {
+            if (!next_syn_state.is_tivial) {
+              states_visiting[to_hash] = BUSY;
             }
-            Transition** new_path = new Transition*[suqence_length + 1];
-            memcpy(new_path, path, sizeof(Transition*) * suqence_length);
-            new_path[suqence_length] = trans;
+            int* new_sequence = new int[sequnce_length + 1];
+            memcpy(new_sequence, next_syn_state.sequence,
+                   sizeof(int) * sequnce_length);
+            new_sequence[sequnce_length] = new_char;
+            next_syn_state.sequence = new_sequence;
 
-            paths.push(new_path);
-            flags_of_triviality.push(new_sequence_is_trivial);
+            states.push(next_syn_state);
           }
         } else {
           // Extract not bijective words.
           if (first_bad_word != 0 && second_bad_word != 0) {
             int symbol;
-            for (unsigned k = 0; k < suqence_length; ++k) {
-              symbol = path[k]->event_id;
-              if (symbol > 0)
+            for (unsigned k = 0; k < sequnce_length; ++k) {
+              symbol = next_syn_state.sequence[k];
+              if (symbol > 0) {
                 first_bad_word->push_back(symbol - 1);
-              else
+              }
+              else {
                 second_bad_word->push_back(-symbol - 1);
+              }
             }
-            symbol = trans->event_id;
-            if (symbol > 0)
-              first_bad_word->push_back(symbol - 1);
-            else
-              second_bad_word->push_back(-symbol - 1);
+            if (new_char > 0) {
+              first_bad_word->push_back(new_char - 1);
+            }
+            else {
+              second_bad_word->push_back(-new_char - 1);
+            }
           }
-          while (!paths.empty()) {
-            delete[] paths.front();
-            paths.pop();
+          while (!states.empty()) {
+            delete[] states.front().sequence;
+            states.pop();
           }
+          delete[] states_visiting;
           return true;
         }
       }
-      delete[] path;
-    }
-    ++suqence_length;
-  }
 
+      delete[] syn_state.sequence;
+      states.pop();
+    }
+    ++sequnce_length;
+  }
+  delete[] states_visiting;
   return false;
 }
 
-unsigned BijectiveChecker::SynonymyState::Hash(unsigned code_sm_n_states) {
-  return (deficit->id * code_sm_n_states + upper_state->id) *
-         code_sm_n_states + lower_state->id;
+unsigned BijectiveChecker::SynonymyState::Hash(unsigned n_code_sm_states) {
+  return SynonymyState::Hash(deficit->id, upper_state->id, lower_state->id,
+                             n_code_sm_states);
+}
+
+unsigned BijectiveChecker::SynonymyState::Hash(
+    unsigned deficit_id, unsigned upper_state_id, unsigned lower_state_id,
+    unsigned n_code_sm_states) {
+  return (deficit_id * n_code_sm_states + upper_state_id) * n_code_sm_states +
+      lower_state_id;
 }
