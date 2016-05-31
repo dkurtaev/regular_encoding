@@ -73,6 +73,7 @@ void UnbijectiveCodeGenerator::GenDelimeters(int seed_length,
       if (delimeters[1].front() <= *it) {
         break;
       }
+      ++it;
     }
     delimeters[1].insert(it, delimeters[1].front());
     delimeters[1].erase(delimeters[1].begin());
