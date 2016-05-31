@@ -226,21 +226,10 @@ void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
   }
 
   // Make all characters are used.
-  if (n_used_chars != n_elem_codes) {
-    std::vector<int> candidates[n_elem_codes];
-    for (int i = 0; i < visited_states.size(); ++i) {
-      const int from_idx = visited_states[i];
-      for (int j = 0; j < unused_chars[from_idx].size(); ++j) {
-        const int char_idx = unused_chars[from_idx][j];
-        candidates[char_idx].push_back(from_idx);
-      }
-    }
-
-    for (int i = 0; i < n_elem_codes; ++i) {
-      if (!char_is_used[i]) {
-        int from_idx = candidates[i][rand() % candidates[i].size()];
-        state_machine->AddTransition(from_idx, rand() % n_states, i);
-      }
+  for (int i = 0; n_used_chars != n_elem_codes && i < n_elem_codes; ++i) {
+    if (!char_is_used[i]) {
+      state_machine->AddTransition(rand() % n_states, rand() % n_states, i);
+      ++n_used_chars;
     }
   }
 }
