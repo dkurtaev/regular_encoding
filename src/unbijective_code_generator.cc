@@ -1,5 +1,8 @@
 #include "include/unbijective_code_generator.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 #include <algorithm>
 #include <iostream>
 
@@ -13,22 +16,23 @@ void UnbijectiveCodeGenerator::GenDelimeters(int seed_length,
   const int max_n_delims = seed_length - 1;
 
   n_delimiters[0] = rand(0, max_n_delims);
-  GenUniqueUnnegatives(max_n_delims - 1, n_delimiters[0], &delimeters[0]);
-
-  if (n_delimiters[0] == 0) {
-    n_delimiters[1] = rand(1, max_n_delims);
-  } else {
+  if (n_delimiters[0] != 0) {
+    GenUniqueUnnegatives(max_n_delims - 1, n_delimiters[0], &delimeters[0]);
     n_delimiters[1] = rand(0, n_delimiters[0] == max_n_delims ?
                               max_n_delims - 1 :
                               max_n_delims);
+  } else {
+    n_delimiters[1] = rand(1, max_n_delims);
   }
 
-  const int n_delims = n_delimiters[0];
   if (n_delimiters[0] != n_delimiters[1]) {
     GenUniqueUnnegatives(max_n_delims - 1, n_delimiters[1], &delimeters[1]);
   } else {
+    const int n_delims = n_delimiters[0];
+
     // Collect unselected delimeters position.
-    int unselected_delims[max_n_delims - n_delims];
+    const int n_unselected_delims = max_n_delims - n_delims;
+    int unselected_delims[n_unselected_delims];
     int idx = 0;
     for (int i = 0; i < delimeters[0][0]; ++i) {
       unselected_delims[idx++] = i;
@@ -46,28 +50,33 @@ void UnbijectiveCodeGenerator::GenDelimeters(int seed_length,
 
     // Set one of new delimeter to unselected position.
     // This gives different decompositions.
-    const int delim = unselected_delims[rand() % (max_n_delims - n_delims)];
+    const int delim = unselected_delims[rand() % n_unselected_delims];
+    delimeters[1].reserve(n_delims);
     delimeters[1].push_back(delim);
 
+    int available_delims[max_n_delims - 1];
+    for (int i = 0; i < delim; ++i) {
+      available_delims[i] = i;
+    }
+    for (int i = delim + 1; i < max_n_delims; ++i) {
+      available_delims[i - 1] = i;
+    }
+
     std::vector<int> buf;
-
-    // 0 <= L <= delim
-    // 0 <= N - 1 - L <= max_n - delim - 1
-
-    // 0 <= L <= delim
-    // N + delim - max_n <= L <= N - 1
-    const int n_left_delims = rand(
-                               std::max(0, n_delims + delim - max_n_delims),
-                               std::min(delim, n_delims - 1));
-    if (n_left_delims > 0) {
-      GenUniqueUnnegatives(delim - 1, n_left_delims, &buf);
-      InsertFront(buf, &delimeters[1]);
+    GenUniqueUnnegatives(max_n_delims - 2, n_delims - 1, &buf);
+    for (int i = 0; i < n_delims - 1; ++i) {
+      delimeters[1].push_back(available_delims[buf[i]]);
     }
-    const int n_right_delims = n_delims - 1 - n_left_delims;
-    if (n_right_delims > 0) {
-      GenUniqueUnnegatives(max_n_delims - delim - 1, n_right_delims, &buf);
-      InsertBack(&delimeters[1], buf);
+
+    std::vector<int>::iterator it = delimeters[1].begin() + 1;
+    while (it != delimeters[1].end()) {
+      if (delimeters[1].front() <= *it) {
+        break;
+      }
+      ++it;
     }
+    delimeters[1].insert(it, delimeters[1].front());
+    delimeters[1].erase(delimeters[1].begin());
   }
 }
 
