@@ -67,6 +67,15 @@ void UnbijectiveCodeGenerator::GenDelimeters(int seed_length,
     for (int i = 0; i < n_delims - 1; ++i) {
       delimeters[1].push_back(available_delims[buf[i]]);
     }
+
+    std::vector<int>::iterator it = delimeters[1].begin() + 1;
+    while (it != delimeters[1].end()) {
+      if (delimeters[1].front() <= *it) {
+        break;
+      }
+    }
+    delimeters[1].insert(it, delimeters[1].front());
+    delimeters[1].erase(delimeters[1].begin());
   }
 }
 
