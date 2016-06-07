@@ -211,13 +211,11 @@ void BijectiveChecker::WriteSynonymyStateMachine(const std::string& file_path) {
 
   // Code state machine states names.
   std::vector<std::string> code_sm_states_names(kNumCodeSmStates);
-  code_sm_states_names[0] = "st";
-  for (int i = 1; i < kNumCodeSmStates - 1; ++i) {
+  for (int i = 0; i < kNumCodeSmStates; ++i) {
     std::ostringstream ss;
-    ss << (i + 1);
+    ss << 'q' << i;
     code_sm_states_names[i] = ss.str();
   }
-  code_sm_states_names[kNumCodeSmStates - 1] = "end";
 
   std::vector<std::string> states_names(kNumDefsSmStates * kNumCodeSmStates *
                                         kNumCodeSmStates);
@@ -236,10 +234,10 @@ void BijectiveChecker::WriteSynonymyStateMachine(const std::string& file_path) {
   std::map<int, std::string> events_names;
   const int n_codes = code_.size();
   for (int i = 0; i < n_codes; ++i) {
-    events_names[i + 1] = code_[i]->str + "/\u03bb";
-    events_names[-i - 1] = "\u03bb/" + code_[i]->str;
+    events_names[i + 1] = code_[i]->str;
+    events_names[-i - 1] = code_[i]->str;
   }
-
+  if (!synonymy_state_machine_) BuildSynonymyStateMachine();
   synonymy_state_machine_->WriteDot(file_path, states_names, events_names);
 }
 

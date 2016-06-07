@@ -65,7 +65,7 @@ void AlphabeticEncoder::WriteCodeStateMachine(
   int n_states = state_machine.GetNumberStates();
   for (int i = 0; i < n_states; ++i) {
     std::ostringstream ss;
-    ss << i;
+    ss << 'q' << i;
     states_names.push_back(ss.str());
   }
 
