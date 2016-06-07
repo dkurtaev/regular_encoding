@@ -214,13 +214,6 @@ void CodeGenerator::GenStateMachine(int n_elem_codes, int n_states,
           char_is_used[char_idx] = true;
           ++n_used_chars;
         }
-
-        unused_chars[from_idx].erase(unused_chars[from_idx].begin() + j);
-        if (unused_chars[from_idx].empty()) {
-          visited_states.erase(visited_states.begin() + i);
-          --i;
-        }
-        --j;
       }
     }
   }
