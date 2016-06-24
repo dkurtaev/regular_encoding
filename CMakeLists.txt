@@ -36,15 +36,14 @@ set(headers
 )
 
 if (COVERALLS)
-  set(files "")
   foreach(path ${sources} ${headers})
-    set(files "${files} ${path}")
+    set(files ${files} ${path})
   endforeach(path)
 
   coveralls_setup(
-    ${files}
+    "${files}"
     ON
-    ${PROJECT_SOURCE_DIR}/cmake/)
+    "${PROJECT_SOURCE_DIR}/cmake/")
 endif()
 
 include_directories(${CMAKE_SOURCE_DIR})
