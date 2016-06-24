@@ -16,10 +16,9 @@ branches:
 
 script:
   - mkdir build && cd build
-  - cmake .. -DCOVERALLS=ON -DCMAKE_BUILD_TYPE=Debug
   - export COVERALLS_SERVICE_NAME=travis-ci
   - export COVERALLS_REPO_TOKEN=abc12345
-  - make -j8
+  - cmake .. -DCOVERALLS=ON -DCMAKE_BUILD_TYPE=Debug && make -j8
   - make coveralls
   - ./bin/code_generator_test
   - ./bin/bijective_checker_test
