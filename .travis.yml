@@ -21,3 +21,5 @@ script:
   - ./bin/code_generator_test
   - ./bin/bijective_checker_test
 
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
