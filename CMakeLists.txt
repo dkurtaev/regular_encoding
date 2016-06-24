@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 2.8)
 set(LIBRARY regular_encoding)
 project(${LIBRARY})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
-set(PROJECT_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include/")
-set(PROJECT_SOURCE_DIR "${CMAKE_SOURCE_DIR}/src/")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Thanks https://github.com/JoakimSoderberg/coveralls-cmake
@@ -38,11 +36,15 @@ set(headers
 )
 
 if (COVERALLS)
-  set(COVERAGE_SRCS ${sources} ${headers})
+  set(files "")
+  foreach(path ${sources} ${headers})
+    set(files "${files} ${path}")
+  endforeach(path)
+
   coveralls_setup(
-    ${COVERAGE_SRCS}
+    ${files}
     ON
-    ${CMAKE_SOURCE_DIR}/cmake/)
+    ${PROJECT_SOURCE_DIR}/cmake/)
 endif()
 
 include_directories(${CMAKE_SOURCE_DIR})
