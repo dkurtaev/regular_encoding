@@ -14,6 +14,9 @@ branches:
   only:
     - master
 
+before_install:
+  - pip install --user cpp-coveralls
+
 script:
   - mkdir build
   - cd build
@@ -22,4 +25,4 @@ script:
   - ./bin/bijective_checker_test
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
