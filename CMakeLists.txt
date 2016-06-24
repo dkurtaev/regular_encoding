@@ -6,6 +6,13 @@ set(PROJECT_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include/")
 set(PROJECT_SOURCE_DIR "${CMAKE_SOURCE_DIR}/src/")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# Thanks https://github.com/JoakimSoderberg/coveralls-cmake
+option(COVERALLS "Generate coveralls data" OFF)
+if (COVERALLS)
+  include(Coveralls)
+  coveralls_turn_on_coverage()
+endif()
+
 set(sources
   src/alphabetic_encoder.cc
   src/bijective_checker.cc
@@ -29,6 +36,14 @@ set(headers
   include/structures.h
   include/unbijective_code_generator.h
 )
+
+if (COVERALLS)
+  set(COVERAGE_SRCS ${sources} ${headers})
+  coveralls_setup(
+    ${COVERAGE_SRCS}
+    ON
+    ${PROJECT_SOURCE_DIR}/cmake/)
+endif()
 
 include_directories(${CMAKE_SOURCE_DIR})
 
