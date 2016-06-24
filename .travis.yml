@@ -16,7 +16,7 @@ branches:
 
 script:
   - mkdir build && cd build
-  - cmake .. -DCOVERALLS=ON -DCMAKE_BUILD_TYPE=Debug && make
+  - cmake .. -DCOVERALLS=ON -DCMAKE_BUILD_TYPE=Debug && make -j8
   - make coveralls
   - ./bin/code_generator_test
   - ./bin/bijective_checker_test

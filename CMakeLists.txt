@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 set(LIBRARY regular_encoding)
 project(${LIBRARY})
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 set(PROJECT_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include/")
 set(PROJECT_SOURCE_DIR "${CMAKE_SOURCE_DIR}/src/")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -42,7 +42,7 @@ if (COVERALLS)
   coveralls_setup(
     ${COVERAGE_SRCS}
     ON
-    ${PROJECT_SOURCE_DIR}/cmake/)
+    ${CMAKE_SOURCE_DIR}/cmake/)
 endif()
 
 include_directories(${CMAKE_SOURCE_DIR})
