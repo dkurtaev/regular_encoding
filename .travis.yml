@@ -13,14 +13,8 @@ branches:
   only:
     - master
 
-before_install:
-  sudo pip install codecov
-
 script:
   - mkdir build && cd build
   - cmake .. && make -j8
   - ./bin/code_generator_test
   - ./bin/bijective_checker_test
-  - cd ../
-  - sh ./get_code_cov.sh
-  - codecov

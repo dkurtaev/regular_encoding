@@ -8,8 +8,7 @@ set(tests
 )
 
 foreach(test ${tests})
-  get_filename_component(target ${test} NAME_WE)
+  get_filename_component(target ${test} NAME_WE)  
   add_executable(${target} ${test} ${main})
   target_link_libraries(${target} gtest ${CMAKE_THREAD_LIBS_INIT} pthread ${LIBRARY})
 endforeach(test)
-
