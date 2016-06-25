@@ -5,8 +5,7 @@ notifications:
 
 sudo: false
 
-compiler:
-  - gcc
+compiler: gcc
 
 os: linux
 
@@ -14,10 +13,14 @@ branches:
   only:
     - master
 
+before_install:
+  sudo pip install codecov
+
 script:
   - mkdir build && cd build
-  - export COVERALLS_SERVICE_NAME=travis-ci
-  - cmake .. -DCOVERALLS=ON -DCMAKE_BUILD_TYPE=Debug && make -j8
-  - make coveralls
+  - cmake .. && make -j8
   - ./bin/code_generator_test
   - ./bin/bijective_checker_test
+  - cd ../
+  - sh ./get_code_cov.sh
+  - codecov
