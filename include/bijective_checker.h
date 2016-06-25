@@ -1,3 +1,7 @@
+// Copyright © 2016 Dmitry Kurtaev. All rights reserved.
+// License: MIT License (see LICENSE)
+// e-mail: dmitry.kurtaev@gmail.com
+
 #ifndef INCLUDE_BIJECTIVE_CHECKER_H_
 #define INCLUDE_BIJECTIVE_CHECKER_H_
 

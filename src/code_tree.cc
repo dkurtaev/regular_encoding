@@ -1,3 +1,7 @@
+// Copyright © 2016 Dmitry Kurtaev. All rights reserved.
+// License: MIT License (see LICENSE)
+// e-mail: dmitry.kurtaev@gmail.com
+
 #include "include/code_tree.h"
 
 CodeTree::CodeTree(const std::vector<ElementaryCode*>& code) {

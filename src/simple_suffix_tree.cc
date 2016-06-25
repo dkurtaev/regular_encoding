@@ -1,3 +1,7 @@
+// Copyright © 2016 Dmitry Kurtaev. All rights reserved.
+// License: MIT License (see LICENSE)
+// e-mail: dmitry.kurtaev@gmail.com
+
 #include "include/simple_suffix_tree.h"
 
 #include <string>

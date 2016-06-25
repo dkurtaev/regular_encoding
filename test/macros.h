@@ -1,3 +1,7 @@
+// Copyright © 2016 Dmitry Kurtaev. All rights reserved.
+// License: MIT License (see LICENSE)
+// e-mail: dmitry.kurtaev@gmail.com
+
 #ifndef TEST_MACROS_H_
 #define TEST_MACROS_H_
 

@@ -1,3 +1,7 @@
+// Copyright © 2016 Dmitry Kurtaev. All rights reserved.
+// License: MIT License (see LICENSE)
+// e-mail: dmitry.kurtaev@gmail.com
+
 #ifndef INCLUDE_CODE_TREE_H_
 #define INCLUDE_CODE_TREE_H_
 

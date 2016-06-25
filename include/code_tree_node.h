@@ -1,7 +1,12 @@
+// Copyright © 2016 Dmitry Kurtaev. All rights reserved.
+// License: MIT License (see LICENSE)
+// e-mail: dmitry.kurtaev@gmail.com
+
 #ifndef INCLUDE_CODE_TREE_NODE_H_
 #define INCLUDE_CODE_TREE_NODE_H_
 
 #include <vector>
+#include <string>
 
 #include "include/structures.h"
 

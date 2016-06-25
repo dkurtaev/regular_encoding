@@ -1,3 +1,7 @@
+// Copyright © 2016 Dmitry Kurtaev. All rights reserved.
+// License: MIT License (see LICENSE)
+// e-mail: dmitry.kurtaev@gmail.com
+
 #ifndef INCLUDE_UNBIJECTIVE_CODE_GENERATOR_H_
 #define INCLUDE_UNBIJECTIVE_CODE_GENERATOR_H_
 
